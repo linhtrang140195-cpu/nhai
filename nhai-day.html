@@ -800,7 +800,7 @@ function enableEdit(){
 function saveAll(){
   ss('nd_cases3',cases);ss('nd_anns2',anns);ss('nd_mentors3',mentors);ss('nd_teams',teamCounts);
   const st={};document.querySelectorAll('[data-e]:not([data-mf])').forEach((el,i)=>st['s'+i]=el.innerHTML);
-  ss('nd_statics',st);
+  ss('nd_statics4',st);
   if(window._heroB64)ss('nd_hero',window._heroB64);
   if(window._rewardB64)ss('nd_reward',window._rewardB64);
   toast('💾 Đã lưu thành công!');
@@ -823,7 +823,7 @@ function exportFile(){
 function restoreSaved(){
   const hero=ls('nd_hero',null);if(hero)document.getElementById('heroImg').src=hero;
   const reward=ls('nd_reward',null);if(reward)document.getElementById('rewardImg').src=reward;
-  const st=ls('nd_statics',null);
+  const st=ls('nd_statics4',null);
   if(st)document.querySelectorAll('[data-e]:not([data-mf])').forEach((el,i)=>{if(st['s'+i]!=null)el.innerHTML=st['s'+i];});
 }
 
