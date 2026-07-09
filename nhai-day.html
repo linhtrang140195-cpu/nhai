@@ -1021,13 +1021,41 @@ textarea.inp{resize:vertical;min-height:64px;}
 
 
 
-/* ROADMAP */
+
+/* ── Roadmap horizontal ── */
+.roadmap-wrap{margin-top:32px;}
+.roadmap-label{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
+.roadmap-track{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.12) transparent;}
+.roadmap-track::-webkit-scrollbar{height:4px;}
+.roadmap-track::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px;}
+.rm-card{flex:0 0 200px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:6px;transition:.2s;}
+.rm-card.done{border-color:rgba(74,222,128,.25);background:rgba(74,222,128,.04);}
+.rm-card.active{border-color:rgba(123,77,219,.35);background:rgba(123,77,219,.07);}
+.rm-card.soon{opacity:.65;}
+.rm-card-status{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;}
+.rms-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.done .rms-dot{background:#4ade80;}
+.active .rms-dot{background:var(--pbright);}
+.soon .rms-dot{background:rgba(255,255,255,.25);}
+.done .rms-lbl{color:#4ade80;}
+.active .rms-lbl{color:#b79bff;}
+.soon .rms-lbl{color:var(--muted);}
+.rm-card-name{font-size:14px;font-weight:800;color:var(--cream);line-height:1.3;}
+.rm-card-date{font-size:11.5px;color:var(--muted);line-height:1.4;}
+.rm-card-cta{margin-top:6px;}
+.rm-cta-link{font-size:11.5px;color:var(--pbright);background:rgba(123,77,219,.15);border:1px solid rgba(123,77,219,.4);padding:5px 12px;border-radius:100px;cursor:pointer;font-family:'Be Vietnam Pro';font-weight:700;transition:.15s;}
+.rm-cta-link:hover{background:rgba(123,77,219,.3);border-color:rgba(123,77,219,.7);}
+.rm-card.done .rm-cta-link{color:#4ade80;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.35);}
+.rm-card.done .rm-cta-link:hover{background:rgba(74,222,128,.2);}
+.rm-card.active .rm-cta-link{color:#f2b933;background:rgba(242,185,51,.1);border-color:rgba(242,185,51,.4);}
+.rm-card.active .rm-cta-link:hover{background:rgba(242,185,51,.2);}
+/* ROADMAP (legacy) */
 
 
 .roadmap-wrap{background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:16px;padding:24px 26px;margin-top:32px;}
 
 
-.roadmap-track{display:flex;flex-direction:column;}
+/* roadmap-track column removed */
 
 
 .rm-row{display:flex;gap:16px;position:relative;}
@@ -1072,7 +1100,7 @@ textarea.inp{resize:vertical;min-height:64px;}
 .rm-date{font-size:14px;color:var(--muted);margin-bottom:6px;}
 
 
-.rm-cta-link{display:inline-block;font-size:14px;font-weight:700;color:var(--pbright);cursor:pointer;background:none;border:none;font-family:'Be Vietnam Pro';padding:0;}
+.rm-cta-link{display:inline-block;}
 
 
 .rm-cta-link:hover{color:var(--gold);}
@@ -1241,6 +1269,77 @@ textarea.inp{resize:vertical;min-height:64px;}
 .atl-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
 .atl-badge.eb{background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.25);}
 .atl-badge.demo{background:rgba(242,185,51,.1);color:var(--gold);border:1px solid rgba(242,185,51,.25);}
+
+/* ── Winner card redesign ── */
+.winner-card{border-radius:18px;overflow:hidden;position:relative;min-height:230px;border:1px solid rgba(255,255,255,.06);cursor:pointer;transition:all .2s;}
+.winner-card:hover{box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.winner-card.wc-open{height:auto !important;overflow:visible;}
+.wc-front{position:relative;height:220px;overflow:hidden;}
+.wc-bg{position:absolute;inset:0;}
+.wc-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.72) 0%,rgba(0,0,0,.1) 60%);}
+.wc-city-badge{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);color:#fff;font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px;border:1px solid rgba(255,255,255,.18);}
+.wc-avatar{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border:2px solid rgba(255,255,255,.25);position:absolute;top:14px;right:14px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.wc-body{position:absolute;bottom:0;left:0;right:0;padding:18px 20px;}
+.wc-category{font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px;}
+.wc-team-tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);margin-bottom:8px;}
+.wc-case{font-size:16px;font-weight:800;color:#fff;line-height:1.3;margin-bottom:5px;}
+.wc-person{font-size:12.5px;color:rgba(255,255,255,.6);}
+.wc-expand-hint{position:absolute;bottom:14px;right:14px;font-size:11px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:4px;}
+/* Winner card detail panel */
+.wc-detail{display:none;padding:18px 20px;background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.1);}
+.winner-card.wc-open .wc-detail{display:block;}
+.winner-card.wc-open .wc-expand-hint{opacity:0;}
+.wcd-desc{font-size:13.5px;color:var(--cream);line-height:1.6;margin-bottom:14px;}
+.wcd-tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.wcd-tool{font-size:11px;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.07);color:var(--muted);border:1px solid rgba(255,255,255,.1);}
+.wcd-close{font-size:12px;color:var(--muted);cursor:pointer;text-align:right;display:block;}
+.wcd-close:hover{color:var(--cream);}
+
+/* ── Vote card v2 (grid card style) ── */
+.vote-filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.vf-sep{width:1px;height:22px;background:rgba(255,255,255,.12);margin:0 4px;}
+.vf-ed-btn{padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:'Be Vietnam Pro';transition:all .2s;white-space:nowrap;}
+.vf-ed-btn.on{background:rgba(242,185,51,.15);border-color:rgba(242,185,51,.5);color:var(--gold);}
+.vote-meta-row{display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px;}
+.vote-meta-count{font-size:13px;color:var(--muted);}
+.vote-sort-wrap{position:relative;}
+.vote-sort-select{appearance:none;-webkit-appearance:none;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--cream);font-size:13px;font-weight:600;padding:7px 28px 7px 14px;border-radius:100px;cursor:pointer;font-family:'Be Vietnam Pro';}
+.vote-sort-wrap::after{content:'▾';position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px;}
+.vote-top3-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:20px 0 12px;}
+.vote-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+.vc2{background:#0e0c1e;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;transition:transform .18s,box-shadow .18s,border-color .18s;cursor:pointer;display:flex;flex-direction:column;}
+.vc2:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.5);border-color:rgba(255,255,255,.16);}
+.vc2.my-vote{border-color:rgba(123,77,219,.5);box-shadow:0 0 0 1px rgba(123,77,219,.3);}
+.vc2-thumb{position:relative;height:140px;display:flex;align-items:center;justify-content:center;font-size:52px;flex-shrink:0;}
+.vc2-rank{position:absolute;top:10px;left:10px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;z-index:2;}
+.vc2-rank.r1{background:#f2b933;color:#000;}
+.vc2-rank.r2{background:#9ca3af;color:#000;}
+.vc2-rank.r3{background:#cd7c3a;color:#fff;}
+.vc2-rank.rn{background:rgba(255,255,255,.12);color:var(--muted);}
+.vc2-city{position:absolute;top:10px;right:10px;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:100px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.15);color:#fff;z-index:2;}
+.vc2-video-badge{position:absolute;bottom:8px;right:10px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(0,0,0,.65);color:#fff;border:1px solid rgba(255,255,255,.2);}
+.vc2-body{padding:14px 14px 10px;flex:1;display:flex;flex-direction:column;gap:6px;}
+.vc2-eyebrow{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.vc2-title{font-size:14px;font-weight:800;color:var(--cream);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.vc2-tools{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;}
+.vc2-tool{font-size:10.5px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.06);color:var(--muted);border:1px solid rgba(255,255,255,.08);}
+.vc2-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid rgba(255,255,255,.06);}
+.vc2-votes{font-size:22px;font-weight:900;color:var(--cream);line-height:1;}
+.vc2-votes span{font-size:11px;font-weight:500;color:var(--muted);margin-left:3px;}
+.vc2-vote-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:var(--muted);font-size:16px;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;}
+.vc2-vote-btn:hover:not(:disabled){border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.1);color:#ef4444;}
+.vc2-vote-btn.voted{border-color:#ef4444;background:rgba(239,68,68,.15);color:#ef4444;}
+.vc2-vote-btn:disabled:not(.voted){opacity:.35;cursor:not-allowed;}
+/* detail expand */
+.vc2-detail{display:none;padding:12px 14px 14px;border-top:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);}
+.vc2.open .vc2-detail{display:block;}
+.vc2-det-person{font-size:12.5px;color:var(--muted);margin-bottom:8px;}
+.vc2-det-desc{font-size:13px;color:var(--cream);line-height:1.5;margin-bottom:8px;}
+.vc2-det-actions{display:flex;gap:8px;align-items:center;}
+.vc2-det-demo{font-size:12px;color:var(--pbright);text-decoration:none;font-weight:600;}
+.vc2-det-demo:hover{text-decoration:underline;}
+.vc2-det-demo.no-link{opacity:.35;pointer-events:none;}
+.vc2-collapse{font-size:11px;color:var(--muted);cursor:pointer;margin-left:auto;}
 </style>
 
 
@@ -1322,13 +1421,13 @@ textarea.inp{resize:vertical;min-height:64px;}
     <div class="hero-dates">
 
 
-      <div class="date-card"><div class="city">🏙️ Hà Nội</div><div class="when" data-e>Thứ 6, 26/06/2026</div><div class="time" data-e>13:00 – 18:00</div></div>
+      <div class="date-card"><div class="city">🏙️ Hà Nội</div><div class="when" data-e>Thứ 5, 31/07/2026</div><div class="time" data-e>13:00 – 18:00</div></div>
 
 
-      <div class="date-card"><div class="city">🌆 TP. Hồ Chí Minh</div><div class="when" data-e>Thứ 6, 03/07/2026</div><div class="time" data-e>13:00 – 18:00</div></div>
+      <div class="date-card"><div class="city">🌆 TP. Hồ Chí Minh</div><div class="when" data-e>Thứ 5, 07/08/2026</div><div class="time" data-e>13:00 – 18:00</div></div>
 
 
-      <div class="date-card"><div class="city">📋 Đăng ký</div><div class="when" data-e>12.06 – 23.06</div><div class="time" data-e>Solo hoặc nhóm 2–3 người</div></div>
+      <div class="date-card"><div class="city">📋 Đăng ký</div><div class="when" data-e>16/7 – 27/7</div><div class="time" data-e>Solo hoặc nhóm 2–3 người</div></div>
 
 
     </div>
@@ -1364,7 +1463,18 @@ textarea.inp{resize:vertical;min-height:64px;}
 
 
 
-  <hr class="divider">
+  <!-- Roadmap -->
+  <div class="block" style="margin-top:32px;">
+    <div class="head">
+      <span class="eyebrow">Lịch trình</span>
+      <h2 class="title">Roadmap <em>campaign</em></h2>
+    </div>
+    <div class="roadmap-wrap">
+      <div class="roadmap-track" id="roadmapTrack"></div>
+    </div>
+  </div>
+
+    <hr class="divider">
 
 
 
@@ -1394,7 +1504,7 @@ textarea.inp{resize:vertical;min-height:64px;}
     <div class="mentor-grid" id="mentorGrid"></div>
 
 
-    <p id="mentorNote" style="margin-top:16px;font-size:16px;color:var(--muted);font-style:italic;" data-e>Mentor sẽ được cập nhật theo từng event — và tháng sau, Ä‘ó có thể là bạn 🧙</p>
+    <p id="mentorNote" style="margin-top:16px;font-size:16px;color:var(--muted);font-style:italic;" data-e>Mentor sẽ được cập nhật theo từng event — và tháng sau, đó có thể là bạn 🧙</p>
 
 
 
@@ -1433,7 +1543,7 @@ textarea.inp{resize:vertical;min-height:64px;}
       <div style="font-size:15.5px;color:var(--mdim);margin-top:12px;font-style:italic;">Mentor không làm hộ, code hộ hay trực tiếp triển khai giúp các team 😄</div>
 
 
-      <div style="font-size:15.5px;color:#f2b933;margin-top:8px;font-weight:600;">💡 Ưu tiên submit các case sớm để mentor có time giải Ä‘áp và nghiên cứu!</div>
+      <div style="font-size:15.5px;color:#f2b933;margin-top:8px;font-weight:600;">💡 Ưu tiên submit các case sớm để mentor có time giải đáp và nghiên cứu!</div>
 
 
     </div>
@@ -1472,7 +1582,7 @@ textarea.inp{resize:vertical;min-height:64px;}
     <div class="criteria-wrap">
 
 
-      <div class="criteria-head" data-e>🏅 Tiêu chí Ä‘ánh giá</div>
+      <div class="criteria-head" data-e>🏅 Tiêu chí đánh giá</div>
 
 
       <div class="prize-section-label">GIẢI MỖI EVENT</div>
@@ -1487,7 +1597,7 @@ textarea.inp{resize:vertical;min-height:64px;}
         <tbody>
 
 
-          <tr><td>🏆 Master Chef</td><td>2.000.000đ</td><td data-e contenteditable="false">Demo nổi bật, hiểu biết sâu về kỹ thuật, chưa từng được sử dụng, có thể scale là điểm cộng. Check với quản lý team Ä‘ó chưa sử dụng từ trước. Mentor Ä‘ánh giá.</td></tr>
+          <tr><td>🏆 Master Chef</td><td>2.000.000đ</td><td data-e contenteditable="false">Demo nổi bật, hiểu biết sâu về kỹ thuật, chưa từng được sử dụng, có thể scale là điểm cộng. Check với quản lý team đó chưa sử dụng từ trước. Mentor đánh giá.</td></tr>
 
 
           <tr><td>🚀 Demo Ready (Early Bird)</td><td>1.000.000đ × 8</td><td data-e contenteditable="false">Sản phẩm chạy được, có demo, giải quyết một pain point cụ thể và chưa từng được sử dụng trong sub-team (BTC xác nhận cùng quản lý).<br><br>8 team đầu tiên đạt đủ tiêu chí nhận 1.000.000đ. Nếu chưa đủ 8 suất, BTC tiếp tục xét theo FCFS đến 17:30 hoặc đến khi đủ 8 suất.<br>Không thuộc Early Bird nhưng hoàn thiện trước 17:30: 500.000đ.</td></tr>
@@ -1538,10 +1648,10 @@ textarea.inp{resize:vertical;min-height:64px;}
       <ul>
 
 
-        <li data-e><b>Mục Ä‘ích:</b> dùng để giải quyết việc gì, cho ai/team nào</li>
+        <li data-e><b>Mục đích:</b> dùng để giải quyết việc gì, cho ai/team nào</li>
 
 
-        <li data-e><b>Tool sử dụng:</b> AI/tool/platform Ä‘ã dùng</li>
+        <li data-e><b>Tool sử dụng:</b> AI/tool/platform đã dùng</li>
 
 
         <li data-e><b>Cách hoạt động:</b> sản phẩm/workflow chạy như thế nào</li>
@@ -1587,36 +1697,6 @@ textarea.inp{resize:vertical;min-height:64px;}
 
 
 
-
-
-  <!-- Roadmap -->
-
-
-  <div class="block">
-
-
-    <div class="head">
-
-
-      <span class="eyebrow">Lịch trình</span>
-
-
-      <h2 class="title">Roadmap <em>campaign</em></h2>
-
-
-    </div>
-
-
-    <div class="roadmap-wrap">
-
-
-      <div class="roadmap-track" id="roadmapTrack"></div>
-
-
-    </div>
-
-
-  </div>
 
 
 
@@ -1760,7 +1840,7 @@ textarea.inp{resize:vertical;min-height:64px;}
         <div class="btc-card btc-fun"><div class="btc-ico">🎲</div><div class="btc-text" data-e>Tạo game để gắn kết nhân viên công ty</div></div>
 
 
-        <div class="btc-card btc-fun"><div class="btc-ico">💕</div><div class="btc-text" data-e>"App hẹn hò" cho các cặp Ä‘ôi trong công ty</div></div>
+        <div class="btc-card btc-fun"><div class="btc-ico">💕</div><div class="btc-text" data-e>"App hẹn hò" cho các cặp đôi trong công ty</div></div>
 
 
         <div class="btc-card btc-fun"><div class="btc-ico">🏃</div><div class="btc-text" data-e>App theo dõi sức khỏe, cá nhân hóa cho nhân viên công ty</div></div>
@@ -1922,21 +2002,20 @@ textarea.inp{resize:vertical;min-height:64px;}
           <div class="vote-section-title">🏆 Top Pick Dish</div>
 
 
-          <div class="vote-section-sub">Bình chọn output ấn tượng nhất · 1 vote / người / event</div>
 
 
         </div>
 
 
-        <div class="vote-filter">
-
-
-          <button class="vf-btn on" onclick="filterVote('HN',this)">🏙️ Hà Nội</button>
-
-
-          <button class="vf-btn" onclick="filterVote('HCM',this)">🌆 HCM</button>
-
-
+        <div class="vote-filter-row">
+          <button class="vf-btn on" onclick="filterVoteCity('HN',this)">🏙️ Hà Nội</button>
+          <button class="vf-btn" onclick="filterVoteCity('HCM',this)">🌆 HCM</button>
+          <div class="vf-sep"></div>
+          <button class="vf-ed-btn on" onclick="filterVoteEd('all',this)">Tất cả</button>
+          <button class="vf-ed-btn" onclick="filterVoteEd('hn01,hcm01',this)">NHAI DAY #1</button>
+          <button class="vf-ed-btn" onclick="filterVoteEd('hn02,hcm02',this)">NHAI DAY #2</button>
+          <button class="vf-ed-btn" onclick="filterVoteEd('hn03,hcm03',this)">NHAI DAY #3</button>
+          <button class="vf-ed-btn" onclick="filterVoteEd('hn04,hcm04',this)">NHAI DAY #4</button>
         </div>
 
 
@@ -1945,7 +2024,7 @@ textarea.inp{resize:vertical;min-height:64px;}
 
       <div class="vote-open-banner">
         <span class="vob-badge">ĐANG MỞ</span>
-        <span class="vob-text"><b>Top Pick Dish</b> — Bình chọn output ấn tượng nhất · 1 vote / người / event</span>
+        <span class="vob-text"><b>Top Pick Dish</b> — Bình chọn output ấn tượng nhất · 3 vote / người / event</span>
         <span class="vob-date">📅 10/07 – 15/07/2026</span>
       </div>
 
@@ -1953,6 +2032,15 @@ textarea.inp{resize:vertical;min-height:64px;}
       <div class="vote-lead" id="voteLead"></div>
 
 
+      <div class="vote-meta-row">
+        <span class="vote-meta-count" id="voteMetaCount"></span>
+        <div class="vote-sort-wrap">
+          <select class="vote-sort-select" id="voteSortSel" onchange="renderVote()">
+            <option value="votes">Nhiều vote nhất</option>
+            <option value="az">A → Z</option>
+          </select>
+        </div>
+      </div>
       <div class="vote-grid" id="voteGrid"></div>
 
 
@@ -2190,7 +2278,7 @@ let cases = ls('nd_cases3',[
   {team:'People Team',city:'Hà Nội',status:'open',title:'Tự động hóa báo cáo onboarding hàng tuần',desc:'Mỗi tuần mất ~3 giờ tổng hợp data onboarding từ nhiều sheet. Muốn dùng AI rút xuống dưới 15 phút.',result:'',author:'People Team',r1:12,r2:7},
 
 
-  {team:'People Team',city:'Hà Nội',status:'open',title:'AI tóm tắt nhanh phỏng vấn ứng viên',desc:'Sau mỗi vòng phỏng vấn, AI tổng hợp ý chính, Ä‘ánh giá nhanh và tạo template feedback gửi hiring manager.',result:'',author:'People Team',r1:9,r2:6},
+  {team:'People Team',city:'Hà Nội',status:'open',title:'AI tóm tắt nhanh phỏng vấn ứng viên',desc:'Sau mỗi vòng phỏng vấn, AI tổng hợp ý chính, đánh giá nhanh và tạo template feedback gửi hiring manager.',result:'',author:'People Team',r1:9,r2:6},
 
 
   {team:'People Team',city:'HCM',status:'open',title:'Bot trả lời FAQ nội bộ',desc:'Trả lời các câu hỏi thường gặp về policy, benefit, leave... thay vì People Team phải reply từng người.',result:'',author:'People Team',r1:14,r2:8},
@@ -2214,19 +2302,19 @@ let cases = ls('nd_cases3',[
 let anns = ls('nd_anns2',[
 
 
-  {ico:'🎉',title:'NHAI DAY! 01 tại Hà Nội Ä‘ã thành công với 14 output',text:'Cảm ơn tất cả các team Ä‘ã tham gia! Hãy cùng theo dõi và tham gia vote trong mục Top Pick Dish sắp tới nhé.',date:'26/06/2026 · AI Help Team',r1:0,r2:0},
+  {ico:'🎉',title:'NHAI DAY! 01 tại Hà Nội đã thành công với 14 output',text:'Cảm ơn tất cả các team đã tham gia! Hãy cùng theo dõi và tham gia vote trong mục Top Pick Dish sắp tới nhé.',date:'26/06/2026 · AI Help Team',r1:0,r2:0},
 
 
-  {ico:'🧙',title:'Danh sách mentor Ä‘ã cập nhật',text:'8 mentor từ các team Creative, Operations, Engineering, Game Dev, Marketing & Esports Ä‘ã sẵn sàng đồng hành cùng bạn! Xem chi tiết ở section Mentors.',date:'18/06/2026 · AI Help Team',r1:15,r2:7},
+  {ico:'🧙',title:'Danh sách mentor đã cập nhật',text:'8 mentor từ các team Creative, Operations, Engineering, Game Dev, Marketing & Esports đã sẵn sàng đồng hành cùng bạn! Xem chi tiết ở section Mentors.',date:'18/06/2026 · AI Help Team',r1:15,r2:7},
 
 
-  {ico:'📌',title:'Đề bài gợi ý từ BTC Ä‘ã có sẵn',text:'Chưa nghĩ ra làm gì? BTC Ä‘ã gợi ý sẵn 2 nhóm đề bài — Work Challenges & Fun/Sáng tạo. Vào tab "Đề bài gợi ý từ BTC" để xem nhé!',date:'17/06/2026 · AI Help Team',r1:20,r2:9},
+  {ico:'📌',title:'Đề bài gợi ý từ BTC đã có sẵn',text:'Chưa nghĩ ra làm gì? BTC đã gợi ý sẵn 2 nhóm đề bài — Work Challenges & Fun/Sáng tạo. Vào tab "Đề bài gợi ý từ BTC" để xem nhé!',date:'17/06/2026 · AI Help Team',r1:20,r2:9},
 
 
-  {ico:'🏆',title:'Tiêu chí Ä‘ánh giá Ä‘ã được làm rõ',text:'Bảng tiêu chí Master Chef, Demo Ready, Best Sharing Ä‘ã cập nhật chi tiết. Đọc kỹ để biết cách "săn giải" hiệu quả nhất!',date:'16/06/2026 · AI Help Team',r1:12,r2:5},
+  {ico:'🏆',title:'Tiêu chí đánh giá đã được làm rõ',text:'Bảng tiêu chí Master Chef, Demo Ready, Best Sharing đã cập nhật chi tiết. Đọc kỹ để biết cách "săn giải" hiệu quả nhất!',date:'16/06/2026 · AI Help Team',r1:12,r2:5},
 
 
-  {ico:'📅',title:'Đăng ký mở từ 12.06 đến 23.06',text:'Form đăng ký Ä‘ã mở cho cả HN và HCM. Slot có giới hạn — đăng ký sớm để chắc chỗ nhé!',date:'12/06/2026 · AI Help Team',r1:8,r2:3},
+  {ico:'📅',title:'Đăng ký mở từ 12.06 đến 23.06',text:'Form đăng ký đã mở cho cả HN và HCM. Slot có giới hạn — đăng ký sớm để chắc chỗ nhé!',date:'12/06/2026 · AI Help Team',r1:8,r2:3},
 
 
   {ico:'✨',title:'NHAI DAY! chính thức khởi động tháng 6',text:'Sự kiện AI nội bộ hàng tháng tại cả HN và HCM trong 4 tháng tới. Magic ideas, real impact!',date:'05/06/2026 · AI Help Team',r1:22,r2:9}
@@ -2340,7 +2428,7 @@ function trackCare(){
   // Đếm lượt quan tâm bằng localStorage (mỗi phiên +1, an toàn, không cần internet)
 
 
-  // Khi Ä‘ã setup Google Sheet/Apps Script, có thể chuyển sang đếm thật từ server.
+  // Khi đã setup Google Sheet/Apps Script, có thể chuyển sang đếm thật từ server.
 
 
   try{
@@ -2664,7 +2752,7 @@ function doReact(arr,i,f,btn){
 const FAQS=[
 
 
-  {q:'NHAI DAY là gì?',a:'NHAI DAY! sẽ trở thành buổi chiều thứ 6 thú vị nhất trong tháng của bạn! Mỗi cá nhân hoặc team có thể mang đến hoặc lựa chọn một vấn đề từ công việc hằng ngày, sau Ä‘ó dùng AI để tìm hướng giải quyết và demo kết quả trực tiếp trong buổi với sự hỗ trợ từ mentor và đồng nghiệp.'},
+  {q:'NHAI DAY là gì?',a:'NHAI DAY! sẽ trở thành buổi chiều thứ 6 thú vị nhất trong tháng của bạn! Mỗi cá nhân hoặc team có thể mang đến hoặc lựa chọn một vấn đề từ công việc hằng ngày, sau đó dùng AI để tìm hướng giải quyết và demo kết quả trực tiếp trong buổi với sự hỗ trợ từ mentor và đồng nghiệp.'},
 
 
   {q:'Đề bài như thế nào?',a:'Bất kỳ pain point công việc nào bạn muốn AI hỗ trợ:<ul><li>Report · Workflow · Meeting note</li><li>Content · Moodboard · Mini site</li><li>Dashboard · Automation · Data · Ý tưởng mới</li></ul>Nếu chưa biết nên làm gì, cứ đăng ký hoặc tìm People Team — tụi mình sẽ giúp bạn tìm đề phù hợp.'},
@@ -2676,7 +2764,7 @@ const FAQS=[
   {q:'Có ai support không?',a:'Có mentor đồng hành suốt buổi. Bạn không phải tự cook một mình. Nếu gặp khó, mentor sẽ cùng brainstorm, gợi ý công cụ, workflow hoặc hướng triển khai phù hợp.'},
 
 
-  {q:'Được ăn gì?',a:'Food & Drink Ä‘ã sẵn sàng — vì brainstorm hiệu quả hơn khi bụng không Ä‘ói. 🍹'},
+  {q:'Được ăn gì?',a:'Food & Drink đã sẵn sàng — vì brainstorm hiệu quả hơn khi bụng không đói. 🍹'},
 
 
   {q:'Có được trao đổi với quản lý để ưu tiên tham gia không?',a:'Tất nhiên. Năm nay AI đang là một trong những ưu tiên của công ty.'},
@@ -3062,34 +3150,61 @@ function renderEvents(){
         <div class="ed-kpi"><span class="ek-n">70</span><div class="ek-l">Người tham gia</div></div>
         <div class="ed-kpi"><span class="ek-n">29</span><div class="ek-l">Team tham gia</div></div>
         <div class="ed-kpi"><span class="ek-n">4.71★</span><div class="ek-l">Trải nghiệm chung</div></div>
-        <div class="ed-kpi"><span class="ek-n">4.61★</span><div class="ek-l">Hữu ích chung</div></div>
+        <div class="ed-kpi"><span class="ek-n">4.61★</span><div class="ek-l">Đánh giá mức độ hữu ích</div></div>
         <div class="ed-kpi"><span class="ek-n">93.5%</span><div class="ek-l">Muốn tiếp tục</div></div>
-        <div class="ed-kpi"><span class="ek-n">100%</span><div class="ek-l">Có demo</div></div>
+        <div class="ed-kpi"><span class="ek-n">100%</span><div class="ek-l">Có output/demo phát triển tiếp</div></div>
       </div>
 
       <div class="award-section">
-        <div class="award-sec-label"><h3>🏆 Master Chef</h3><span class="award-badge">2.000.000đ / city</span></div>
+        <div class="award-sec-label"><h3>🏆 Master Chef</h3><span class="award-badge">2.000.000đ</span></div>
         <div class="winner-row">
-          <div class="winner-card">
-            <div class="wc-bg" style="background:linear-gradient(135deg,#7c2d12,#c2410c,#ea580c,#f97316)"></div>
-            <div class="wc-overlay"></div>
-            <div class="wc-city-badge">🏙️ Hà Nội · 26/06/2026</div>
-            <div class="wc-avatar">🎙</div>
-            <div class="wc-body">
-              <div class="wc-category">Master Chef · Hà Nội</div>
-              <div class="wc-name">Trần Quốc Hưng</div>
-              <div class="wc-dept">CODE · Ghi âm Google Meet → AI tóm tắt → Google Sheet</div>
+          <div class="winner-card" onclick="toggleWinnerDetail(this)">
+            <div class="wc-front">
+              <div class="wc-bg" style="background:linear-gradient(135deg,#7c2d12,#c2410c,#ea580c,#f97316)"></div>
+              <div class="wc-overlay"></div>
+              <div class="wc-city-badge">🏙️ Hà Nội · 26/06/2026</div>
+              <div class="wc-avatar">🎙</div>
+              <div class="wc-body">
+                <div class="wc-category">🏆 Master Chef · Hà Nội</div>
+                <span class="wc-team-tag">CODE</span>
+                <div class="wc-case">Ghi âm Google Meet → AI tóm tắt → Google Sheet</div>
+                <div class="wc-person">👤 Trần Quốc Hưng</div>
+              </div>
+              <div class="wc-expand-hint">Chi tiết ›</div>
+            </div>
+            <div class="wc-detail">
+              <div class="wcd-desc">Ghi âm cuộc họp Google Meet tự động, AI xử lý và tóm tắt nội dung theo cấu trúc, đẩy thẳng lên Google Sheet — không cần ghi chú thủ công.</div>
+              <div class="wcd-tools">
+                <span class="wcd-tool">AI STT</span>
+                <span class="wcd-tool">Claude</span>
+                <span class="wcd-tool">Google Sheets</span>
+                <span class="wcd-tool">Google Meet</span>
+              </div>
+              <span class="wcd-close" onclick="event.stopPropagation();this.closest('.winner-card').classList.remove('wc-open')">Thu gọn ↑</span>
             </div>
           </div>
-          <div class="winner-card">
-            <div class="wc-bg" style="background:linear-gradient(135deg,#1e3a5f,#1d4ed8,#3b82f6,#60a5fa)"></div>
-            <div class="wc-overlay"></div>
-            <div class="wc-city-badge">🌆 TP.HCM · 03/07/2026</div>
-            <div class="wc-avatar">⚽</div>
-            <div class="wc-body">
-              <div class="wc-category">Master Chef · TP.HCM</div>
-              <div class="wc-name">Ngô Anh Tuấn + Vũ Huy Anh + Trần Quang Huy</div>
-              <div class="wc-dept">FCO/FCM · Hệ thống phân tích giải đấu FC Online</div>
+          <div class="winner-card" onclick="toggleWinnerDetail(this)">
+            <div class="wc-front">
+              <div class="wc-bg" style="background:linear-gradient(135deg,#1e3a5f,#1d4ed8,#3b82f6,#60a5fa)"></div>
+              <div class="wc-overlay"></div>
+              <div class="wc-city-badge">🌆 TP.HCM · 03/07/2026</div>
+              <div class="wc-avatar">⚽</div>
+              <div class="wc-body">
+                <div class="wc-category">🏆 Master Chef · TP.HCM</div>
+                <span class="wc-team-tag">FCO / FCM</span>
+                <div class="wc-case">Hệ thống quản lý & phân tích dữ liệu giải đấu FC Online</div>
+                <div class="wc-person">👤 Ngô Anh Tuấn + Vũ Huy Anh + Trần Quang Huy</div>
+              </div>
+              <div class="wc-expand-hint">Chi tiết ›</div>
+            </div>
+            <div class="wc-detail">
+              <div class="wcd-desc">Matchday Matrix: đọc ảnh kết quả trận đấu, tự động tính OVR, lưu lịch sử toàn mùa giải, dashboard phong độ đội và overlay livestream — tất cả tự động từ 1 tool.</div>
+              <div class="wcd-tools">
+                <span class="wcd-tool">Claude Code</span>
+                <span class="wcd-tool">Computer Vision</span>
+                <span class="wcd-tool">Power BI</span>
+              </div>
+              <span class="wcd-close" onclick="event.stopPropagation();this.closest('.winner-card').classList.remove('wc-open')">Thu gọn ↑</span>
             </div>
           </div>
         </div>
@@ -3100,11 +3215,11 @@ function renderEvents(){
         <div class="atl-grid">
           <div>
             <div class="atl-col-head"><div class="atl-dot hn"></div>Hà Nội</div>
-            ${mkAwardList(AWARDS_HN.filter(a=>!a.mc),'HN')}
+            ${mkAwardList(AWARDS_HN,'HN')}
           </div>
           <div>
             <div class="atl-col-head"><div class="atl-dot hcm"></div>TP.HCM</div>
-            ${mkAwardList(AWARDS_HCM.filter(a=>!a.mc),'HCM')}
+            ${mkAwardList(AWARDS_HCM,'HCM')}
           </div>
         </div>
       </div>
@@ -3129,6 +3244,12 @@ function renderEvents(){
       </div>
     </div>`;
   }).join('');
+}
+
+function toggleWinnerDetail(card){
+  const isOpen=card.classList.contains('wc-open');
+  document.querySelectorAll('.winner-card.wc-open').forEach(c=>c.classList.remove('wc-open'));
+  if(!isOpen) card.classList.add('wc-open');
 }
 function switchEdition(i){
 
@@ -3291,7 +3412,7 @@ const TOP_PICK=[
 
    person:'Lê Xuân Mạnh + Vương Hoa Lê',team:'AOV/DF',
    desc:'Tự động sync video nhiều clip thành timeline, AI phân tích âm thanh chọn góc camera và tự động thêm phụ đề.',
-   goal:'Tự động sync + cắt cảnh từ nhiều clip, AI phân tích âm thanh chọn Ä‘úng góc camera',
+   goal:'Tự động sync + cắt cảnh từ nhiều clip, AI phân tích âm thanh chọn đúng góc camera',
 
 
    tools:['Python','ffmpeg','MoviePy','Whisper','Claude AI'],
@@ -3454,7 +3575,7 @@ const TOP_PICK=[
 
    person:'Nguyễn Tiến Đạt + Lê Gia Huy + Trần Ngọc Thành Nam',team:'New Game',
    desc:'Agent tra cứu & tư vấn AI use case từ database Garena VN & Sea Group. Chat trực tiếp trên SeaTalk.',
-   goal:'Tư vấn về giải pháp AI Ä‘ã áp dụng tại Garena VN & Sea Group, gợi ý Ä‘úng nhu cầu',
+   goal:'Tư vấn về giải pháp AI đã áp dụng tại Garena VN & Sea Group, gợi ý đúng nhu cầu',
 
 
    tools:['Claude','RAG','Knowledge base'],
@@ -3544,141 +3665,128 @@ TOP_PICK.forEach(c=>{if(voteCounts[c.id]===undefined)voteCounts[c.id]=0;});
 
 
 
-function filterVote(city,btn){
 
-
+function filterVoteCity(city,btn){
   document.querySelectorAll('.vf-btn').forEach(b=>b.classList.remove('on'));
-
-
   btn.classList.add('on');
-
-
   renderVote(city);
-
-
+}
+function filterVoteEd(ed,btn){
+  document.querySelectorAll('.vf-ed-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  btn.dataset.ed=ed;
+  const cityBtn=document.querySelector('.vf-btn.on');
+  const city=cityBtn&&cityBtn.textContent.includes('HCM')?'HCM':'HN';
+  renderVote(city);
+}
+function toggleVc2(card){
+  const isOpen=card.classList.contains('open');
+  document.querySelectorAll('.vc2.open').forEach(c=>c.classList.remove('open'));
+  if(!isOpen) card.classList.add('open');
+}
+function filterVote(city,btn){
+  // compat shim for roadmap CTA
+  const cityBtns=document.querySelectorAll('.vf-btn');
+  cityBtns.forEach(b=>b.classList.remove('on'));
+  const target=Array.from(cityBtns).find(b=>(city==='HN'?b.textContent.includes('Nội'):b.textContent.includes('HCM')));
+  if(target) target.classList.add('on');
+  renderVote(city);
 }
 
 
 function renderVote(city){
-
+  // read current filter state
+  const cityBtn=document.querySelector('.vf-btn.on');
+  const edBtn=document.querySelector('.vf-ed-btn.on');
+  if(!city) city=cityBtn?cityBtn.textContent.includes('HCM')?'HCM':'HN':'HN';
+  const edFilter=edBtn?edBtn.dataset.ed||'all':'all';
 
   const cur=EVENTS.find(ev=>ev.city===city&&ev.status==='done');
-
-
   const eventId=cur?cur.id:'';
-
-
-  const filtered=TOP_PICK.filter(c=>c.city===city);
-
-
-  const sorted=[...filtered].sort((a,b)=>(voteCounts[b.id]||0)-(voteCounts[a.id]||0));
-
-
   const voteKey=eventId;
-
-
   const myVote=myVotes[voteKey];
 
-
-  const maxVotes=sorted.length?(voteCounts[sorted[0].id]||0):1;
-
-
-
-
-
-  // leaderboard strip (only show if any votes cast)
-
-
-  const hasAnyVote=sorted.some(c=>(voteCounts[c.id]||0)>0);
-
-
-  const leadEl=document.getElementById('voteLead');
-
-
-  if(hasAnyVote){
-
-
-    leadEl.innerHTML=sorted.filter(c=>(voteCounts[c.id]||0)>0).slice(0,6).map((c,i)=>{
-
-
-      const cnt=voteCounts[c.id]||0;
-
-
-      const pct=maxVotes?Math.round(cnt/maxVotes*100):0;
-
-
-      const medals=['🥇','🥈','🥉'];
-
-
-      return `<div class="vl-chip">
-
-
-        <div class="vl-rank">${medals[i]||'#'+(i+1)}</div>
-
-
-        <div><div class="vl-name">${e(c.title.length>28?c.title.slice(0,26)+'…':c.title)}</div>
-
-
-          <div class="vl-bar" style="width:${Math.max(pct,8)}px;max-width:80px"></div></div>
-
-
-        <div class="vl-cnt">${cnt} vote${cnt!==1?'s':''}</div>
-
-
-      </div>`;
-
-
-    }).join('');
-
-
-    leadEl.style.display='flex';
-
-
-  } else {
-
-
-    leadEl.innerHTML='';leadEl.style.display='none';
-
-
+  let filtered=TOP_PICK.filter(c=>c.city===city);
+  if(edFilter!=='all'){
+    const allowed=edFilter.split(',');
+    filtered=filtered.filter(c=>allowed.includes(c.event));
   }
 
+  const sortSel=document.getElementById('voteSortSel');
+  const sortMode=sortSel?sortSel.value:'votes';
+  let sorted=[...filtered];
+  if(sortMode==='votes') sorted.sort((a,b)=>(voteCounts[b.id]||0)-(voteCounts[a.id]||0));
+  else sorted.sort((a,b)=>a.title.localeCompare(b.title,'vi'));
 
+  const countEl=document.getElementById('voteMetaCount');
+  if(countEl) countEl.textContent=sorted.length?sorted.length+' use case':'Chưa tới sự kiện';
 
+  // leaderboard strip
+  const hasAnyVote=sorted.some(c=>(voteCounts[c.id]||0)>0);
+  const leadEl=document.getElementById('voteLead');
+  const maxVotes=sorted.length?(voteCounts[sorted[0].id]||0):1;
+  if(hasAnyVote){
+    leadEl.innerHTML=sorted.filter(c=>(voteCounts[c.id]||0)>0).slice(0,6).map((c,i)=>{
+      const cnt=voteCounts[c.id]||0;
+      const pct=maxVotes?Math.round(cnt/maxVotes*100):0;
+      const medals=['🥇','🥈','🥉'];
+      return `<div class="vl-chip">
+        <div class="vl-rank">${medals[i]||'#'+(i+1)}</div>
+        <div><div class="vl-name">${e(c.title.length>28?c.title.slice(0,26)+'…':c.title)}</div>
+          <div class="vl-bar" style="width:${Math.max(pct,8)}px;max-width:80px"></div></div>
+        <div class="vl-cnt">${cnt} vote${cnt!==1?'s':''}</div>
+      </div>`;
+    }).join('');
+    leadEl.style.display='flex';
+  } else {
+    leadEl.innerHTML='';leadEl.style.display='none';
+  }
 
+  const editionLabel={'hn01':'NHAI DAY #1','hcm01':'NHAI DAY #1','hn02':'NHAI DAY #2','hcm02':'NHAI DAY #2','hn03':'NHAI DAY #3','hcm03':'NHAI DAY #3','hn04':'NHAI DAY #4','hcm04':'NHAI DAY #4'};
+  const cityLabel={'HN':'HÀ NỘI','HCM':'TP.HCM'};
+  const gradMap={
+    'linear-gradient(135deg,#1a1640,#2d1a8e)':'#1a1640',
+  };
 
   document.getElementById('voteGrid').innerHTML=sorted.map((c,i)=>{
     const cnt=voteCounts[c.id]||0;
     const isMyVote=myVote===c.id;
     const hasVoted=!!myVote;
-    const rankLabel=i===0?'👑 #1':i===1?'🥈 #2':i===2?'🥉 #3':'#'+(i+1);
-    const rankClass=i===0?'r1':i===1?'r2':i===2?'r3':'';
-    return `<div class="vote-card" onclick="toggleVoteDetail(this)">
-      <div class="vc-short">
-        <div class="vc-short-emoji">${c.emoji}</div>
-        <div class="vc-short-body">
-          <div class="vc-short-title">${e(c.title)}</div>
-          <div class="vc-short-desc">${e(c.desc||c.goal)}</div>
-        </div>
-        <div class="vc-short-right">
-          <span class="vc-rank-badge ${rankClass}">${rankLabel}</span>
-          <button class="vc-vote-mini${isMyVote?' voted':''}" ${hasVoted&&!isMyVote?'disabled':''}
-            onclick="event.stopPropagation();doVote('${voteKey}','${c.id}','${city}',this)">
-            ${isMyVote?'✓ Voted':'Vote'} ${cnt>0?'('+cnt+')':''}
-          </button>
-        </div>
+    const rankNum=i+1;
+    const rankClass=rankNum===1?'r1':rankNum===2?'r2':rankNum===3?'r3':'rn';
+    const rankDisplay=rankNum<=3?String(rankNum):'#'+rankNum;
+    const evLbl=editionLabel[c.event]||'';
+    const ctLbl=cityLabel[c.city]||c.city;
+    const eyebrow=[evLbl,ctLbl].filter(Boolean).join(' · ');
+    const bg=c.grad||'linear-gradient(135deg,#1a1640,#2d1a8e)';
+    return `<div class="vc2${isMyVote?' my-vote':''}" onclick="toggleVc2(this)">
+      <div class="vc2-thumb" style="background:${bg}">
+        <div class="vc2-rank ${rankClass}">${rankDisplay}</div>
+        <div class="vc2-city">${ctLbl}</div>
+        <span>${c.emoji}</span>
+        ${c.demo?'<div class="vc2-video-badge">▶ Demo</div>':''}
       </div>
-      <div class="vc-detail">
-        <div class="vc-det-person">👤 <b>${e(c.person||'')}</b>${c.team?' · '+e(c.team):''}</div>
-        <div class="vc-det-tools">${c.tools.map(t=>`<span class="vc-det-tool">${e(t)}</span>`).join('')}</div>
-        <div class="vc-det-actions">
-          <a class="vc-det-demo${c.demo?'':' no-link'}" href="${c.demo||'#'}" ${c.demo?'target="_blank"':''} onclick="event.stopPropagation()">🔗 Xem demo</a>
-          ${isMyVote?'<span class="vc-det-voted">✓ Bạn đã vote</span>':''}
+      <div class="vc2-body">
+        <div class="vc2-eyebrow">${e(eyebrow)}</div>
+        <div class="vc2-title">${e(c.title)}</div>
+        <div class="vc2-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
+      </div>
+      <div class="vc2-footer">
+        <div class="vc2-votes">${cnt}<span>votes</span></div>
+        <button class="vc2-vote-btn${isMyVote?' voted':''}" ${hasVoted&&!isMyVote?'disabled':''}
+          onclick="event.stopPropagation();doVote('${voteKey}','${c.id}','${city}',this)"
+          title="${isMyVote?'Bỏ vote':'Vote cho case này'}">♥</button>
+      </div>
+      <div class="vc2-detail">
+        <div class="vc2-det-person">👤 <b>${e(c.person||'')}</b>${c.team?' · '+e(c.team):''}</div>
+        <div class="vc2-det-desc">${e(c.desc||c.goal||'')}</div>
+        <div class="vc2-det-actions">
+          <a class="vc2-det-demo${c.demo?'':' no-link'}" href="${c.demo||'#'}" ${c.demo?'target="_blank"':''} onclick="event.stopPropagation()">🔗 Xem demo</a>
+          <span class="vc2-collapse" onclick="event.stopPropagation();this.closest('.vc2').classList.remove('open')">Thu gọn ↑</span>
         </div>
       </div>
     </div>`;
   }).join('');
-
-
 }
 
 
@@ -3703,92 +3811,33 @@ function toggleVoteDetail(card){
 
 
 const ROADMAP=[
-
-
   {status:'done',name:'NHAI DAY 01 — Hà Nội',date:'26/06/2026',recapId:'hn01'},
-
-
   {status:'done',name:'NHAI DAY 01 — HCM',date:'03/07/2026',recapId:'hcm01'},
-
-
   {status:'active',name:'Top Pick Dish — Đang mở vote',date:'Bình chọn output ấn tượng nhất từ Day 01',voteCity:'HN'},
-
-
-  {status:'soon',name:'NHAI DAY 02 — Hà Nội',date:'Tháng 8/2026',register:true},
-
-
-  {status:'soon',name:'NHAI DAY 02 — HCM',date:'Tháng 8/2026',register:true},
-
-
+  {status:'soon',name:'NHAI DAY 02 — Hà Nội',date:'31/07/2026',register:true},
+  {status:'soon',name:'NHAI DAY 02 — HCM',date:'07/08/2026',register:true},
+  {status:'tbd',name:'NHAI DAY 03 — Hà Nội',date:'28/08/2026 (dự kiến)'},
+  {status:'tbd',name:'NHAI DAY 03 — HCM',date:'11/09/2026 (dự kiến)'},
+  {status:'tbd',name:'NHAI DAY 04 — Hà Nội',date:'02/10/2026 (dự kiến)'},
+  {status:'tbd',name:'NHAI DAY 04 — HCM',date:'02/10/2026 (dự kiến)'},
 ];
 
 
 function renderRoadmap(){
-
-
-  document.getElementById('roadmapTrack').innerHTML=ROADMAP.map((r,i)=>{
-
-
-    const lbl={done:'Đã hoàn thành',active:'Đang diễn ra',soon:'Sắp tới'}[r.status];
-
-
-    const dotTxt={done:'✓',active:'●',soon:'○'}[r.status];
-
-
-    const isLast=i===ROADMAP.length-1;
-
-
+  const lblMap={done:'Đã hoàn thành',active:'Đang diễn ra',soon:'Sắp tới',tbd:'TBD'};
+  document.getElementById('roadmapTrack').innerHTML=ROADMAP.map(r=>{
+    const lbl=lblMap[r.status]||r.status;
     let cta='';
-
-
     if(r.recapId) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>openRecap('${r.recapId}'),60)">Xem recap →</button>`;
-
-
-    else if(r.voteCity) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>{switchResTab('vote',document.querySelectorAll('.rtab')[1]);filterVote('${r.voteCity}',document.querySelectorAll('.vf-btn')[0]);},60)">Bình chọn ngay →</button>`;
-
-
-    else if(r.register) cta=`<button class="rm-cta-link" onclick="openReg()">Đăng ký giữ chỗ →</button>`;
-
-
-    return `<div class="rm-row">
-
-
-      <div class="rm-stem">
-
-
-        <div class="rm-dot ${r.status}">${dotTxt}</div>
-
-
-        ${!isLast?'<div class="rm-line"></div>':''}
-
-
-      </div>
-
-
-      <div class="rm-body">
-
-
-        <div class="rm-label ${r.status}">${lbl}</div>
-
-
-        <div class="rm-name">${r.name}</div>
-
-
-        <div class="rm-date">${r.date}</div>
-
-
-        ${cta}
-
-
-      </div>
-
-
+    else if(r.voteCity) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>{switchResTab('vote',document.querySelectorAll('.rtab')[1]);filterVote('${r.voteCity}',document.querySelectorAll('.vf-btn')[0]);},60)">Bình chọn →</button>`;
+    else if(r.register) cta=`<button class="rm-cta-link" onclick="openReg()">Đăng ký →</button>`;
+    return `<div class="rm-card ${r.status}">
+      <div class="rm-card-status"><div class="rms-dot"></div><span class="rms-lbl">${lbl}</span></div>
+      <div class="rm-card-name">${r.name}</div>
+      <div class="rm-card-date">${r.date}</div>
+      ${cta?`<div class="rm-card-cta">${cta}</div>`:''}
     </div>`;
-
-
   }).join('');
-
-
 }
 
 
