@@ -2208,7 +2208,7 @@ textarea.inp{resize:vertical;min-height:64px;}
 <div class="recap-content">
 
 
-  <button class="recap-xbtn" onclick="closeRecap()">✕</button>
+  <button class="recap-xbtn" onclick="closeRecap(true)">✕</button>
 
 
   <div id="recapInner"></div>
@@ -2939,8 +2939,7 @@ const FAQS=[
 ];
 
 
-FAQS.length=0;
-FAQS.push(
+FAQS.unshift(
   {q:'Mình chưa biết bắt đầu từ đâu thì có tham gia được không?',a:'Có. Bạn có thể chọn một đề bài gợi ý từ BTC hoặc liên hệ BTC để được tư vấn hướng phù hợp.'},
   {q:'Mình đã có idea/workflow/project riêng thì sao?',a:'Bạn có thể mang đến NHAI DAY để tiếp tục build, hỏi mentor, validate tính khả thi hoặc mở rộng hướng giải quyết.'},
   {q:'Có cần hoàn thiện sản phẩm trong buổi không?',a:'Không cần hoàn thiện toàn bộ sản phẩm ngay trong buổi. Trong thời gian giới hạn, NHAI DAY tập trung ghi nhận cách bạn dùng AI để giải quyết vấn đề thực tế hơn là một end product hoàn chỉnh. Miễn là project có hướng đi rõ, có một phần kết quả đủ cụ thể để demo/show ra và cho thấy tiềm năng tiếp tục phát triển, thì vẫn được ghi nhận.'},
@@ -3380,7 +3379,7 @@ function renderEvents(){
       <div class="award-section">
         <div class="award-sec-label"><h3>🏆 Master Chef</h3><span class="award-badge">2.000.000đ</span></div>
         <div class="winner-row">
-          <div class="winner-card" onclick="toggleWinnerDetail(this)">
+          <div class="winner-card" id="result-focus-hn01" onclick="toggleWinnerDetail(this)">
             <div class="wc-front">
               <div class="wc-bg" style="background:linear-gradient(135deg,#7c2d12,#c2410c,#ea580c,#f97316)"></div>
               <div class="wc-overlay"></div>
@@ -3411,7 +3410,7 @@ function renderEvents(){
               <span class="wcd-close" onclick="event.stopPropagation();this.closest('.winner-card').classList.remove('wc-open')">Thu gọn ↑</span>
             </div>
           </div>
-          <div class="winner-card" onclick="toggleWinnerDetail(this)">
+          <div class="winner-card" id="result-focus-hcm01" onclick="toggleWinnerDetail(this)">
             <div class="wc-front">
               <div class="wc-bg" style="background:linear-gradient(135deg,#1e3a5f,#1d4ed8,#3b82f6,#60a5fa)"></div>
               <div class="wc-overlay"></div>
@@ -3493,16 +3492,30 @@ function switchEdition(i){
 
 }
 
-
-function goToResultsFromRecap(id){
-  const editionIndex=(id||'').startsWith('hn02')||(id||'').startsWith('hcm02')?1:0;
-  closeRecap();
+let recapReturnState={eventId:'',anchorId:'',editionIndex:0};
+function getRecapResultConfig(id){
+  const map={
+    hn01:{anchorId:'result-focus-hn01',editionIndex:0},
+    hcm01:{anchorId:'result-focus-hcm01',editionIndex:0},
+    hn02:{anchorId:'ed-1',editionIndex:1},
+    hcm02:{anchorId:'ed-1',editionIndex:1}
+  };
+  return map[id]||{anchorId:'rp-ketqua',editionIndex:0};
+}
+function navigateToRecapResult(id){
+  const cfg=getRecapResultConfig(id);
   switchTab('results',document.querySelectorAll('.ptab')[2]);
   setTimeout(()=>{
     switchResTab('ketqua',document.querySelectorAll('.rtab')[0]);
-    switchEdition(editionIndex);
-    document.getElementById('rp-ketqua')?.scrollIntoView({behavior:'smooth',block:'start'});
+    switchEdition(cfg.editionIndex);
+    const target=document.getElementById(cfg.anchorId)||document.getElementById('rp-ketqua');
+    target?.scrollIntoView({behavior:'smooth',block:'center'});
   },80);
+}
+
+function goToResultsFromRecap(id){
+  closeRecap(false);
+  navigateToRecapResult(id);
 }
 
 
@@ -3510,6 +3523,8 @@ function openRecap(id){
 
 
   const ev=EVENTS.find(x=>x.id===id);if(!ev)return;
+  const cfg=getRecapResultConfig(id);
+  recapReturnState={eventId:id,anchorId:cfg.anchorId,editionIndex:cfg.editionIndex};
 
   trackAnalyticsEvent('recap_open',{event_id:id,event_name:ev.name});
   const cityLabel=ev.city==='HN'?'Hà Nội':'TP.HCM';
@@ -3615,6 +3630,8 @@ openRecap=function(id){
 
 
   const ev=EVENTS.find(x=>x.id===id);if(!ev)return;
+  const cfg=getRecapResultConfig(id);
+  recapReturnState={eventId:id,anchorId:cfg.anchorId,editionIndex:cfg.editionIndex};
 
   trackAnalyticsEvent('recap_open',{event_id:id,event_name:ev.name});
 
@@ -3679,19 +3696,22 @@ openRecap=function(id){
 }
 
 
-function closeRecap(){
+function closeRecap(restoreResult){
 
 
   document.getElementById('recapOverlay').classList.remove('open');
 
 
   document.body.style.overflow='';
+  if(restoreResult&&recapReturnState.eventId){
+    navigateToRecapResult(recapReturnState.eventId);
+  }
 
 
 }
 
 
-document.getElementById('recapOverlay').addEventListener('click',function(ev){if(ev.target===this)closeRecap();});
+document.getElementById('recapOverlay').addEventListener('click',function(ev){if(ev.target===this)closeRecap(false);});
 
 
 
