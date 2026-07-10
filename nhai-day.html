@@ -829,7 +829,7 @@ textarea.inp{resize:vertical;min-height:64px;}
 .recap-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:26px;}
 
 
-.recap-kpi{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:14px 10px;text-align:center;}
+.recap-kpi{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:14px 10px;text-align:center;}
 
 
 .recap-kpi .rk-n{font-size:28px;font-weight:800;color:var(--gold);display:block;margin-bottom:4px;}
@@ -868,10 +868,52 @@ textarea.inp{resize:vertical;min-height:64px;}
 .recap-note b{color:var(--cream);}
 
 
-.recap-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px;}
+.recap-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
 
 
-.recap-photo-slot{aspect-ratio:4/3;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--mdim);}
+.recap-tag{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--cream);}
+
+
+.recap-quicklist{display:flex;flex-direction:column;gap:8px;}
+
+
+.recap-quickitem{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--muted);line-height:1.55;}
+
+
+.recap-quickitem b{color:var(--cream);}
+
+
+.recap-actions{display:flex;justify-content:flex-end;margin-top:14px;}
+
+
+.recap-link-btn{padding:10px 14px;border-radius:10px;border:1px solid rgba(123,77,219,.32);background:rgba(123,77,219,.12);color:#ddd6fe;font-family:'Be Vietnam Pro';font-size:14px;font-weight:700;cursor:pointer;}
+
+
+.recap-link-btn:hover{background:rgba(123,77,219,.2);}
+
+
+.recap-photos-wrap{display:flex;gap:10px;overflow-x:auto;scrollbar-width:thin;padding-bottom:4px;margin-top:4px;}
+
+
+.recap-photos-wrap::-webkit-scrollbar{height:8px;}
+
+
+.recap-photos-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:999px;}
+
+
+.recap-photo-card{min-width:220px;width:220px;flex-shrink:0;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.04);border:1px solid var(--line);cursor:pointer;transition:transform .18s ease,border-color .18s ease;}
+
+
+.recap-photo-card img{display:block;width:100%;height:150px;object-fit:cover;background:#120f25;}
+
+
+.recap-photo-cap{padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.4;}
+
+
+.recap-photo-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.18);}
+
+
+.recap-photo-slot{min-width:220px;width:220px;height:190px;flex-shrink:0;background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--mdim);}
 
 
 
@@ -1022,33 +1064,50 @@ textarea.inp{resize:vertical;min-height:64px;}
 
 
 
-/* ── Roadmap horizontal ── */
-.roadmap-wrap{margin-top:32px;}
-.roadmap-label{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
-.roadmap-track{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.12) transparent;}
-.roadmap-track::-webkit-scrollbar{height:4px;}
-.roadmap-track::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px;}
-.rm-card{flex:0 0 200px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:6px;transition:.2s;}
-.rm-card.done{border-color:rgba(74,222,128,.25);background:rgba(74,222,128,.04);}
-.rm-card.active{border-color:rgba(123,77,219,.35);background:rgba(123,77,219,.07);}
-.rm-card.soon{opacity:.65;}
-.rm-card-status{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;}
-.rms-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+/* ── Roadmap pipe flow ── */
+.roadmap-wrap{background:
+  radial-gradient(circle at 14% 18%,rgba(242,185,51,.08),transparent 28%),
+  radial-gradient(circle at 86% 78%,rgba(123,77,219,.12),transparent 32%),
+  rgba(255,255,255,.02);
+  border:1px solid var(--line);border-radius:24px;padding:26px 24px 18px;margin-top:32px;overflow:hidden;}
+.roadmap-track{display:flex;gap:28px;overflow-x:auto;padding:8px 4px 16px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.12) transparent;}
+.roadmap-track::-webkit-scrollbar{height:6px;}
+.roadmap-track::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:999px;}
+.rm-card{position:relative;flex:0 0 248px;padding-top:30px;}
+.rm-card::before{content:'';position:absolute;top:23px;left:-30px;width:36px;height:14px;border-top:4px solid rgba(141,127,201,.32);border-bottom:4px solid rgba(141,127,201,.14);border-right:none;border-radius:14px 0 0 14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);}
+.rm-card.first::before{display:none;}
+.rm-pipe{position:absolute;top:0;left:0;right:0;height:34px;pointer-events:none;}
+.rm-pipe-main{position:absolute;top:14px;left:22px;right:22px;height:12px;border-radius:999px;background:linear-gradient(180deg,#3b3563,#221d43);border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 14px rgba(0,0,0,.18);}
+.rm-pipe-port{position:absolute;top:10px;width:20px;height:20px;border-radius:50%;background:#120f25;border:4px solid #332c5f;box-shadow:0 0 0 2px rgba(255,255,255,.03);}
+.rm-pipe-port.left{left:10px;}
+.rm-pipe-port.right{right:10px;}
+.rm-card.done .rm-pipe-main{background:linear-gradient(180deg,#214f3d,#163528);border-color:rgba(74,222,128,.18);}
+.rm-card.done .rm-pipe-port{border-color:#2b7a57;}
+.rm-card.active .rm-pipe-main{background:linear-gradient(180deg,#594223,#342411);border-color:rgba(242,185,51,.22);}
+.rm-card.active .rm-pipe-port{border-color:#b47f1f;}
+.rm-card.soon .rm-pipe-main,.rm-card.tbd .rm-pipe-main{opacity:.76;}
+.rm-shell{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:8px;position:relative;box-shadow:0 14px 34px rgba(0,0,0,.22);min-height:172px;}
+.rm-shell::before{content:'';position:absolute;top:-11px;left:24px;width:18px;height:18px;border-radius:50%;background:#1c1739;border:4px solid rgba(255,255,255,.16);box-shadow:0 0 0 4px rgba(10,8,32,.95);}
+.rm-card.done .rm-shell{border-color:rgba(74,222,128,.24);background:linear-gradient(180deg,rgba(74,222,128,.08),rgba(255,255,255,.025));}
+.rm-card.active .rm-shell{border-color:rgba(242,185,51,.24);background:linear-gradient(180deg,rgba(242,185,51,.08),rgba(123,77,219,.06));}
+.rm-card.soon .rm-shell,.rm-card.tbd .rm-shell{opacity:.72;}
+.rm-card-status{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;}
+.rms-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 4px rgba(255,255,255,.03);}
 .done .rms-dot{background:#4ade80;}
-.active .rms-dot{background:var(--pbright);}
-.soon .rms-dot{background:rgba(255,255,255,.25);}
-.done .rms-lbl{color:#4ade80;}
-.active .rms-lbl{color:#b79bff;}
-.soon .rms-lbl{color:var(--muted);}
-.rm-card-name{font-size:14px;font-weight:800;color:var(--cream);line-height:1.3;}
-.rm-card-date{font-size:11.5px;color:var(--muted);line-height:1.4;}
-.rm-card-cta{margin-top:6px;}
-.rm-cta-link{font-size:11.5px;color:var(--pbright);background:rgba(123,77,219,.15);border:1px solid rgba(123,77,219,.4);padding:5px 12px;border-radius:100px;cursor:pointer;font-family:'Be Vietnam Pro';font-weight:700;transition:.15s;}
-.rm-cta-link:hover{background:rgba(123,77,219,.3);border-color:rgba(123,77,219,.7);}
+.active .rms-dot{background:var(--gold);}
+.soon .rms-dot,.tbd .rms-dot{background:rgba(255,255,255,.22);}
+.done .rms-lbl{color:#86efac;}
+.active .rms-lbl{color:#f6cb68;}
+.soon .rms-lbl,.tbd .rms-lbl{color:var(--muted);}
+.rm-card-name{font-size:18px;font-weight:800;color:var(--cream);line-height:1.25;max-width:15ch;}
+.rm-card-date{font-size:12px;color:var(--muted);line-height:1.45;max-width:18ch;}
+.rm-card-cta{margin-top:auto;padding-top:6px;}
+.rm-cta-link{font-size:11.5px;color:#ddd6fe;background:rgba(123,77,219,.15);border:1px solid rgba(123,77,219,.4);padding:6px 12px;border-radius:999px;cursor:pointer;font-family:'Be Vietnam Pro';font-weight:700;transition:.15s;}
+.rm-cta-link:hover{background:rgba(123,77,219,.28);border-color:rgba(123,77,219,.7);}
 .rm-card.done .rm-cta-link{color:#4ade80;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.35);}
 .rm-card.done .rm-cta-link:hover{background:rgba(74,222,128,.2);}
-.rm-card.active .rm-cta-link{color:#f2b933;background:rgba(242,185,51,.1);border-color:rgba(242,185,51,.4);}
-.rm-card.active .rm-cta-link:hover{background:rgba(242,185,51,.2);}
+.rm-card.active .rm-cta-link{color:#f2b933;background:rgba(242,185,51,.12);border-color:rgba(242,185,51,.4);}
+.rm-card.active .rm-cta-link:hover{background:rgba(242,185,51,.22);}
 /* ROADMAP (legacy) */
 
 
@@ -1264,11 +1323,15 @@ textarea.inp{resize:vertical;min-height:64px;}
 .atl-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;margin-bottom:6px;}
 .atl-emo{font-size:18px;width:28px;text-align:center;flex-shrink:0;}
 .atl-info{flex:1;min-width:0;}
-.atl-name{font-size:12.5px;font-weight:700;color:var(--cream);line-height:1.2;}
-.atl-case{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.3;}
+.atl-name{font-size:11px;font-weight:600;color:var(--muted);line-height:1.35;margin-top:4px;}
+.atl-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.atl-case{font-size:13px;color:var(--cream);margin-top:0;line-height:1.35;font-weight:800;}
 .atl-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
 .atl-badge.eb{background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.25);}
 .atl-badge.demo{background:rgba(242,185,51,.1);color:var(--gold);border:1px solid rgba(242,185,51,.25);}
+.atl-badge.mc{background:rgba(242,185,51,.12);color:#ffd978;border:1px solid rgba(242,185,51,.3);}
+.atl-badge.join{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid rgba(255,255,255,.12);}
+.case-topic-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:20px;background:rgba(255,240,200,.12);color:#fff1c2;border:1px solid rgba(255,241,194,.22);}
 
 /* ── Winner card redesign ── */
 .winner-card{border-radius:18px;overflow:hidden;position:relative;min-height:230px;border:1px solid rgba(255,255,255,.06);cursor:pointer;transition:all .2s;}
@@ -1281,9 +1344,12 @@ textarea.inp{resize:vertical;min-height:64px;}
 .wc-avatar{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border:2px solid rgba(255,255,255,.25);position:absolute;top:14px;right:14px;display:flex;align-items:center;justify-content:center;font-size:22px;}
 .wc-body{position:absolute;bottom:0;left:0;right:0;padding:18px 20px;}
 .wc-category{font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px;}
-.wc-team-tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);margin-bottom:8px;}
-.wc-case{font-size:16px;font-weight:800;color:#fff;line-height:1.3;margin-bottom:5px;}
-.wc-person{font-size:12.5px;color:rgba(255,255,255,.6);}
+.wc-meta-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;}
+.wc-team-tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);}
+.wc-topic-tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 10px;border-radius:20px;background:rgba(255,240,200,.18);color:#fff1c2;border:1px solid rgba(255,241,194,.3);box-shadow:0 8px 20px rgba(0,0,0,.16);}
+.wc-case{font-size:15px;font-weight:400;color:#fff;line-height:1.35;margin-bottom:6px;}
+.wc-person{font-size:15.5px;font-weight:800;color:#fff;line-height:1.3;margin-bottom:6px;}
+.wc-person span{color:rgba(255,255,255,.72);font-weight:600;}
 .wc-expand-hint{position:absolute;bottom:14px;right:14px;font-size:11px;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:4px;}
 /* Winner card detail panel */
 .wc-detail{display:none;padding:18px 20px;background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.1);}
@@ -1292,6 +1358,10 @@ textarea.inp{resize:vertical;min-height:64px;}
 .wcd-desc{font-size:13.5px;color:var(--cream);line-height:1.6;margin-bottom:14px;}
 .wcd-tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
 .wcd-tool{font-size:11px;padding:3px 9px;border-radius:20px;background:rgba(255,255,255,.07);color:var(--muted);border:1px solid rgba(255,255,255,.1);}
+.wcd-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.wcd-demo-link{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:rgba(123,77,219,.16);border:1px solid rgba(123,77,219,.3);color:#e9ddff;text-decoration:none;font-size:12.5px;font-weight:700;}
+.wcd-demo-link:hover{background:rgba(123,77,219,.24);}
+.wcd-demo-note{font-size:12.5px;color:var(--muted);padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);}
 .wcd-close{font-size:12px;color:var(--muted);cursor:pointer;text-align:right;display:block;}
 .wcd-close:hover{color:var(--cream);}
 
@@ -1302,6 +1372,11 @@ textarea.inp{resize:vertical;min-height:64px;}
 .vf-ed-btn.on{background:rgba(242,185,51,.15);border-color:rgba(242,185,51,.5);color:var(--gold);}
 .vote-meta-row{display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px;}
 .vote-meta-count{font-size:13px;color:var(--muted);}
+.vote-runtime-note{margin-bottom:16px;padding:11px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.1);font-size:13.5px;line-height:1.5;}
+.vote-runtime-note.info{background:rgba(123,77,219,.08);border-color:rgba(123,77,219,.24);color:#cbb8ff;}
+.vote-runtime-note.success{background:rgba(74,222,128,.08);border-color:rgba(74,222,128,.24);color:#bdf3ce;}
+.vote-runtime-note.warn{background:rgba(242,185,51,.08);border-color:rgba(242,185,51,.28);color:#ffe4a3;}
+.vote-runtime-note.error{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.26);color:#ffb4b4;}
 .vote-sort-wrap{position:relative;}
 .vote-sort-select{appearance:none;-webkit-appearance:none;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--cream);font-size:13px;font-weight:600;padding:7px 28px 7px 14px;border-radius:100px;cursor:pointer;font-family:'Be Vietnam Pro';}
 .vote-sort-wrap::after{content:'▾';position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px;}
@@ -1316,30 +1391,73 @@ textarea.inp{resize:vertical;min-height:64px;}
 .vc2-rank.r2{background:#9ca3af;color:#000;}
 .vc2-rank.r3{background:#cd7c3a;color:#fff;}
 .vc2-rank.rn{background:rgba(255,255,255,.12);color:var(--muted);}
+.vc2-rank.pending{background:rgba(255,255,255,.08);color:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.12);}
 .vc2-city{position:absolute;top:10px;right:10px;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:100px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.15);color:#fff;z-index:2;}
 .vc2-video-badge{position:absolute;bottom:8px;right:10px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(0,0,0,.65);color:#fff;border:1px solid rgba(255,255,255,.2);}
 .vc2-body{padding:14px 14px 10px;flex:1;display:flex;flex-direction:column;gap:6px;}
 .vc2-eyebrow{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.vc2-state-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.vc2-state{font-size:10.5px;font-weight:800;letter-spacing:.04em;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);color:var(--muted);white-space:nowrap;}
+.vc2-state.live{color:#b79bff;border-color:rgba(123,77,219,.28);background:rgba(123,77,219,.12);}
+.vc2-state.voted{color:#86efac;border-color:rgba(74,222,128,.26);background:rgba(74,222,128,.12);}
+.vc2-state.locked{color:#ffd89a;border-color:rgba(242,185,51,.22);background:rgba(242,185,51,.08);}
 .vc2-title{font-size:14px;font-weight:800;color:var(--cream);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.vc2-summary{font-size:12px;color:var(--muted);line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:52px;}
 .vc2-tools{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;}
 .vc2-tool{font-size:10.5px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.06);color:var(--muted);border:1px solid rgba(255,255,255,.08);}
-.vc2-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid rgba(255,255,255,.06);}
+.vc2-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px;border-top:1px solid rgba(255,255,255,.06);}
 .vc2-votes{font-size:22px;font-weight:900;color:var(--cream);line-height:1;}
 .vc2-votes span{font-size:11px;font-weight:500;color:var(--muted);margin-left:3px;}
 .vc2-vote-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:var(--muted);font-size:16px;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;}
 .vc2-vote-btn:hover:not(:disabled){border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.1);color:#ef4444;}
 .vc2-vote-btn.voted{border-color:#ef4444;background:rgba(239,68,68,.15);color:#ef4444;}
 .vc2-vote-btn:disabled:not(.voted){opacity:.35;cursor:not-allowed;}
+.vc2-vote-help{padding:0 14px 12px;font-size:11px;color:var(--mdim);min-height:16px;}
+.vc2-vote-help.voted{color:#86efac;}
+.vc2-vote-help.live{color:#b79bff;}
+.vc2-vote-help.locked{color:#ffd89a;}
 /* detail expand */
 .vc2-detail{display:none;padding:12px 14px 14px;border-top:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);}
 .vc2.open .vc2-detail{display:block;}
 .vc2-det-person{font-size:12.5px;color:var(--muted);margin-bottom:8px;}
-.vc2-det-desc{font-size:13px;color:var(--cream);line-height:1.5;margin-bottom:8px;}
+.vc2-det-block{margin-bottom:10px;}
+.vc2-det-label{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
+.vc2-det-desc{font-size:13px;color:var(--cream);line-height:1.5;}
+.vc2-det-tools{display:flex;gap:6px;flex-wrap:wrap;}
+.vc2-media-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;}
+.vc2-media-strip::-webkit-scrollbar{height:6px;}
+.vc2-media-strip::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:999px;}
+.vc2-media-card{min-width:220px;width:220px;flex-shrink:0;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);}
+.vc2-media-card img{display:block;width:100%;height:140px;object-fit:cover;background:#120f25;cursor:zoom-in;}
 .vc2-det-actions{display:flex;gap:8px;align-items:center;}
-.vc2-det-demo{font-size:12px;color:var(--pbright);text-decoration:none;font-weight:600;}
+.vc2-det-demo{font-size:12px;color:var(--pbright);text-decoration:none;font-weight:600;background:none;border:none;padding:0;cursor:pointer;font-family:'Be Vietnam Pro';}
 .vc2-det-demo:hover{text-decoration:underline;}
 .vc2-det-demo.no-link{opacity:.35;pointer-events:none;}
 .vc2-collapse{font-size:11px;color:var(--muted);cursor:pointer;margin-left:auto;}
+.demo-modal{position:fixed;inset:0;background:rgba(9,7,18,.88);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:28px;z-index:4100;}
+.demo-modal.open{display:flex;}
+.demo-modal-inner{position:relative;width:min(1040px,94vw);max-height:88vh;overflow:auto;border-radius:22px;background:#151127;border:1px solid rgba(255,255,255,.08);box-shadow:0 28px 90px rgba(0,0,0,.45);padding:22px;}
+.demo-modal-close{position:absolute;top:16px;right:16px;width:38px;height:38px;border:none;border-radius:999px;background:rgba(255,255,255,.08);color:#fff;font-size:20px;font-weight:700;cursor:pointer;}
+.demo-modal-head{padding-right:56px;margin-bottom:16px;}
+.demo-modal-title{font-size:22px;font-weight:800;color:var(--cream);line-height:1.3;}
+.demo-modal-sub{margin-top:6px;font-size:12px;color:var(--muted);}
+.demo-modal-stage{border-radius:18px;overflow:hidden;background:#0f0b1d;border:1px solid rgba(255,255,255,.08);}
+.demo-modal-stage img{display:block;width:100%;max-height:62vh;object-fit:contain;background:#0f0b1d;}
+.demo-modal-thumbs{display:flex;gap:10px;overflow-x:auto;margin-top:14px;padding-bottom:2px;}
+.demo-modal-thumbs::-webkit-scrollbar{height:6px;}
+.demo-modal-thumbs::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:999px;}
+.demo-thumb{width:120px;min-width:120px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.1);background:#120f25;cursor:pointer;opacity:.75;transition:all .18s;}
+.demo-thumb.active{opacity:1;border-color:rgba(242,185,51,.65);box-shadow:0 0 0 1px rgba(242,185,51,.25);}
+.demo-thumb img{display:block;width:100%;height:82px;object-fit:cover;}
+.demo-modal-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px;}
+.demo-modal-link{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(123,77,219,.16);border:1px solid rgba(123,77,219,.28);color:#efe6ff;text-decoration:none;font-size:13px;font-weight:700;}
+.demo-modal-note{font-size:12px;color:var(--muted);}
+.img-lightbox{position:fixed;inset:0;background:rgba(9,7,18,.88);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:28px;z-index:4000;}
+.img-lightbox.open{display:flex;}
+.img-lightbox-inner{position:relative;max-width:min(1100px,92vw);max-height:88vh;width:auto;}
+.img-lightbox img{display:block;max-width:100%;max-height:88vh;border-radius:18px;border:1px solid rgba(255,255,255,.14);box-shadow:0 28px 90px rgba(0,0,0,.45);background:#0e0b1d;}
+.img-lightbox-close{position:absolute;top:-14px;right:-14px;width:38px;height:38px;border:none;border-radius:999px;background:rgba(25,20,50,.92);color:#fff;font-size:20px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.25);}
+.img-lightbox-cap{margin-top:10px;text-align:center;font-size:12px;color:#d8d0f8;}
 </style>
 
 
@@ -1347,6 +1465,27 @@ textarea.inp{resize:vertical;min-height:64px;}
 
 
 <body>
+
+<div class="demo-modal" id="demoModal" onclick="closeDemoModal()">
+  <div class="demo-modal-inner" onclick="event.stopPropagation()">
+    <button class="demo-modal-close" type="button" onclick="closeDemoModal()" aria-label="Đóng demo">×</button>
+    <div class="demo-modal-head">
+      <div class="demo-modal-title" id="demoModalTitle"></div>
+      <div class="demo-modal-sub" id="demoModalSub"></div>
+    </div>
+    <div class="demo-modal-stage" id="demoModalStage"></div>
+    <div class="demo-modal-thumbs" id="demoModalThumbs"></div>
+    <div class="demo-modal-actions" id="demoModalActions"></div>
+  </div>
+</div>
+
+<div class="img-lightbox" id="imgLightbox" onclick="closeImageLightbox()">
+  <div class="img-lightbox-inner" onclick="event.stopPropagation()">
+    <button class="img-lightbox-close" type="button" onclick="closeImageLightbox()" aria-label="Đóng ảnh">×</button>
+    <img id="imgLightboxPhoto" src="" alt="">
+    <div class="img-lightbox-cap" id="imgLightboxCap"></div>
+  </div>
+</div>
 
 
 
@@ -1467,7 +1606,7 @@ textarea.inp{resize:vertical;min-height:64px;}
   <div class="block" style="margin-top:32px;">
     <div class="head">
       <span class="eyebrow">Lịch trình</span>
-      <h2 class="title">Roadmap <em>campaign</em></h2>
+      <h2 class="title">Lịch trình <em>NHAI DAY</em></h2>
     </div>
     <div class="roadmap-wrap">
       <div class="roadmap-track" id="roadmapTrack"></div>
@@ -2024,11 +2163,12 @@ textarea.inp{resize:vertical;min-height:64px;}
 
       <div class="vote-open-banner">
         <span class="vob-badge">ĐANG MỞ</span>
-        <span class="vob-text"><b>Top Pick Dish</b> — Bình chọn output ấn tượng nhất · 3 vote / người / event</span>
+        <span class="vob-text"><b>Top Pick Dish</b> — Bình chọn output ấn tượng nhất · tối đa 3 team / thiết bị</span>
         <span class="vob-date">📅 10/07 – 15/07/2026</span>
       </div>
 
 
+      <div class="vote-runtime-note info" id="voteRuntimeNote">Đang chuẩn bị dữ liệu vote...</div>
       <div class="vote-lead" id="voteLead"></div>
 
 
@@ -2254,6 +2394,7 @@ textarea.inp{resize:vertical;min-height:64px;}
 
 
 
+<script src="./vote-config.js"></script>
 <script>
 
 
@@ -2302,7 +2443,7 @@ let cases = ls('nd_cases3',[
 let anns = ls('nd_anns2',[
 
 
-  {ico:'🎉',title:'NHAI DAY! 01 tại Hà Nội đã thành công với 14 output',text:'Cảm ơn tất cả các team đã tham gia! Hãy cùng theo dõi và tham gia vote trong mục Top Pick Dish sắp tới nhé.',date:'26/06/2026 · AI Help Team',r1:0,r2:0},
+  {ico:'🎉',title:'Đã có recap NHAI DAY! 01 - Hà Nội',text:'Phần tổng kết và kết quả Hà Nội đã được cập nhật. Top Pick Dish hiện đang mở bình chọn và sẽ chốt kết quả sau khi đóng vote.',date:'26/06/2026 · AI Help Team',r1:0,r2:0},
 
 
   {ico:'🧙',title:'Danh sách mentor đã cập nhật',text:'8 mentor từ các team Creative, Operations, Engineering, Game Dev, Marketing & Esports đã sẵn sàng đồng hành cùng bạn! Xem chi tiết ở section Mentors.',date:'18/06/2026 · AI Help Team',r1:15,r2:7},
@@ -2378,6 +2519,8 @@ function switchTab(id, btn){
 
 
   document.getElementById('pg-'+id).classList.add('on');
+
+  trackAnalyticsEvent('tab_view',{tab:id});
 
 
 }
@@ -2785,6 +2928,15 @@ const FAQS=[
 ];
 
 
+FAQS.length=0;
+FAQS.push(
+  {q:'Mình chưa biết bắt đầu từ đâu thì có tham gia được không?',a:'Có. Bạn có thể chọn một đề bài gợi ý từ BTC hoặc liên hệ BTC để được tư vấn hướng phù hợp.'},
+  {q:'Mình đã có idea/workflow/project riêng thì sao?',a:'Bạn có thể mang đến NHAI DAY để tiếp tục build, hỏi mentor, validate tính khả thi hoặc mở rộng hướng giải quyết.'},
+  {q:'Có cần hoàn thiện sản phẩm trong buổi không?',a:'Không cần hoàn thiện toàn bộ sản phẩm ngay trong buổi. Trong thời gian giới hạn, NHAI DAY tập trung ghi nhận cách bạn dùng AI để giải quyết vấn đề thực tế hơn là một end product hoàn chỉnh. Miễn là project có hướng đi rõ, có một phần kết quả đủ cụ thể để demo/show ra và cho thấy tiềm năng tiếp tục phát triển, thì vẫn được ghi nhận.'},
+  {q:'Nếu làm chưa xong trong buổi thì sao?',a:'Không sao. Những project chưa hoàn thiện vẫn được khuyến khích tiếp tục build up sau buổi và có thể quay lại ở các NHAI DAY tiếp theo.'}
+);
+
+
 function renderFaq(){
 
 
@@ -3004,33 +3156,40 @@ function switchResTab(id, btn){
 
 // ── AWARD DATA ──
 const AWARDS_HN=[
-  {name:"Trần Hoài Thương + Nguyễn Kiều Anh",team:"People Team",case:"Automate báo cáo tuần nội bộ & business partners",emo:"📊"},
-  {name:"Trần Quốc Hưng",team:"CODE",case:"Ghi âm Google Meet → AI tóm tắt → Google Sheet",emo:"🎙",mc:true},
-  {name:"Nguyễn Duy Tuấn + Trần Khánh Hoàng",team:"AOV/DF",case:"Gacha QA Automation",emo:"🎮"},
-  {name:"Trần Thu Giang",team:"AOV/DF",case:"Tracking báo giá booking nguồn lực truyền thông AOV Esport",emo:"📈"},
-  {name:"Lê Xuân Mạnh + Vương Hoa Lê",team:"AOV/DF",case:"AI tối ưu quy trình Rough Cut video",emo:"🎬"},
-  {name:"Nguyễn Thị Ngọc Anh + Thu Hương + Hồng Hạnh",team:"Admin Game",case:"Tự động tổng hợp công việc & báo cáo ngày qua SeaTalk",emo:"🤖"},
-  {name:"Phạm Nguyễn Minh Ngọc + Phạm Thu Trang + Lưu Thị Mỹ Hạnh",team:"People Team",case:"Tạo python tool tạo hồ sơ BPO upload GitHub",emo:"🐍"},
-  {name:"Lương Thị Thuý Quỳnh + Đinh Thị Thu Ba + Nguyễn Tiến Quảng",team:"Legal/Kế toán/Admin",case:"Đối soát chi phí taxi tự động (file NCC vs QĐCT)",emo:"🚕"},
+  {name:"Trần Hoài Thương + Nguyễn Kiều Anh",team:"People Team",case:"Automate báo cáo tuần nội bộ & business partners",topic:"",emo:"📊"},
+  {name:"Trần Quốc Hưng",team:"CODE",case:"Ghi âm Google Meet → AI tóm tắt → Google Sheet",topic:"Content & Communication",emo:"🎙",mc:true},
+  {name:"Nguyễn Duy Tuấn + Trần Khánh Hoàng",team:"AOV/DF",case:"Gacha QA Automation",topic:"Automation",emo:"🎮"},
+  {name:"Trần Thu Giang",team:"AOV/DF",case:"AOV Esports - KOL/UGC rate card tracking",topic:"Data Analytics",emo:"📈"},
+  {name:"Lê Xuân Mạnh + Vương Hoa Lê",team:"AOV/DF",case:"Ứng dụng AI để tối ưu quy trình Rough Cut trong sản xuất video",topic:"Content & Communication",emo:"🎬"},
+  {name:"Nguyễn Thị Ngọc Anh + Thu Hương + Hồng Hạnh",team:"Admin Game",case:"Tự động tổng hợp công việc từ nhiều nguồn dữ liệu, tạo Daily Report và gửi báo cáo, nhắc việc đầu ngày qua SeaTalk",topic:"Automation",emo:"🤖"},
+  {name:"Phạm Nguyễn Minh Ngọc + Phạm Thu Trang + Lưu Thị Mỹ Hạnh",team:"People Team",case:"Tạo python tool tạo hồ sơ BPO upload GitHub",topic:"Automation",emo:"🐍"},
+  {name:"Lương Thị Thuý Quỳnh + Đinh Thị Thu Ba + Nguyễn Tiến Quảng",team:"Legal/Kế toán/Admin",case:"AI tự động lấy dữ liệu QĐCT cho file Grab",topic:"Automation",emo:"🚕"},
 ];
+
 const AWARDS_HCM=[
-  {name:"Phùng Châu Hải + Nguyễn Thế Việt",team:"Free Fire",case:"Content social & công cụ broadcast AI-first cho esports",emo:"📡"},
-  {name:"Nguyễn Mạnh Linh + Trịnh Thị Bình + Trần Thị Vân Anh",team:"People Team",case:"Tự động hoá công việc hành chính – Bot nhắc reminder",emo:"📅"},
-  {name:"Nguyễn Tiến Đạt + Lê Gia Huy + Trần Ngọc Thành Nam",team:"New Game",case:'Thầy AI – Agent tư vấn AI use case từ database Garena',emo:"🧑‍🏫"},
-  {name:"Vưu Khai Triển + Minh Tuấn + Sỹ Giáp",team:"CS",case:"Bot hỗ trợ pick & mở phiếu hàng loạt cho CS",emo:"🎫"},
-  {name:"Châu Bảo Minh + Nguyễn Đình Vương + Lâm Hoàng Lan",team:"Free Fire",case:"Transfer thông tin GD → Dev sang GDD + maintain GDD tự động",emo:"📋"},
-  {name:"Trần Thiệu Kỳ + Võ Phạm Thuỳ Trang + Lại Quốc Trường",team:"FCO/FCM",case:"Report tương tác campaign hashtag + auto convert thẻ quà",emo:"🎁"},
-  {name:"Nguyễn Tường Minh Khôi + Trần Anh Dũng + Hoàng Đặng Huy",team:"FCO/FCM",case:"Bot report performance Creator FC Mobile 2 chiều SeaTalk",emo:"📊"},
-  {name:"Ngô Anh Tuấn + Vũ Huy Anh + Trần Quang Huy",team:"FCO/FCM",case:"Hệ thống quản lý & phân tích dữ liệu giải đấu FC Online",emo:"⚽",mc:true},
+  {name:"Phùng Châu Hải + Nguyễn Thế Việt",team:"Free Fire",case:"Content social & công cụ broadcast AI-first cho esports",topic:"Content & Communication",emo:"📡"},
+  {name:"Nguyễn Mạnh Linh + Trịnh Thị Bình + Trần Thị Vân Anh",team:"People Team",case:"Bot nhắc reminder",topic:"Automation",emo:"📅"},
+  {name:"Nguyễn Tiến Đạt + Lê Gia Huy + Trần Ngọc Thành Nam",team:"New Game",case:'"Thầy AI" – Agent tra cứu & tư vấn AI use case',topic:"Data Analytics",emo:"🧑‍🏫"},
+  {name:"Vưu Khai Triển + Minh Tuấn + Sỹ Giáp",team:"CS",case:"Hỗ trợ kiểm tra hàng loạt phiếu yêu cầu tài khoản",topic:"Automation",emo:"🎫"},
+  {name:"Châu Bảo Minh + Nguyễn Đình Vương + Lâm Hoàng Lan",team:"Free Fire",case:"Crosscheck design document & implementation",topic:"",emo:"📋"},
+  {name:"Trần Thiệu Kỳ + Võ Phạm Thuỳ Trang + Lại Quốc Trường",team:"FCO/FCM",case:"Report tương tác campaign + auto convert thẻ quà",topic:"Data Analytics",emo:"🎁"},
+  {name:"Nguyễn Tường Minh Khôi + Trần Anh Dũng + Hoàng Đặng Huy",team:"FCO/FCM",case:"Automation Report Bot",topic:"Data Analytics",emo:"📊"},
+  {name:"Ngô Anh Tuấn + Vũ Huy Anh + Trần Quang Huy",team:"FCO/FCM",case:"Hệ thống quản lý & phân tích dữ liệu giải đấu FC Online",topic:"Data",emo:"⚽",mc:true},
 ];
 const DEMOS_500K_HN=[
-  {name:"Trà Anh",team:"AOV/DF",case:"Bot CSKH cho UGC creator",emo:"🤖"},
-  {name:"Đào Quang Tuấn + Trần Anh Quân + Trần Quang Vinh",team:"AOV/DF",case:"Bot nhắc việc bị miss",emo:"🔔"},
-  {name:"Mai Anh Tuấn",team:"Free Fire",case:"Auto upload banner lên CDNTool",emo:"🖼️"},
+  {name:"Trà Anh",team:"AOV/DF",case:"Bot CSKH cho UGC creator",topic:"Content & Communication",emo:"🤖"},
+  {name:"Đào Quang Tuấn + Trần Anh Quân + Trần Quang Vinh",team:"AOV/DF",case:"Làm một con bot nhắc việc bị miss",topic:"Automation",emo:"🔔"},
+  {name:"Mai Anh Tuấn + Nguyễn Hữu Thành + Ngô Quốc Quân",team:"Free Fire",case:"Auto upload banner lên CDNTool",topic:"Automation",emo:"🖼️"},
+  {name:"Dương Quang Huy + Trần Thái Anh",team:"AOV/DF",case:"Tự động hóa đăng ký tham gia giải ĐCVP Liên Quân Mobile",topic:"Automation",emo:"📝"},
+  {name:"Nguyễn Tường Linh + Đoàn Hồng Việt + Đinh Thùy Dương",team:"Free Fire",case:"Bot gợi ý đồ ăn trưa cho team",topic:"Engineering",emo:"🍱"},
+  {name:"Thân Việt Anh + Cao Hoàng Anh",team:"Engineering",case:"Interactive advertisement cho game DF để người dùng trải nghiệm sắp xếp đồ loot",topic:"Engineering",emo:"🧩"},
 ];
 const DEMOS_500K_HCM=[
-  {name:"Trần Gia Bảo + Ngô Thành Trung + Ngô Hoàng Nam Hưng",team:"Free Fire",case:"Tối ưu hóa workflow cho team Craftland PUGC",emo:"🏗️"},
-  {name:"Lương Ngọc Huy + Trần Nam Phong + Ngô Hoàng Tuấn",team:"Free Fire",case:"AI xử lý log Editor → Excel + predict balance",emo:"📉"},
+  {name:"Trần Gia Bảo + Ngô Thành Trung + Ngô Hoàng Nam Hưng",team:"Free Fire",case:"Tối ưu hóa workflow cho team Craftland PUGC",topic:"Engineering",emo:"🏗️"},
+  {name:"Lương Ngọc Huy + Trần Nam Phong + Ngô Hoàng Tuấn",team:"Free Fire",case:"AI xử lý log Editor và CSV Designer → Excel + predict balance",topic:"Automation",emo:"📉"},
+  {name:"Nguyễn Huỳnh Minh Nhật + Đào Minh Nghĩa",team:"FCO/FCM",case:"Giải quyết tracking performance campaign trên tất cả các mặt trận",topic:"Data Analytics",emo:"📍"},
+  {name:"Nguyễn Ngọc Phúc + Lê Trần Thiện Khoa + Huỳnh Nguyễn Anh Vũ",team:"FCO/FCM",case:"Hệ thống generate list quà tặng tự động",topic:"Automation",emo:"🎁"},
+  {name:"Phạm Phương Linh + Lê Ngọc Minh + Trần Phúc Toàn",team:"FCO/FCM",case:"AI phân loại ticket CS giúp định tuyến đúng PIC xử lý",topic:"Automation",emo:"🧭"},
 ];
 
 // ── EVENTS DATA ──
@@ -3042,13 +3201,13 @@ const EVENTS=[
   {id:'hn01',name:'NHAI DAY 01 — Hà Nội',date:'26/06/2026',city:'HN',status:'done',emoji:'🏙️',
 
 
-   kpis:[{n:'35',l:'Người tham gia'},{n:'16',l:'Team tham gia'},{n:'4.77★',l:'Trải nghiệm'},{n:'4.69★',l:'Hữu ích'}],
+   kpis:[{n:'32',l:'Người tham gia'},{n:'15',l:'Team tham gia'},{n:'4.77★',l:'Trải nghiệm · Hà Nội'},{n:'4.69★',l:'Hữu ích · Hà Nội'}],
 
 
    awards:[
 
 
-     {name:'🏆 Master Chef',val:'2.000.000đ',winner:'Đang cập nhật'},
+     {name:'🏆 Master Chef',val:'2.000.000đ',winner:'Trần Quốc Hưng · CODE · Ghi âm Google Meet → AI tóm tắt → Google Sheet'},
 
 
      {name:'🚀 Demo Ready (Early Bird)',val:'1.000.000đ × 8',winner:'100% team có output hoàn thiện'},
@@ -3057,28 +3216,37 @@ const EVENTS=[
      {name:'✅ Hoàn thiện trước 17:30',val:'500.000đ',winner:'Tất cả team có demo trước 17:30'},
 
 
-     {name:'💡 Top Pick Dish',val:'1.000.000đ',winner:'Đang mở bình chọn →'},
+     {name:'💡 Top Pick Dish',val:'1.000.000đ',winner:'Chưa chốt kết quả · đang mở bình chọn →'},
 
 
    ],
 
+   note:'<b>32 người tham gia, 15 team — 100% có demo hoàn thiện</b> sau 5 tiếng. 93% muốn tiếp tục ứng dụng. Hà Nội nổi bật với nhiều team từ <b>AOV/DF, People Team, Admin Game</b>; đề bài nghiêng mạnh về <b>Automation</b>, vận hành nội bộ và tối ưu workflow. Master Chef thuộc về case ghi âm Google Meet → AI tóm tắt → Google Sheet. Rating riêng Hà Nội: <b>4.77 / 5.0</b>.',
 
-   note:'<b>35 người tham gia, 16 team — 100% có demo hoàn thiện</b> sau 5 tiếng. 93% muốn tiếp tục ứng dụng. Output đa dạng từ bot nhắc việc, daily report tự động đến tool AI tối ưu dựng video và QA gacha. Rating: <b>4.77 / 5.0</b>.',
 
-
-   photos:true},
+   tags:['AOV/DF nổi bật','Automation chiếm đa số','People Team & Admin Game'],
+   quickNotes:[
+     '<b>Master Chef Hà Nội:</b> Trần Quốc Hưng (CODE) với case ghi âm Google Meet, AI tóm tắt và đẩy lên Google Sheet.',
+     '<b>Cơ cấu team:</b> AOV/DF là nhóm xuất hiện nhiều nhất, bên cạnh People Team, Admin Game và Legal/Kế toán.',
+     '<b>Màu sắc use case:</b> tập trung nhiều vào automation vận hành, daily report, nhắc việc và tối ưu quy trình media/QA.'
+   ],
+   photos:[
+     {src:'',caption:'Bạn có thể thêm ảnh recap Hà Nội tại đây để hiển thị dạng cuộn ngang.'},
+     {src:'',caption:'Ảnh bàn demo, phần pitching hoặc khoảnh khắc trao giải sẽ rất hợp ở block này.'},
+     {src:'',caption:'Khi có ảnh thật, chỉ cần thay link ảnh vào mảng photos của event Hà Nội.'}
+   ]},
 
 
   {id:'hcm01',name:'NHAI DAY 01 — HCM',date:'03/07/2026',city:'HCM',status:'done',emoji:'🌆',
 
 
-   kpis:[{n:'35',l:'Người tham gia'},{n:'13',l:'Team tham gia'},{n:'4.67★',l:'Trải nghiệm'},{n:'4.56★',l:'Hữu ích'}],
+   kpis:[{n:'35',l:'Người tham gia'},{n:'13',l:'Team tham gia'},{n:'4.67★',l:'Trải nghiệm · TP.HCM'},{n:'4.56★',l:'Hữu ích · TP.HCM'}],
 
 
    awards:[
 
 
-     {name:'🏆 Master Chef',val:'2.000.000đ',winner:'Đang cập nhật'},
+     {name:'🏆 Master Chef',val:'2.000.000đ',winner:'Ngô Anh Tuấn + Vũ Huy Anh + Trần Quang Huy · FCO/FCM · Hệ thống quản lý & phân tích dữ liệu giải đấu FC Online'},
 
 
      {name:'🚀 Demo Ready (Early Bird)',val:'1.000.000đ × 8',winner:'88.9% team muốn tiếp tục phát triển'},
@@ -3087,22 +3255,30 @@ const EVENTS=[
      {name:'✅ Hoàn thiện trước 17:30',val:'500.000đ',winner:'Tất cả team có demo trước 17:30'},
 
 
-     {name:'💡 Top Pick Dish',val:'1.000.000đ',winner:'Đang mở bình chọn →'},
+     {name:'💡 Top Pick Dish',val:'1.000.000đ',winner:'Chưa chốt kết quả · đang mở bình chọn →'},
 
 
    ],
 
-
-   note:'<b>35 người tham gia, 13 team — 100% có demo hoàn thiện</b>. Output đa dạng từ automation report bot, AI crosscheck design doc, đến "Thầy AI" tra cứu use case nội bộ. 94% muốn tiếp tục ứng dụng. Rating: <b>4.67 / 5.0</b>.',
-
-
-   photos:true},
+   note:'<b>35 người tham gia, 13 team — 100% có demo hoàn thiện</b>. TP.HCM nổi bật với các team từ <b>FCO/FCM, Free Fire, New Game</b>; đề bài tập trung vào <b>Automation</b> và <b>Data Analytics</b>. Output trải rộng từ report bot, crosscheck design doc đến "Thầy AI" tra cứu use case nội bộ. Rating riêng TP.HCM: <b>4.67 / 5.0</b>.',
 
 
-  {id:'hn02',name:'NHAI DAY 02 — Hà Nội',date:'Tháng 8/2026',city:'HN',status:'soon',emoji:'🚀',kpis:[],awards:[],note:'',photos:false},
+   tags:['FCO/FCM & Free Fire','Automation + Data Analytics','Case thiên về report & tooling'],
+   quickNotes:[
+     '<b>Master Chef TP.HCM:</b> team FCO/FCM với case phân tích dữ liệu giải đấu FC Online.',
+     '<b>Cơ cấu team:</b> Free Fire và FCO/FCM là hai cụm xuất hiện dày nhất trong danh sách demo.',
+     '<b>Màu sắc use case:</b> thiên về dashboard, report bot, crosscheck tài liệu và tool dữ liệu hỗ trợ vận hành/esports.'
+   ],
+   photos:[
+     {src:'',caption:'Bạn có thể thêm ảnh recap TP.HCM tại đây để hiển thị dạng cuộn ngang.'},
+     {src:'',caption:'Khung demo, teamwork hoặc khoảnh khắc trao giải đều phù hợp cho gallery.'}
+   ]},
 
 
-  {id:'hcm02',name:'NHAI DAY 02 — HCM',date:'Tháng 8/2026',city:'HCM',status:'soon',emoji:'🌆',kpis:[],awards:[],note:'',photos:false},
+  {id:'hn02',name:'NHAI DAY 02 — Hà Nội',date:'Tháng 8/2026',city:'HN',status:'soon',emoji:'🚀',kpis:[],awards:[],note:'',tags:[],quickNotes:[],photos:[]},
+
+
+  {id:'hcm02',name:'NHAI DAY 02 — HCM',date:'Tháng 8/2026',city:'HCM',status:'soon',emoji:'🌆',kpis:[],awards:[],note:'',tags:[],quickNotes:[],photos:[]},
 
 
 ];
@@ -3110,6 +3286,39 @@ const EVENTS=[
 
 
 
+
+const RECAP_PHOTOS={
+  hn01:[
+    {src:'assets/recap/hn01/1783657549881_1557818116140178354_7231936612318587249_414d501939ed069bfc0e2474c84035da.jpg',caption:'Recap Hà Nội #1'},
+    {src:'assets/recap/hn01/1783657549906_1557818116140178354_7231936612318587249_d432758eec80d01cd0cd96e138c72032.jpg',caption:'Recap Hà Nội #2'},
+    {src:'assets/recap/hn01/1783657549922_1557818116140178354_7231936612318587249_e79b78f619ac6b61ac6146371714810c.jpg',caption:'Recap Hà Nội #3'},
+    {src:'assets/recap/hn01/1783657549935_1557818116140178354_7231936612318587249_ddfbf1a8460c4fb42ebb5b03bd18078d.jpg',caption:'Recap Hà Nội #4'},
+    {src:'assets/recap/hn01/1783657549947_1557818116140178354_7231936612318587249_5f9df4e7300f436fb95df55e41a9b84b.jpg',caption:'Recap Hà Nội #5'},
+    {src:'assets/recap/hn01/1783657549958_1557818116140178354_7231936612318587249_a600ab136d66f0f5cba5110f1096f8cf.jpg',caption:'Recap Hà Nội #6'},
+    {src:'assets/recap/hn01/1783657549967_1557818116140178354_7231936612318587249_1978b2a2dd0d5ae85e5ed87d9ebe1743.jpg',caption:'Recap Hà Nội #7'},
+    {src:'assets/recap/hn01/1783657549976_1557818116140178354_7231936612318587249_b0459b47549fcc5514f8e31b961c5dd9.jpg',caption:'Recap Hà Nội #8'},
+    {src:'assets/recap/hn01/1783657549984_1557818116140178354_7231936612318587249_0dc7b36a937ead8baafc270d919f5323.jpg',caption:'Recap Hà Nội #9'},
+    {src:'assets/recap/hn01/1783657549992_1557818116140178354_7231936612318587249_1317c2ec65e13f496b7832fa8530425a.jpg',caption:'Recap Hà Nội #10'},
+    {src:'assets/recap/hn01/1783657549998_1557818116140178354_7231936612318587249_503e2778f1d7498f6b7b94b56096a273.jpg',caption:'Recap Hà Nội #11'}
+  ],
+  hcm01:[
+    {src:'assets/recap/hcm01/1783657549881_1557818116140178354_7231936612318587249_414d501939ed069bfc0e2474c84035da.jpg',caption:'Recap TP.HCM #1'},
+    {src:'assets/recap/hcm01/1783657549906_1557818116140178354_7231936612318587249_d432758eec80d01cd0cd96e138c72032.jpg',caption:'Recap TP.HCM #2'},
+    {src:'assets/recap/hcm01/1783657549922_1557818116140178354_7231936612318587249_e79b78f619ac6b61ac6146371714810c.jpg',caption:'Recap TP.HCM #3'},
+    {src:'assets/recap/hcm01/1783657549935_1557818116140178354_7231936612318587249_ddfbf1a8460c4fb42ebb5b03bd18078d.jpg',caption:'Recap TP.HCM #4'},
+    {src:'assets/recap/hcm01/1783657549947_1557818116140178354_7231936612318587249_5f9df4e7300f436fb95df55e41a9b84b.jpg',caption:'Recap TP.HCM #5'},
+    {src:'assets/recap/hcm01/1783657549958_1557818116140178354_7231936612318587249_a600ab136d66f0f5cba5110f1096f8cf.jpg',caption:'Recap TP.HCM #6'},
+    {src:'assets/recap/hcm01/1783657549967_1557818116140178354_7231936612318587249_1978b2a2dd0d5ae85e5ed87d9ebe1743.jpg',caption:'Recap TP.HCM #7'},
+    {src:'assets/recap/hcm01/1783657549976_1557818116140178354_7231936612318587249_b0459b47549fcc5514f8e31b961c5dd9.jpg',caption:'Recap TP.HCM #8'},
+    {src:'assets/recap/hcm01/1783657549984_1557818116140178354_7231936612318587249_0dc7b36a937ead8baafc270d919f5323.jpg',caption:'Recap TP.HCM #9'},
+    {src:'assets/recap/hcm01/1783657549992_1557818116140178354_7231936612318587249_1317c2ec65e13f496b7832fa8530425a.jpg',caption:'Recap TP.HCM #10'},
+    {src:'assets/recap/hcm01/1783657549998_1557818116140178354_7231936612318587249_503e2778f1d7498f6b7b94b56096a273.jpg',caption:'Recap TP.HCM #11'}
+  ]
+};
+
+for(const ev of EVENTS){
+  if(RECAP_PHOTOS[ev.id]) ev.photos=RECAP_PHOTOS[ev.id];
+}
 
 function renderEvents(){
   const EDITIONS=[
@@ -3130,8 +3339,9 @@ function renderEvents(){
       <div class="atl-item">
         <div class="atl-emo">${a.emo}</div>
         <div class="atl-info">
-          <div class="atl-name">${a.name}</div>
+          ${a.topic?`<div class="atl-meta"><span class="case-topic-tag">${a.topic}</span></div>`:''}
           <div class="atl-case">${a.case}</div>
+          <div class="atl-name">${a.name}</div>
         </div>
         <span class="atl-badge ${a.mc?'eb':'eb'}">${a.mc?'Master Chef':'Early Bird'}</span>
       </div>`).join('');
@@ -3139,16 +3349,17 @@ function renderEvents(){
       <div class="atl-item">
         <div class="atl-emo">${a.emo}</div>
         <div class="atl-info">
-          <div class="atl-name">${a.name}</div>
+          ${a.topic?`<div class="atl-meta"><span class="case-topic-tag">${a.topic}</span></div>`:''}
           <div class="atl-case">${a.case}</div>
+          <div class="atl-name">${a.name}</div>
         </div>
         <span class="atl-badge demo">500k</span>
       </div>`).join('');
 
     return `<div class="ed-panel ${i===0?'on':''}" id="ed-${i}">
       <div class="ed-stats-bar">
-        <div class="ed-kpi"><span class="ek-n">70</span><div class="ek-l">Người tham gia</div></div>
-        <div class="ed-kpi"><span class="ek-n">29</span><div class="ek-l">Team tham gia</div></div>
+        <div class="ed-kpi"><span class="ek-n">67</span><div class="ek-l">Người tham gia</div></div>
+        <div class="ed-kpi"><span class="ek-n">28</span><div class="ek-l">Team tham gia</div></div>
         <div class="ed-kpi"><span class="ek-n">4.71★</span><div class="ek-l">Trải nghiệm chung</div></div>
         <div class="ed-kpi"><span class="ek-n">4.61★</span><div class="ek-l">Đánh giá mức độ hữu ích</div></div>
         <div class="ed-kpi"><span class="ek-n">93.5%</span><div class="ek-l">Muốn tiếp tục</div></div>
@@ -3166,9 +3377,12 @@ function renderEvents(){
               <div class="wc-avatar">🎙</div>
               <div class="wc-body">
                 <div class="wc-category">🏆 Master Chef · Hà Nội</div>
-                <span class="wc-team-tag">CODE</span>
+                <div class="wc-meta-row">
+                  <span class="wc-team-tag">CODE</span>
+                  <span class="wc-topic-tag">Content & Communication</span>
+                </div>
+                <div class="wc-person">👤 <strong>Trần Quốc Hưng</strong></div>
                 <div class="wc-case">Ghi âm Google Meet → AI tóm tắt → Google Sheet</div>
-                <div class="wc-person">👤 Trần Quốc Hưng</div>
               </div>
               <div class="wc-expand-hint">Chi tiết ›</div>
             </div>
@@ -3179,6 +3393,9 @@ function renderEvents(){
                 <span class="wcd-tool">Claude</span>
                 <span class="wcd-tool">Google Sheets</span>
                 <span class="wcd-tool">Google Meet</span>
+              </div>
+              <div class="wcd-actions">
+                <a class="wcd-demo-link" href="https://gamma.app/docs/Tro-ly-AI-ghi-am-tom-tat-cuoc-hop-Google-Meet-epxuk5424p11um4?mode=doc" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Demo</a>
               </div>
               <span class="wcd-close" onclick="event.stopPropagation();this.closest('.winner-card').classList.remove('wc-open')">Thu gọn ↑</span>
             </div>
@@ -3191,9 +3408,12 @@ function renderEvents(){
               <div class="wc-avatar">⚽</div>
               <div class="wc-body">
                 <div class="wc-category">🏆 Master Chef · TP.HCM</div>
-                <span class="wc-team-tag">FCO / FCM</span>
-                <div class="wc-case">Hệ thống quản lý & phân tích dữ liệu giải đấu FC Online</div>
+                <div class="wc-meta-row">
+                  <span class="wc-team-tag">FCO / FCM</span>
+                  <span class="wc-topic-tag">Data</span>
+                </div>
                 <div class="wc-person">👤 Ngô Anh Tuấn + Vũ Huy Anh + Trần Quang Huy</div>
+                <div class="wc-case">Hệ thống quản lý & phân tích dữ liệu giải đấu FC Online</div>
               </div>
               <div class="wc-expand-hint">Chi tiết ›</div>
             </div>
@@ -3203,6 +3423,9 @@ function renderEvents(){
                 <span class="wcd-tool">Claude Code</span>
                 <span class="wcd-tool">Computer Vision</span>
                 <span class="wcd-tool">Power BI</span>
+              </div>
+              <div class="wcd-actions">
+                <a class="wcd-demo-link" href="https://drive.google.com/drive/folders/1qzW0bPKf46qW6lS7971q_81bynaaXaNH?usp=sharing" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Demo</a>
               </div>
               <span class="wcd-close" onclick="event.stopPropagation();this.closest('.winner-card').classList.remove('wc-open')">Thu gọn ↑</span>
             </div>
@@ -3239,7 +3462,7 @@ function renderEvents(){
       </div>
 
       <div class="award-section">
-        <div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#b79bff;background:rgba(123,77,219,.1);border-color:rgba(123,77,219,.25)">1.000.000đ · Đang vote</span></div>
+        <div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#b79bff;background:rgba(123,77,219,.1);border-color:rgba(123,77,219,.25)">1.000.000đ · Đang mở bình chọn</span></div>
         <button class="btn-recap" onclick="switchResTab('vote',document.querySelectorAll('.rtab')[1])">Xem & bình chọn →</button>
       </div>
     </div>`;
@@ -3260,10 +3483,40 @@ function switchEdition(i){
 }
 
 
+function goToResultsFromRecap(id){
+  const editionIndex=(id||'').startsWith('hn02')||(id||'').startsWith('hcm02')?1:0;
+  closeRecap();
+  switchTab('results',document.querySelectorAll('.ptab')[2]);
+  setTimeout(()=>{
+    switchResTab('ketqua',document.querySelectorAll('.rtab')[0]);
+    switchEdition(editionIndex);
+    document.getElementById('rp-ketqua')?.scrollIntoView({behavior:'smooth',block:'start'});
+  },80);
+}
+
+
 function openRecap(id){
 
 
   const ev=EVENTS.find(x=>x.id===id);if(!ev)return;
+
+  trackAnalyticsEvent('recap_open',{event_id:id,event_name:ev.name});
+  const cityLabel=ev.city==='HN'?'Hà Nội':'TP.HCM';
+  const eventNumber=(ev.name.match(/NHAI DAY\s*(\d+)/i)||[])[1]||'01';
+  const heroTitle=`Đã có kết quả recap <em>NHAI DAY! ${eventNumber}</em>`;
+  const participants=ev.kpis&&ev.kpis[0]?ev.kpis[0].n:'';
+  const teams=ev.kpis&&ev.kpis[1]?ev.kpis[1].n:'';
+  const rating=ev.kpis&&ev.kpis[2]?ev.kpis[2].n:'';
+  const leadAward=ev.awards&&ev.awards[0]?ev.awards[0]:null;
+  const leadWinner=leadAward&&leadAward.winner?leadAward.winner.split('·')[0].trim():'Đang cập nhật';
+  const heroSummary=`${cityLabel} đã khép lại với ${participants||'nhiều'} người tham gia và ${teams||'nhiều'} team. Master Chef thuộc về ${leadWinner}, còn toàn bộ kết quả chi tiết và ghi chú nổi bật vẫn nằm ngay bên dưới.`;
+  const heroMiniSummary=leadAward?`${leadAward.name} · ${leadWinner}`:`Recap ${cityLabel}`;
+  const heroMetrics=[
+    ev.kpis&&ev.kpis[1]?ev.kpis[1]:null,
+    ev.kpis&&ev.kpis[0]?ev.kpis[0]:null,
+    ev.kpis&&ev.kpis[2]?ev.kpis[2]:null
+  ].filter(Boolean);
+  const heroCharacter='assets/recap/hero-wizard.png';
 
 
   const awards=ev.awards.map(a=>`<div class="recap-award">
@@ -3278,18 +3531,110 @@ function openRecap(id){
   </div>`).join('');
 
 
-  const photos=ev.photos?`<div class="recap-section"><div class="recap-sec-head">Thư viện ảnh</div>
+  const quickNotes=ev.quickNotes&&ev.quickNotes.length?`<div class="recap-section"><div class="recap-sec-head">Nhìn nhanh</div>
+    ${ev.tags&&ev.tags.length?`<div class="recap-tags">${ev.tags.map(t=>`<span class="recap-tag">${t}</span>`).join('')}</div>`:''}
+    <div class="recap-quicklist">${ev.quickNotes.map(t=>`<div class="recap-quickitem">${t}</div>`).join('')}</div>
+  </div>`:'';
 
 
-    <div class="recap-photos">${[1,2,3,4,5,6].map(()=>'<div class="recap-photo-slot">🖼️</div>').join('')}</div>
-
-
-    <div style="font-size:13px;color:var(--mdim);margin-top:10px;text-align:center;">Ảnh sẽ được cập nhật</div></div>`:'' ;
+  const photos=ev.photos&&ev.photos.length?`<div class="recap-section"><div class="recap-sec-head">Thư viện ảnh</div>
+    <div class="recap-photos-wrap">${ev.photos.map(p=>p.src?`<div class="recap-photo-card" onclick="openImageLightbox('${p.src}','${(p.caption||'').replace(/'/g,'&#39;')}')"><img src="${p.src}" alt="${p.alt||ev.name}"><div class="recap-photo-cap">${p.caption||''}</div></div>`:`<div class="recap-photo-slot">🖼️</div>`).join('')}</div>
+  </div>`:'';
 
 
   document.getElementById('recapInner').innerHTML=`
 
 
+    <div class="recap-hero">
+      <div class="recap-hero-grid">
+        <div class="recap-floating-card">
+          <div class="recap-float-top">
+            <div>
+              <div class="recap-float-city">${cityLabel}</div>
+              <div class="recap-float-date">📅 ${ev.date}</div>
+            </div>
+            <span class="recap-float-badge">Đã có recap</span>
+          </div>
+          <div>
+            <div class="recap-float-label">Điểm nhấn</div>
+            <div class="recap-float-highlight">${rating||'4.7★'}</div>
+            <div class="recap-float-sub">${heroMiniSummary}</div>
+          </div>
+        </div>
+        <div class="recap-character-stage">
+          <img class="recap-character" src="${heroCharacter}" alt="NHAI DAY hero">
+        </div>
+        <div class="recap-main-card">
+          <div class="recap-main-eyebrow">Recap sự kiện</div>
+          <div class="recap-title">${heroTitle}</div>
+          <div class="recap-date">✨ ${ev.name} · ${cityLabel}</div>
+          <div class="recap-summary">${heroSummary}</div>
+          <div class="recap-hero-metrics">${heroMetrics.map(k=>`<div class="recap-hero-metric"><span class="rhm-n">${k.n}</span><span class="rhm-l">${k.l}</span></div>`).join('')}</div>
+          <div class="recap-hero-actions"><button class="recap-link-btn" onclick="goToResultsFromRecap('${ev.id}')">Xem chi tiết ở tab Kết quả →</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="recap-ev-label">Tổng quan nhanh</div>
+    ${ev.kpis.length?`<div class="recap-kpis">${ev.kpis.map(k=>`<div class="recap-kpi"><span class="rk-n">${k.n}</span><span class="rk-l">${k.l}</span></div>`).join('')}</div>`:''}
+
+
+    ${ev.awards.length?`<div class="recap-section"><div class="recap-sec-head">Giải thưởng</div><div class="recap-award-list">${awards}</div></div>`:''}
+
+
+    ${quickNotes}
+
+
+    ${ev.note?`<div class="recap-section"><div class="recap-sec-head">Tổng kết</div><div class="recap-note">${ev.note}</div></div>`:''}
+
+
+    ${photos}`;
+
+
+  document.getElementById('recapOverlay').classList.add('open');
+
+
+  document.body.style.overflow='hidden';
+
+
+}
+
+
+openRecap=function(id){
+
+
+  const ev=EVENTS.find(x=>x.id===id);if(!ev)return;
+
+  trackAnalyticsEvent('recap_open',{event_id:id,event_name:ev.name});
+
+
+  const awards=ev.awards.map(a=>`<div class="recap-award">
+
+
+    <div class="recap-award-info"><div class="recap-award-name">${a.name}</div><div class="recap-award-winner">${a.winner}</div></div>
+
+
+    <div class="recap-award-val">${a.val}</div>
+
+
+  </div>`).join('');
+
+
+  const quickNotes=ev.quickNotes&&ev.quickNotes.length?`<div class="recap-section"><div class="recap-sec-head">Nhìn nhanh</div>
+    ${ev.tags&&ev.tags.length?`<div class="recap-tags">${ev.tags.map(t=>`<span class="recap-tag">${t}</span>`).join('')}</div>`:''}
+    <div class="recap-quicklist">${ev.quickNotes.map(t=>`<div class="recap-quickitem">${t}</div>`).join('')}</div>
+  </div>`:'';
+
+
+  const photos=ev.photos&&ev.photos.length?`<div class="recap-section"><div class="recap-sec-head">Thư viện ảnh</div>
+    <div class="recap-photos-wrap">${ev.photos.map(p=>p.src?`<div class="recap-photo-card" onclick="openImageLightbox('${p.src}','${(p.caption||'').replace(/'/g,'&#39;')}')"><img src="${p.src}" alt="${p.alt||ev.name}"><div class="recap-photo-cap">${p.caption||''}</div></div>`:`<div class="recap-photo-slot">🖼️</div>`).join('')}</div>
+  </div>`:'';
+
+
+  document.getElementById('recapInner').innerHTML=`
+
+
+    <div class="recap-ev-label">Recap sự kiện</div>
     <div class="recap-title">${ev.name}</div>
 
 
@@ -3302,10 +3647,16 @@ function openRecap(id){
     ${ev.awards.length?`<div class="recap-section"><div class="recap-sec-head">Giải thưởng</div><div class="recap-award-list">${awards}</div></div>`:''}
 
 
+    ${quickNotes}
+
+
     ${ev.note?`<div class="recap-section"><div class="recap-sec-head">Tổng kết</div><div class="recap-note">${ev.note}</div></div>`:''}
 
 
-    ${photos}`;
+    ${photos}
+
+
+    <div class="recap-actions"><button class="recap-link-btn" onclick="goToResultsFromRecap('${ev.id}')">Xem chi tiết ở tab Kết quả →</button></div>`;
 
 
   document.getElementById('recapOverlay').classList.add('open');
@@ -3344,13 +3695,33 @@ const TOP_PICK=[
   // ── HÀ NỘI — NHAI DAY 01 ──
 
 
+  {id:'hn01-mc',event:'hn01',city:'HN',emoji:'🎙',
+
+
+   title:'Ghi âm Google Meet → AI tóm tắt → Google Sheet',
+
+
+   person:'Trần Quốc Hưng',team:'CODE',topic:'Content & Communication',
+   desc:'Trợ lý AI ghi âm, tóm tắt cuộc họp Google Meet theo cấu trúc và đẩy thẳng nội dung sang Google Sheet để theo dõi.',
+   goal:'Giảm thao tác ghi chú thủ công và chuẩn hóa recap cuộc họp thành dữ liệu có thể dùng lại',
+
+
+   tools:['AI STT','Claude','Google Sheets','Google Meet'],
+
+
+   demo:'https://gamma.app/docs/Tro-ly-AI-ghi-am-tom-tat-cuoc-hop-Google-Meet-epxuk5424p11um4?mode=doc',
+
+
+   grad:'linear-gradient(135deg,#4a1f0f,#c2410c,#f97316)'},
+
+
   {id:'hn01-1',event:'hn01',city:'HN',emoji:'🤖',
 
 
    title:'Bot CSKH cho UGC creator',
 
 
-   person:'Trà Anh',team:'AOV/DF',
+   person:'Trà Anh',team:'AOV/DF',topic:'Content & Communication',
    desc:'Giảm workload team UGC khi trả lời câu hỏi creator. Chatbot thay thế các câu hỏi cơ bản.',
    goal:'Giảm workload team UGC — bot tự động trả lời câu hỏi của creator thay người',
 
@@ -3359,6 +3730,7 @@ const TOP_PICK=[
 
 
    demo:'https://drive.google.com/open?id=1JO1FBCoX5LIHJME52EuOjDK9SKil17hO',
+   gallery:['assets/demos/hn-tra-anh-bot-cskh-ugc-creator/shot-1.png'],
 
 
    grad:'linear-gradient(135deg,#1a1640,#2d1a8e)'},
@@ -3367,10 +3739,10 @@ const TOP_PICK=[
   {id:'hn01-2',event:'hn01',city:'HN',emoji:'📊',
 
 
-   title:'AOV Esports — KOL/UGC rate card tracking',
+   title:'AOV esports - KOL/UGC rate card tracking',
 
 
-   person:'Trần Thu Giang',team:'AOV/DF',
+   person:'Trần Thu Giang',team:'AOV/DF',topic:'Data Analytics',
    desc:'Tracking KOL/UGC rate card cho team Esports và campaign AOV. Demo live: aovebooking.run.ingarena.net',
    goal:'Quản lý rate card KOL/UGC tự động cho team Esports & Campaign AOV',
 
@@ -3379,6 +3751,7 @@ const TOP_PICK=[
 
 
    demo:'https://aovebooking.run.ingarena.net/booking_summary.html',
+   gallery:['assets/demos/hn-tran-thu-giang-aov-rate-card-tracking/shot-1.png'],
 
 
    grad:'linear-gradient(135deg,#1a2640,#1a4d8e)'},
@@ -3387,10 +3760,10 @@ const TOP_PICK=[
   {id:'hn01-3',event:'hn01',city:'HN',emoji:'📋',
 
 
-   title:'Daily Report tự động qua SeaTalk',
+   title:'Tự động tổng hợp công việc & Daily Report qua SeaTalk',
 
 
-   person:'Nguyễn Thị Ngọc Anh',team:'Admin Game',
+   person:'Nguyễn Thị Ngọc Anh + Thu Hương + Hồng Hạnh',team:'Admin Game',topic:'Automation',
    desc:'Thu thập dữ liệu từ Gmail & hệ thống nội bộ, tổng hợp và gửi Daily Report lúc 10h sáng mỗi ngày làm việc.',
    goal:'Thu thập data từ Gmail & hệ thống nội bộ, tạo và gửi Daily Report lúc 10h sáng',
 
@@ -3407,10 +3780,10 @@ const TOP_PICK=[
   {id:'hn01-4',event:'hn01',city:'HN',emoji:'🎬',
 
 
-   title:'AI tối ưu quy trình Rough Cut video',
+   title:'Ứng dụng AI để tối ưu quy trình Rough Cut trong sản xuất video',
 
 
-   person:'Lê Xuân Mạnh + Vương Hoa Lê',team:'AOV/DF',
+   person:'Lê Xuân Mạnh + Vương Hoa Lê',team:'AOV/DF',topic:'Content & Communication',
    desc:'Tự động sync video nhiều clip thành timeline, AI phân tích âm thanh chọn góc camera và tự động thêm phụ đề.',
    goal:'Tự động sync + cắt cảnh từ nhiều clip, AI phân tích âm thanh chọn đúng góc camera',
 
@@ -3419,6 +3792,11 @@ const TOP_PICK=[
 
 
    demo:'https://drive.google.com/open?id=1N61bpWnzv06MZjWfBZtApxRPPWSfr_KT',
+   gallery:[
+     'assets/demos/hn-le-xuan-manh-rough-cut-video/shot-1.png',
+     'assets/demos/hn-le-xuan-manh-rough-cut-video/shot-2.png',
+     'assets/demos/hn-le-xuan-manh-rough-cut-video/shot-3.png'
+   ],
 
 
    grad:'linear-gradient(135deg,#1a1640,#8e1a6a)'},
@@ -3430,7 +3808,7 @@ const TOP_PICK=[
    title:'Gacha QA Automation',
 
 
-   person:'Nguyễn Duy Tuấn + Trần Khánh Hoàng',team:'AOV/DF',
+   person:'Nguyễn Duy Tuấn + Trần Khánh Hoàng',team:'AOV/DF',topic:'Automation',
    desc:'Tự động QA gacha: quay vòng quay trên giả lập → chụp màn hình → detect giải thưởng → generate report.',
    goal:'Tự động thao tác quay vòng quay, detect giải thưởng qua ảnh, generate report QA',
 
@@ -3438,7 +3816,7 @@ const TOP_PICK=[
    tools:['Claude Code'],
 
 
-   demo:'',
+   demo:'https://drive.google.com/drive/folders/18HnehIjoxR7wu1PlFgi3LHw8AGrAYF6z',
 
 
    grad:'linear-gradient(135deg,#1a2a1a,#1a6e2d)'},
@@ -3447,10 +3825,10 @@ const TOP_PICK=[
   {id:'hn01-6',event:'hn01',city:'HN',emoji:'🚕',
 
 
-   title:'AI tự động lấy dữ liệu qđct cho file Grab',
+   title:'AI tự động lấy dữ liệu QĐCT cho file Grab',
 
 
-   person:'Lương Thị Thuý Quỳnh + Đinh Thị Thu Ba',team:'Legal/Kế toán',
+   person:'Lương Thị Thuý Quỳnh + Đinh Thị Thu Ba + Nguyễn Tiến Quảng',team:'Legal/Kế toán',topic:'Automation',
    desc:'AI đọc file taxi vendor, truy xuất QĐCT từ hệ thống booking, đối soát ngày công tác và điền link tự động.',
    goal:'Tự động đối soát chi phí taxi giữa file Grab và dữ liệu quyết định công tác',
 
@@ -3458,7 +3836,14 @@ const TOP_PICK=[
    tools:['AI automation'],
 
 
-   demo:'https://drive.google.com/open?id=1xGMWZsm4zNy1ccJA3c0CsbAzQf2NsE6M',
+   demo:'',
+   accessLabel:'File nội bộ',
+   gallery:[
+     'assets/demos/hn-dinh-thi-thu-ba-ai-du-lieu-qdct-grab/shot-1.png',
+     'assets/demos/hn-dinh-thi-thu-ba-ai-du-lieu-qdct-grab/shot-2.png',
+     'assets/demos/hn-dinh-thi-thu-ba-ai-du-lieu-qdct-grab/shot-3.png',
+     'assets/demos/hn-dinh-thi-thu-ba-ai-du-lieu-qdct-grab/shot-4.png'
+   ],
 
 
    grad:'linear-gradient(135deg,#261a1a,#6e2d1a)'},
@@ -3467,10 +3852,10 @@ const TOP_PICK=[
   {id:'hn01-7',event:'hn01',city:'HN',emoji:'🔔',
 
 
-   title:'Bot nhắc việc bị miss',
+   title:'Làm một con bot nhắc việc bị miss',
 
 
-   person:'Đào Quang Tuấn',team:'AOV/DF',
+   person:'Đào Quang Tuấn + Trần Anh Quân + Trần Quang Vinh',team:'AOV/DF',topic:'Automation',
    desc:'Bot nhắc việc hàng ngày sử dụng workflow/chatflow trên Alpha Intelligence kết hợp AlphaMate.',
    goal:'Bot tự động phát hiện và nhắc các công việc bị bỏ sót qua workflow AI',
 
@@ -3479,6 +3864,11 @@ const TOP_PICK=[
 
 
    demo:'https://drive.google.com/open?id=1kDnCwcXuCq_t6fMSsdNMzPTyvo0tCsMx',
+   gallery:[
+     'assets/demos/hn-dao-quang-tuan-bot-nhac-viec-bi-miss/shot-1.jpg',
+     'assets/demos/hn-dao-quang-tuan-bot-nhac-viec-bi-miss/shot-2.jpg',
+     'assets/demos/hn-dao-quang-tuan-bot-nhac-viec-bi-miss/shot-3.jpg'
+   ],
 
 
    grad:'linear-gradient(135deg,#1a1a2e,#2d1a4e)'},
@@ -3490,7 +3880,7 @@ const TOP_PICK=[
    title:'Auto upload banner lên CDNTool',
 
 
-   person:'Mai Anh Tuấn',team:'Free Fire',
+   person:'Mai Anh Tuấn + Nguyễn Hữu Thành + Ngô Quốc Quân',team:'Free Fire',topic:'Automation',
    desc:'Tự động đổi tên, resize ảnh và upload lên CDNTool. Giải quyết pain point thủ công dễ nhầm lẫn của team QA Product.',
    goal:'Tự động đổi tên, resize ảnh và upload lên CDNTool thay vì làm thủ công từng bước',
 
@@ -3507,13 +3897,33 @@ const TOP_PICK=[
   // ── HỒ CHÍ MINH — NHAI DAY 01 ──
 
 
+  {id:'hcm01-mc',event:'hcm01',city:'HCM',emoji:'⚽',
+
+
+   title:'Hệ thống quản lý & phân tích dữ liệu giải đấu FC Online',
+
+
+   person:'Ngô Anh Tuấn + Vũ Huy Anh + Trần Quang Huy',team:'FCO/FCM',topic:'Data',
+   desc:'Matchday Matrix đọc ảnh kết quả trận đấu, tự động tính OVR, lưu lịch sử mùa giải, dashboard phong độ đội và hỗ trợ overlay livestream.',
+   goal:'Tập trung toàn bộ dữ liệu giải đấu FC Online vào một luồng theo dõi và phân tích tự động',
+
+
+   tools:['Claude Code','Computer Vision','Power BI'],
+
+
+   demo:'https://drive.google.com/drive/folders/1qzW0bPKf46qW6lS7971q_81bynaaXaNH?usp=sharing',
+
+
+   grad:'linear-gradient(135deg,#12365c,#2563eb,#60a5fa)'},
+
+
   {id:'hcm01-1',event:'hcm01',city:'HCM',emoji:'📣',
 
 
    title:'Report tương tác campaign + auto convert thẻ quà',
 
 
-   person:'Trần Thiệu Kỳ + Võ Phạm Thuỳ Trang + Lại Quốc Trường',team:'FCO/FCM',
+   person:'Trần Thiệu Kỳ + Võ Phạm Thuỳ Trang + Lại Quốc Trường',team:'FCO/FCM',topic:'Data Analytics',
    desc:'Collect post campaign theo hashtag, tổng hợp report tương tác. Auto convert thẻ quà từ CDN sang Google Drive.',
    goal:'Phân tích data campaign theo hashtag và tự động convert thẻ quà',
 
@@ -3522,6 +3932,10 @@ const TOP_PICK=[
 
 
    demo:'https://drive.google.com/open?id=13CeY-bN91U0CDqwYgvUj9LNbbqairbQE',
+   gallery:[
+     'assets/demos/hcm-tran-thieu-ky-report-tuong-tac-campaign/shot-1.png',
+     'assets/demos/hcm-tran-thieu-ky-report-tuong-tac-campaign/shot-2.png'
+   ],
 
 
    grad:'linear-gradient(135deg,#261a1a,#8e3d1a)'},
@@ -3533,7 +3947,7 @@ const TOP_PICK=[
    title:'Tối ưu hóa workflow cho team Craftland PUGC',
 
 
-   person:'Trần Gia Bảo',team:'Free Fire',
+   person:'Trần Gia Bảo + Ngô Thành Trung + Ngô Hoàng Nam Hưng',team:'Free Fire',topic:'Engineering',
    desc:'AI Bot hỗ trợ tối ưu workflow PUGC: nhắc công việc định kỳ, giảm thời gian onboard thành viên mới, tự động hóa lặp lại.',
    goal:'AI Bot giảm thời gian onboard thành viên mới và tự động hóa quy trình PUGC',
 
@@ -3542,6 +3956,7 @@ const TOP_PICK=[
 
 
    demo:'https://drive.google.com/open?id=1lnWaTw9xzD5niNBUVMZAjV6KObdJTzav',
+   gallery:['assets/demos/hcm-tran-gia-bao-craftland-pugc/shot-1.png'],
 
 
    grad:'linear-gradient(135deg,#1a2a1a,#2d7a2d)'},
@@ -3550,10 +3965,10 @@ const TOP_PICK=[
   {id:'hcm01-3',event:'hcm01',city:'HCM',emoji:'✅',
 
 
-   title:'Crosscheck design doc và implementation',
+   title:'Crosscheck design document & implementation',
 
 
-   person:'Châu Bảo Minh + Nguyễn Đình Vương + Lâm Hoàng Lan',team:'Free Fire',
+   person:'Châu Bảo Minh + Nguyễn Đình Vương + Lâm Hoàng Lan',team:'Free Fire',topic:'',
    desc:'Nhập GDD link + GitHub link → AI so sánh code vs document, đánh giá Pass ≥80%, chỉ rõ sự khác biệt nếu Fail.',
    goal:'Kiểm tra nhanh sự đồng bộ game designer — dev, phát hiện lỗi sớm trước release',
 
@@ -3570,10 +3985,10 @@ const TOP_PICK=[
   {id:'hcm01-4',event:'hcm01',city:'HCM',emoji:'🧑‍🏫',
 
 
-   title:'Thầy AI — Agent tra cứu AI use case',
+   title:'"Thầy AI" – Agent tra cứu & tư vấn AI use case',
 
 
-   person:'Nguyễn Tiến Đạt + Lê Gia Huy + Trần Ngọc Thành Nam',team:'New Game',
+   person:'Nguyễn Tiến Đạt + Lê Gia Huy + Trần Ngọc Thành Nam',team:'New Game',topic:'Data Analytics',
    desc:'Agent tra cứu & tư vấn AI use case từ database Garena VN & Sea Group. Chat trực tiếp trên SeaTalk.',
    goal:'Tư vấn về giải pháp AI đã áp dụng tại Garena VN & Sea Group, gợi ý đúng nhu cầu',
 
@@ -3582,18 +3997,46 @@ const TOP_PICK=[
 
 
    demo:'',
+   gallery:['assets/demos/hcm-thay-ai-agent-use-case-shot-1.png'],
 
 
    grad:'linear-gradient(135deg,#1a1a2e,#16213e)'},
 
 
+  {id:'hcm01-4b',event:'hcm01',city:'HCM',emoji:'🎫',
+
+
+   title:'Hỗ trợ kiểm tra hàng loạt phiếu yêu cầu tài khoản',
+
+
+   person:'Vưu Khai Triển + Minh Tuấn + Sỹ Giáp',team:'CS',topic:'Automation',
+   desc:'Tool hỗ trợ team CS rà soát hàng loạt phiếu yêu cầu tài khoản nhanh hơn, giảm thao tác kiểm tra thủ công lặp lại.',
+   goal:'Tăng tốc quá trình kiểm tra hàng loạt phiếu yêu cầu tài khoản và giảm workload thao tác tay',
+
+
+   tools:['Automation tool'],
+
+
+   demo:'',
+   accessLabel:'File nội bộ',
+   gallery:[
+     'assets/demos/hcm-vuu-khai-trien-ho-tro-kiem-tra-phieu/shot-1.png',
+     'assets/demos/hcm-vuu-khai-trien-ho-tro-kiem-tra-phieu/shot-2.png',
+     'assets/demos/hcm-vuu-khai-trien-ho-tro-kiem-tra-phieu/shot-3.png',
+     'assets/demos/hcm-vuu-khai-trien-ho-tro-kiem-tra-phieu/shot-4.png'
+   ],
+
+
+   grad:'linear-gradient(135deg,#1f2438,#315b8a)'},
+
+
   {id:'hcm01-5',event:'hcm01',city:'HCM',emoji:'📉',
 
 
-   title:'AI phân tích log Editor & CSV Designer',
+   title:'AI xử lý log Editor và CSV Designer → Excel + predict balance',
 
 
-   person:'Lương Ngọc Huy + Trần Nam Phong + Ngô Hoàng Tuấn',team:'Free Fire',
+   person:'Lương Ngọc Huy + Trần Nam Phong + Ngô Hoàng Tuấn',team:'Free Fire',topic:'Automation',
    desc:'Web tool phân tích log gameplay, so sánh với design CSV, phát hiện lệch balance, tạo báo cáo Excel + AI predict.',
    goal:'Web tool so sánh data thực tế vs design CSV, phân tích log gameplay tự động',
 
@@ -3602,6 +4045,11 @@ const TOP_PICK=[
 
 
    demo:'https://drive.google.com/open?id=1544OYWxJF7s2v2gfvqYAExEe3XtU2A6K',
+   gallery:[
+     'assets/demos/hcm-ngo-hoang-tuan-editor-csv-excel-predict/shot-1.png',
+     'assets/demos/hcm-ngo-hoang-tuan-editor-csv-excel-predict/shot-2.png',
+     'assets/demos/hcm-ngo-hoang-tuan-editor-csv-excel-predict/shot-3.png'
+   ],
 
 
    grad:'linear-gradient(135deg,#261a1a,#6e1a1a)'},
@@ -3610,10 +4058,10 @@ const TOP_PICK=[
   {id:'hcm01-6',event:'hcm01',city:'HCM',emoji:'📊',
 
 
-   title:'Automation Report Bot — KOL & Social channels',
+   title:'Automation Report Bot',
 
 
-   person:'Nguyễn Tường Minh Khôi + Trần Anh Dũng',team:'FCO/FCM',
+   person:'Nguyễn Tường Minh Khôi + Trần Anh Dũng + Hoàng Đặng Huy',team:'FCO/FCM',topic:'Data Analytics',
    desc:'Kết nối Power BI Fabric FC Online/Mobile, tự động query, format báo cáo theo template chuẩn và gửi vào group SeaTalk.',
    goal:'Báo cáo performance KOL/Social channels hàng ngày hoàn toàn tự động',
 
@@ -3622,6 +4070,11 @@ const TOP_PICK=[
 
 
    demo:'https://drive.google.com/open?id=19vwv4Da9N8mtl359xsgqEaMXATseS1ws',
+   gallery:[
+     'assets/demos/hcm-nguyen-tuong-minh-khoi-automation-report-bot/shot-1.jpg',
+     'assets/demos/hcm-nguyen-tuong-minh-khoi-automation-report-bot/shot-2.jpg',
+     'assets/demos/hcm-nguyen-tuong-minh-khoi-automation-report-bot/shot-3.jpg'
+   ],
 
 
    grad:'linear-gradient(135deg,#1a2640,#1a4d8e)'},
@@ -3630,10 +4083,10 @@ const TOP_PICK=[
   {id:'hcm01-7',event:'hcm01',city:'HCM',emoji:'📑',
 
 
-   title:'Bot nhắc reminder chứng từ hợp đồng',
+   title:'Bot nhắc reminder',
 
 
-   person:'Trịnh Thị Bình + Nguyễn Mạnh Linh + Trần Thị Vân Anh',team:'People Team',
+   person:'Trịnh Thị Bình + Nguyễn Mạnh Linh + Trần Thị Vân Anh',team:'People Team',topic:'Automation',
    desc:'Bot tự động nhắc requester update thông tin chứng từ đơn đặt hàng/hợp đồng cho thanh toán booking vé máy bay, khách sạn.',
    goal:'Bot tự động nhắc requester update thông tin chứng từ, đơn đặt hàng hoặc hợp đồng',
 
@@ -3642,6 +4095,7 @@ const TOP_PICK=[
 
 
    demo:'https://drive.google.com/open?id=15D_x2AB5Xxuh5OjnWa40F7C5tWUUKezz',
+   gallery:['assets/demos/hcm-trinh-thi-binh-bot-nhac-reminder/shot-1.png'],
 
 
    grad:'linear-gradient(135deg,#1a1a2e,#2d1a4e)'},
@@ -3653,13 +4107,176 @@ const TOP_PICK=[
 
 
 
-let myVotes=ls('nd_topvotes',{});
+const VOTE_CONFIG=Object.assign({
+  enabled:false,
+  supabaseUrl:'',
+  anonKey:'',
+  edgeFunctionUrl:'',
+  analyticsEnabled:true,
+  analyticsFunctionUrl:'',
+  campaignId:'top-pick-day01-2026',
+  maxVotes:3
+}, window.NHAI_VOTE_CONFIG||{});
 
+const voteState={
+  deviceId:'',
+  counts:{},
+  myVotes:[],
+  loading:false,
+  ready:false,
+  submittingCaseId:'',
+  error:'',
+  campaignId:VOTE_CONFIG.campaignId||'top-pick-day01-2026',
+  maxVotes:Number(VOTE_CONFIG.maxVotes)||3
+};
 
-let voteCounts=ls('nd_votecount',{});
+const analyticsState={
+  deviceId:'',
+  sessionId:'',
+  startedAt:0,
+  sessionStarted:false,
+  sessionEnded:false
+};
 
+TOP_PICK.forEach(c=>{voteState.counts[c.id]=0;});
 
-TOP_PICK.forEach(c=>{if(voteCounts[c.id]===undefined)voteCounts[c.id]=0;});
+function createLocalDeviceId(){
+  return 'nd-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
+}
+function getVoteDeviceId(){
+  let id=ls('nd_vote_device_id','');
+  if(id)return id;
+  id=(window.crypto&&typeof window.crypto.randomUUID==='function')?window.crypto.randomUUID():createLocalDeviceId();
+  ss('nd_vote_device_id',id);
+  return id;
+}
+function isVoteBackendReady(){
+  return !!(VOTE_CONFIG.enabled&&VOTE_CONFIG.supabaseUrl&&VOTE_CONFIG.anonKey&&voteState.campaignId);
+}
+function getVoteFunctionUrl(){
+  if(VOTE_CONFIG.edgeFunctionUrl)return VOTE_CONFIG.edgeFunctionUrl;
+  return String(VOTE_CONFIG.supabaseUrl||'').replace(/\/$/,'')+'/functions/v1/top-pick-vote';
+}
+function isAnalyticsReady(){
+  return !!(VOTE_CONFIG.analyticsEnabled&&VOTE_CONFIG.supabaseUrl&&VOTE_CONFIG.anonKey);
+}
+function getAnalyticsFunctionUrl(){
+  if(VOTE_CONFIG.analyticsFunctionUrl)return VOTE_CONFIG.analyticsFunctionUrl;
+  return String(VOTE_CONFIG.supabaseUrl||'').replace(/\/$/,'')+'/functions/v1/site-analytics';
+}
+function getVoteHeaders(){
+  return {
+    'Content-Type':'application/json',
+    'apikey':VOTE_CONFIG.anonKey,
+    'Authorization':'Bearer '+VOTE_CONFIG.anonKey
+  };
+}
+function createAnalyticsSessionId(){
+  return 'sess-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
+}
+function getAnalyticsSessionId(){
+  let id='';
+  try{id=sessionStorage.getItem('nd_analytics_session_id')||'';}catch(e){}
+  if(id)return id;
+  id=createAnalyticsSessionId();
+  try{sessionStorage.setItem('nd_analytics_session_id',id);}catch(e){}
+  return id;
+}
+async function sendAnalytics(payload,keepalive=false){
+  if(!isAnalyticsReady())return;
+  try{
+    await fetch(getAnalyticsFunctionUrl(),{
+      method:'POST',
+      headers:getVoteHeaders(),
+      body:JSON.stringify(payload),
+      keepalive:!!keepalive
+    });
+  }catch(e){}
+}
+async function startAnalyticsSession(){
+  if(!isAnalyticsReady()||analyticsState.sessionStarted)return;
+  analyticsState.sessionStarted=true;
+  analyticsState.startedAt=Date.now();
+  await sendAnalytics({
+    type:'session_start',
+    device_id:analyticsState.deviceId,
+    session_id:analyticsState.sessionId,
+    path:location.pathname,
+    title:document.title,
+    user_agent:navigator.userAgent
+  });
+  await trackAnalyticsEvent('page_view',{path:location.pathname,title:document.title});
+}
+async function trackAnalyticsEvent(eventName,meta={},eventValue=''){
+  if(!isAnalyticsReady())return;
+  if(!analyticsState.sessionStarted){
+    await startAnalyticsSession();
+  }
+  await sendAnalytics({
+    type:'event',
+    event_name:eventName,
+    event_value:eventValue||'',
+    meta,
+    device_id:analyticsState.deviceId,
+    session_id:analyticsState.sessionId
+  });
+}
+function endAnalyticsSession(){
+  if(!isAnalyticsReady()||analyticsState.sessionEnded||!analyticsState.sessionStarted)return;
+  analyticsState.sessionEnded=true;
+  const durationSeconds=Math.max(1,Math.round((Date.now()-analyticsState.startedAt)/1000));
+  sendAnalytics({
+    type:'session_end',
+    device_id:analyticsState.deviceId,
+    session_id:analyticsState.sessionId,
+    duration_seconds:durationSeconds,
+    path:location.pathname
+  },true);
+}
+function getMyVoteIds(){
+  return Array.isArray(voteState.myVotes)?voteState.myVotes:[];
+}
+function getRemainingVotes(){
+  return Math.max(voteState.maxVotes-getMyVoteIds().length,0);
+}
+function applyVoteSnapshot(payload){
+  TOP_PICK.forEach(c=>{voteState.counts[c.id]=0;});
+  const nextCounts=payload&&payload.counts&&typeof payload.counts==='object'?payload.counts:{};
+  Object.keys(nextCounts).forEach(caseId=>{
+    voteState.counts[caseId]=Number(nextCounts[caseId]||0);
+  });
+  voteState.myVotes=Array.isArray(payload&&payload.deviceVotes)?payload.deviceVotes.slice():[];
+  if(typeof payload?.maxVotes==='number'&&payload.maxVotes>0){
+    voteState.maxVotes=payload.maxVotes;
+  }
+}
+async function loadVoteSnapshot(){
+  if(!isVoteBackendReady()){
+    voteState.ready=false;
+    voteState.loading=false;
+    voteState.error='';
+    return;
+  }
+  voteState.loading=true;
+  voteState.error='';
+  try{
+    const url=new URL(getVoteFunctionUrl());
+    url.searchParams.set('campaign_id',voteState.campaignId);
+    url.searchParams.set('device_id',voteState.deviceId);
+    const res=await fetch(url.toString(),{
+      method:'GET',
+      headers:getVoteHeaders()
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||data.ok===false) throw new Error(data.message||'Khong tai duoc du lieu vote.');
+    applyVoteSnapshot(data);
+    voteState.ready=true;
+  }catch(err){
+    voteState.error=(err&&err.message)||'Khong ket noi duoc he thong vote.';
+  }finally{
+    voteState.loading=false;
+  }
+}
 
 
 
@@ -3692,6 +4309,98 @@ function filterVote(city,btn){
   if(target) target.classList.add('on');
   renderVote(city);
 }
+
+function openImageLightbox(src,caption){
+  const wrap=document.getElementById('imgLightbox');
+  const img=document.getElementById('imgLightboxPhoto');
+  const cap=document.getElementById('imgLightboxCap');
+  if(!wrap||!img||!cap)return;
+  img.src=src;
+  img.alt=caption||'Demo image';
+  cap.textContent=caption||'';
+  wrap.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeImageLightbox(){
+  const wrap=document.getElementById('imgLightbox');
+  const img=document.getElementById('imgLightboxPhoto');
+  const cap=document.getElementById('imgLightboxCap');
+  if(!wrap||!img||!cap)return;
+  wrap.classList.remove('open');
+  img.src='';
+  img.alt='';
+  cap.textContent='';
+  document.body.style.overflow='';
+}
+function renderDemoStage(src,title,index,total){
+  const stage=document.getElementById('demoModalStage');
+  const thumbs=document.getElementById('demoModalThumbs');
+  const sub=document.getElementById('demoModalSub');
+  const media=(window.__demoModalMedia||[]);
+  if(!stage||!thumbs||!sub)return;
+  stage.innerHTML=`<img src="${src}" alt="${title}">`;
+  thumbs.innerHTML=media.map((item,idx)=>`<button type="button" class="demo-thumb ${idx===index?'active':''}" data-demo-idx="${idx}"><img src="${item}" alt="${title}"></button>`).join('');
+  thumbs.querySelectorAll('[data-demo-idx]').forEach(btn=>{
+    btn.addEventListener('click',ev=>{
+      ev.stopPropagation();
+      const nextIdx=Number(btn.getAttribute('data-demo-idx')||0);
+      renderDemoStage(media[nextIdx],title,nextIdx,total);
+    });
+  });
+  sub.textContent=total>1?`Ảnh minh họa ${index+1}/${total}`:'Ảnh minh họa';
+}
+function openDemoModal(title,media,link,accessLabel){
+  const wrap=document.getElementById('demoModal');
+  const titleEl=document.getElementById('demoModalTitle');
+  const actions=document.getElementById('demoModalActions');
+  if(!wrap||!titleEl||!actions)return;
+  window.__demoModalMedia=media||[];
+  titleEl.textContent=title||'Demo';
+  actions.innerHTML=[
+    link?`<a class="demo-modal-link" href="${link}" target="_blank" onclick="event.stopPropagation()">🔗 Xem link demo</a>`:'',
+    accessLabel?`<span class="demo-modal-note">🔒 ${accessLabel}</span>`:'',
+    !link&&!accessLabel?`<span class="demo-modal-note">Ảnh minh họa nội dung demo</span>`:''
+  ].filter(Boolean).join('');
+  renderDemoStage((media||[])[0],title||'Demo',0,(media||[]).length);
+  wrap.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeDemoModal(){
+  const wrap=document.getElementById('demoModal');
+  const stage=document.getElementById('demoModalStage');
+  const thumbs=document.getElementById('demoModalThumbs');
+  const actions=document.getElementById('demoModalActions');
+  const titleEl=document.getElementById('demoModalTitle');
+  const sub=document.getElementById('demoModalSub');
+  if(!wrap||!stage||!thumbs||!actions||!titleEl||!sub)return;
+  wrap.classList.remove('open');
+  stage.innerHTML='';
+  thumbs.innerHTML='';
+  actions.innerHTML='';
+  titleEl.textContent='';
+  sub.textContent='';
+  window.__demoModalMedia=[];
+  document.body.style.overflow='';
+}
+function openCaseDemo(caseId){
+  const c=TOP_PICK.find(x=>x.id===caseId);
+  if(!c)return;
+  trackAnalyticsEvent('demo_open',{case_id:caseId,title:c.title,has_gallery:!!(c.gallery&&c.gallery.length),has_link:!!c.demo});
+  if(c.gallery&&c.gallery.length){
+    openDemoModal(c.title,c.gallery,c.demo||'',c.accessLabel||'');
+    return;
+  }
+  if(c.demo){
+    window.open(c.demo,'_blank','noopener');
+    return;
+  }
+  if(c.accessLabel){
+    openDemoModal(c.title,[], '', c.accessLabel);
+  }
+}
+document.addEventListener('keydown',ev=>{
+  if(ev.key==='Escape'){ closeImageLightbox(); closeDemoModal(); }
+});
 
 
 function renderVote(city){
@@ -3759,16 +4468,19 @@ function renderVote(city){
     const ctLbl=cityLabel[c.city]||c.city;
     const eyebrow=[evLbl,ctLbl].filter(Boolean).join(' · ');
     const bg=c.grad||'linear-gradient(135deg,#1a1640,#2d1a8e)';
+    const hasMedia=!!(c.gallery&&c.gallery.length);
+    const accessText=(hasMedia||c.demo)?'Xem demo':(c.accessLabel||'');
     return `<div class="vc2${isMyVote?' my-vote':''}" onclick="toggleVc2(this)">
       <div class="vc2-thumb" style="background:${bg}">
         <div class="vc2-rank ${rankClass}">${rankDisplay}</div>
         <div class="vc2-city">${ctLbl}</div>
         <span>${c.emoji}</span>
-        ${c.demo?'<div class="vc2-video-badge">▶ Demo</div>':''}
+        ${c.demo?'<div class="vc2-video-badge">▶ Demo</div>':(c.accessLabel?`<div class="vc2-video-badge">${e(c.accessLabel)}</div>`:'')}
       </div>
       <div class="vc2-body">
         <div class="vc2-eyebrow">${e(eyebrow)}</div>
         <div class="vc2-title">${e(c.title)}</div>
+        <div class="vc2-summary">${e(c.goal||c.desc||'')}</div>
         <div class="vc2-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
       </div>
       <div class="vc2-footer">
@@ -3779,9 +4491,20 @@ function renderVote(city){
       </div>
       <div class="vc2-detail">
         <div class="vc2-det-person">👤 <b>${e(c.person||'')}</b>${c.team?' · '+e(c.team):''}</div>
-        <div class="vc2-det-desc">${e(c.desc||c.goal||'')}</div>
+        <div class="vc2-det-block">
+          <div class="vc2-det-label">Mục đích / Vấn đề</div>
+          <div class="vc2-det-desc">${e(c.goal||c.desc||'')}</div>
+        </div>
+        ${c.desc&&c.goal&&c.desc!==c.goal?`<div class="vc2-det-block">
+          <div class="vc2-det-label">Mô tả thêm</div>
+          <div class="vc2-det-desc">${e(c.desc)}</div>
+        </div>`:''}
+        ${c.tools&&c.tools.length?`<div class="vc2-det-block">
+          <div class="vc2-det-label">Tool sử dụng</div>
+          <div class="vc2-det-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
+        </div>`:''}
         <div class="vc2-det-actions">
-          <a class="vc2-det-demo${c.demo?'':' no-link'}" href="${c.demo||'#'}" ${c.demo?'target="_blank"':''} onclick="event.stopPropagation()">🔗 Xem demo</a>
+          ${accessText?`<button type="button" class="vc2-det-demo${(hasMedia||c.demo||c.accessLabel)?'':' no-link'}" onclick="event.stopPropagation();openCaseDemo('${c.id}')">${(hasMedia||c.demo)?'🔗':'🔒'} ${e(accessText)}</button>`:''}
           <span class="vc2-collapse" onclick="event.stopPropagation();this.closest('.vc2').classList.remove('open')">Thu gọn ↑</span>
         </div>
       </div>
@@ -3801,6 +4524,241 @@ function toggleVoteDetail(card){
   const isOpen=card.classList.contains('expanded');
   document.querySelectorAll('.vote-card.expanded').forEach(c=>c.classList.remove('expanded'));
   if(!isOpen) card.classList.add('expanded');
+}
+
+function renderVoteRuntimeNote(){
+  const noteEl=document.getElementById('voteRuntimeNote');
+  if(!noteEl)return;
+  if(!isVoteBackendReady()){
+    noteEl.className='vote-runtime-note warn';
+    noteEl.textContent='Vote thật chưa được cấu hình. Điền thông tin Supabase trong vote-config.js để bật bình chọn công khai.';
+    return;
+  }
+  if(voteState.loading){
+    noteEl.className='vote-runtime-note info';
+    noteEl.textContent='Đang tải số vote thực tế từ hệ thống chung...';
+    return;
+  }
+  if(voteState.error){
+    noteEl.className='vote-runtime-note error';
+    noteEl.textContent=voteState.error;
+    return;
+  }
+  noteEl.className='vote-runtime-note success';
+  noteEl.textContent=`Thiết bị này đã vote ${getMyVoteIds().length}/${voteState.maxVotes} team. Còn ${getRemainingVotes()} lượt bình chọn.`;
+}
+
+function renderVote(city){
+  const cityBtn=document.querySelector('.vf-btn.on');
+  const edBtn=document.querySelector('.vf-ed-btn.on');
+  if(!city) city=cityBtn?cityBtn.textContent.includes('HCM')?'HCM':'HN':'HN';
+  const edFilter=edBtn?edBtn.dataset.ed||'all':'all';
+
+  let filtered=TOP_PICK.filter(c=>c.city===city);
+  if(edFilter!=='all'){
+    const allowed=edFilter.split(',');
+    filtered=filtered.filter(c=>allowed.includes(c.event));
+  }
+
+  const sortSel=document.getElementById('voteSortSel');
+  const sortMode=sortSel?sortSel.value:'votes';
+  let sorted=[...filtered];
+  const hasAnyVote=sorted.some(c=>(voteState.counts[c.id]||0)>0);
+  if(sortMode==='votes'&&hasAnyVote){
+    sorted.sort((a,b)=>{
+      const diff=(voteState.counts[b.id]||0)-(voteState.counts[a.id]||0);
+      return diff||a.title.localeCompare(b.title,'vi');
+    });
+  }else{
+    sorted.sort((a,b)=>a.title.localeCompare(b.title,'vi'));
+  }
+
+  const countEl=document.getElementById('voteMetaCount');
+  if(countEl){
+    const parts=[sorted.length?sorted.length+' use case':'Chưa tới sự kiện'];
+    if(isVoteBackendReady()){
+      parts.push(voteState.loading?'Đang tải vote':'Còn '+getRemainingVotes()+'/'+voteState.maxVotes+' lượt trên thiết bị này');
+    }
+    countEl.textContent=parts.join(' · ');
+  }
+  renderVoteRuntimeNote();
+
+  const leadEl=document.getElementById('voteLead');
+  const rankedCases=sorted.filter(c=>(voteState.counts[c.id]||0)>0);
+  const maxVotes=rankedCases.length?(voteState.counts[rankedCases[0].id]||0):1;
+  if(rankedCases.length){
+    leadEl.innerHTML=rankedCases.slice(0,6).map((c,i)=>{
+      const cnt=voteState.counts[c.id]||0;
+      const pct=maxVotes?Math.round(cnt/maxVotes*100):0;
+      const medals=['🥇','🥈','🥉'];
+      return `<div class="vl-chip">
+        <div class="vl-rank">${medals[i]||'#'+(i+1)}</div>
+        <div><div class="vl-name">${e(c.title.length>28?c.title.slice(0,26)+'…':c.title)}</div>
+          <div class="vl-bar" style="width:${Math.max(pct,8)}px;max-width:80px"></div></div>
+        <div class="vl-cnt">${cnt} vote${cnt!==1?'s':''}</div>
+      </div>`;
+    }).join('');
+    leadEl.style.display='flex';
+  }else{
+    leadEl.innerHTML='';
+    leadEl.style.display='none';
+  }
+
+  const editionLabel={'hn01':'NHAI DAY #1','hcm01':'NHAI DAY #1','hn02':'NHAI DAY #2','hcm02':'NHAI DAY #2','hn03':'NHAI DAY #3','hcm03':'NHAI DAY #3','hn04':'NHAI DAY #4','hcm04':'NHAI DAY #4'};
+  const cityLabel={'HN':'Hà Nội','HCM':'TP.HCM'};
+  const myVoteIds=getMyVoteIds();
+  const remainingVotes=getRemainingVotes();
+
+  document.getElementById('voteGrid').innerHTML=sorted.map((c,i)=>{
+    const cnt=voteState.counts[c.id]||0;
+    const isMyVote=myVoteIds.includes(c.id);
+    const canVote=isVoteBackendReady()&&!voteState.loading&&!voteState.submittingCaseId&&!isMyVote&&remainingVotes>0;
+    const rankNum=i+1;
+    const rankClass=hasAnyVote?(rankNum===1?'r1':rankNum===2?'r2':rankNum===3?'r3':'rn'):'pending';
+    const rankDisplay=hasAnyVote?(rankNum<=3?String(rankNum):'#'+rankNum):'•';
+    const evLbl=editionLabel[c.event]||'';
+    const ctLbl=cityLabel[c.city]||c.city;
+    const eyebrow=[evLbl,ctLbl].filter(Boolean).join(' · ');
+    const bg=c.grad||'linear-gradient(135deg,#1a1640,#2d1a8e)';
+    const hasMedia=!!(c.gallery&&c.gallery.length);
+    const accessText=(hasMedia||c.demo)?'Xem demo':(c.accessLabel||'');
+    const voteTitle=isMyVote?'Bấm lại để bỏ vote':(remainingVotes<=0?'Đã dùng hết 3 lượt vote':(isVoteBackendReady()?'Vote cho case này':'Đang chờ cấu hình vote thật'));
+    const stateLabel=isMyVote?'Đã vote':(remainingVotes<=0?'Hết lượt':(isVoteBackendReady()?'Còn '+remainingVotes+' lượt':'Đang mở'));
+    const stateClass=isMyVote?'voted':(remainingVotes<=0?'locked':'live');
+    return `<div class="vc2${isMyVote?' my-vote':''}" onclick="toggleVc2(this)">
+      <div class="vc2-thumb" style="background:${bg}">
+        <div class="vc2-rank ${rankClass}">${rankDisplay}</div>
+        <div class="vc2-city">${ctLbl}</div>
+        <span>${c.emoji}</span>
+        ${c.demo?'<div class="vc2-video-badge">▶ Demo</div>':(c.accessLabel?`<div class="vc2-video-badge">${e(c.accessLabel)}</div>`:'')}
+      </div>
+      <div class="vc2-body">
+        <div class="vc2-eyebrow">${e(eyebrow)}</div>
+        <div class="vc2-state-row"><span class="vc2-state ${stateClass}">${e(stateLabel)}</span></div>
+        <div class="vc2-title">${e(c.title)}</div>
+        <div class="vc2-summary">${e(c.goal||c.desc||'')}</div>
+        <div class="vc2-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
+      </div>
+      <div class="vc2-footer">
+        <div class="vc2-votes">${cnt}<span>votes</span></div>
+        <button class="vc2-vote-btn${isMyVote?' voted':''}" ${canVote||isMyVote?'':'disabled'}
+          onclick="event.stopPropagation();doVote('${c.id}','${city}',this)"
+          title="${e(voteTitle)}">${voteState.submittingCaseId===c.id?'…':'♥'}</button>
+      </div>
+      <div class="vc2-detail">
+        <div class="vc2-det-person">👤 <b>${e(c.person||'')}</b>${c.team?' · '+e(c.team):''}</div>
+        <div class="vc2-det-block">
+          <div class="vc2-det-label">Mục đích / Vấn đề</div>
+          <div class="vc2-det-desc">${e(c.goal||c.desc||'')}</div>
+        </div>
+        ${c.desc&&c.goal&&c.desc!==c.goal?`<div class="vc2-det-block">
+          <div class="vc2-det-label">Mô tả thêm</div>
+          <div class="vc2-det-desc">${e(c.desc)}</div>
+        </div>`:''}
+        ${c.tools&&c.tools.length?`<div class="vc2-det-block">
+          <div class="vc2-det-label">Tool sử dụng</div>
+          <div class="vc2-det-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
+        </div>`:''}
+        <div class="vc2-det-actions">
+          ${accessText?`<button type="button" class="vc2-det-demo${(hasMedia||c.demo||c.accessLabel)?'':' no-link'}" onclick="event.stopPropagation();openCaseDemo('${c.id}')">${(hasMedia||c.demo)?'🔗':'🔒'} ${e(accessText)}</button>`:''}
+          <span class="vc2-collapse" onclick="event.stopPropagation();this.closest('.vc2').classList.remove('open')">Thu gọn ↑</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+const _originalRenderVoteRuntimeNote=renderVoteRuntimeNote;
+renderVoteRuntimeNote=function(){
+  const bannerTextEl=document.querySelector('.vob-text');
+  if(bannerTextEl) bannerTextEl.innerHTML='<b>Top Pick Dish</b> — Bình chọn 3 vấn đề bạn quan tâm / ấn tượng nhất';
+  const noteEl=document.getElementById('voteRuntimeNote');
+  if(!noteEl){
+    if(typeof _originalRenderVoteRuntimeNote==='function') _originalRenderVoteRuntimeNote();
+    return;
+  }
+  if(!isVoteBackendReady()){
+    noteEl.className='vote-runtime-note warn';
+    noteEl.textContent='Vote thật chưa được cấu hình. Điền thông tin Supabase trong vote-config.js để bật bình chọn công khai.';
+    return;
+  }
+  if(voteState.loading){
+    noteEl.className='vote-runtime-note info';
+    noteEl.textContent='Đang tải số vote thực tế từ hệ thống chung...';
+    return;
+  }
+  if(voteState.error){
+    noteEl.className='vote-runtime-note error';
+    noteEl.textContent=voteState.error;
+    return;
+  }
+  noteEl.className='vote-runtime-note success';
+  noteEl.textContent=`Đã chọn ${getMyVoteIds().length}/${voteState.maxVotes} vấn đề. Còn ${getRemainingVotes()} lượt bình chọn.`;
+};
+
+const _originalRenderVote=renderVote;
+renderVote=function(city){
+  const result=_originalRenderVote(city);
+  const bannerTextEl=document.querySelector('.vob-text');
+  if(bannerTextEl) bannerTextEl.innerHTML='<b>Top Pick Dish</b> — Bình chọn 3 vấn đề bạn quan tâm / ấn tượng nhất';
+  const countEl=document.getElementById('voteMetaCount');
+  if(countEl){
+    const raw=(countEl.textContent||'').split('·')[0].trim();
+    if(raw){
+      const suffix=isVoteBackendReady()?(voteState.loading?'Đang tải vote':`Còn ${getRemainingVotes()}/${voteState.maxVotes} lượt bình chọn`):'';
+      countEl.textContent=suffix?`${raw} · ${suffix}`:raw;
+    }
+  }
+  return result;
+};
+
+async function doVote(caseId,city,btn){
+  if(!isVoteBackendReady()){
+    voteState.error='Vote that chua duoc cau hinh xong. Hay them thong tin Supabase trong file vote-config.js.';
+    renderVote(city);
+    return;
+  }
+  if(voteState.loading||voteState.submittingCaseId)return;
+  const isMyVote=getMyVoteIds().includes(caseId);
+  if(!isMyVote&&getRemainingVotes()<=0){
+    voteState.error='Thiet bi nay da dung het 3 luot vote.';
+    renderVote(city);
+    return;
+  }
+  voteState.error='';
+  voteState.submittingCaseId=caseId;
+  renderVote(city);
+  try{
+    const res=await fetch(getVoteFunctionUrl(),{
+      method:isMyVote?'DELETE':'POST',
+      headers:getVoteHeaders(),
+      body:JSON.stringify({
+        campaign_id:voteState.campaignId,
+        device_id:voteState.deviceId,
+        case_id:caseId
+      })
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||data.ok===false) throw new Error(data.message||(isMyVote?'Khong bo duoc vote.':'Khong gui duoc vote.'));
+    applyVoteSnapshot(data);
+    voteState.ready=true;
+    trackAnalyticsEvent(isMyVote?'unvote':'vote_success',{case_id:caseId,city});
+  }catch(err){
+    voteState.error=(err&&err.message)||(isMyVote?'Khong bo duoc vote.':'Khong gui duoc vote.');
+  }finally{
+    voteState.submittingCaseId='';
+  }
+  renderVote(city);
+}
+
+async function initVoteState(){
+  voteState.deviceId=getVoteDeviceId();
+  analyticsState.deviceId=voteState.deviceId;
+  analyticsState.sessionId=getAnalyticsSessionId();
+  renderVote('HN');
+  startAnalyticsSession();
+  await loadVoteSnapshot();
+  renderVote('HN');
 }
 
 
@@ -3825,17 +4783,24 @@ const ROADMAP=[
 
 function renderRoadmap(){
   const lblMap={done:'Đã hoàn thành',active:'Đang diễn ra',soon:'Sắp tới',tbd:'TBD'};
-  document.getElementById('roadmapTrack').innerHTML=ROADMAP.map(r=>{
+  document.getElementById('roadmapTrack').innerHTML=ROADMAP.map((r,i)=>{
     const lbl=lblMap[r.status]||r.status;
     let cta='';
     if(r.recapId) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>openRecap('${r.recapId}'),60)">Xem recap →</button>`;
     else if(r.voteCity) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>{switchResTab('vote',document.querySelectorAll('.rtab')[1]);filterVote('${r.voteCity}',document.querySelectorAll('.vf-btn')[0]);},60)">Bình chọn →</button>`;
     else if(r.register) cta=`<button class="rm-cta-link" onclick="openReg()">Đăng ký →</button>`;
-    return `<div class="rm-card ${r.status}">
-      <div class="rm-card-status"><div class="rms-dot"></div><span class="rms-lbl">${lbl}</span></div>
-      <div class="rm-card-name">${r.name}</div>
-      <div class="rm-card-date">${r.date}</div>
-      ${cta?`<div class="rm-card-cta">${cta}</div>`:''}
+    return `<div class="rm-card ${r.status} ${i===0?'first':''} ${i===ROADMAP.length-1?'last':''}">
+      <div class="rm-pipe">
+        <div class="rm-pipe-main"></div>
+        <div class="rm-pipe-port left"></div>
+        <div class="rm-pipe-port right"></div>
+      </div>
+      <div class="rm-shell">
+        <div class="rm-card-status"><div class="rms-dot"></div><span class="rms-lbl">${lbl}</span></div>
+        <div class="rm-card-name">${r.name}</div>
+        <div class="rm-card-date">${r.date}</div>
+        ${cta?`<div class="rm-card-cta">${cta}</div>`:''}
+      </div>
     </div>`;
   }).join('');
 }
@@ -3865,10 +4830,13 @@ try{ trackCare(); }catch(e){}
 try{ renderEvents(); }catch(e){}
 
 
-try{ renderVote('HN'); }catch(e){}
+try{ initVoteState(); }catch(e){}
 
 
 try{ renderRoadmap(); }catch(e){}
+
+window.addEventListener('pagehide',endAnalyticsSession);
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') endAnalyticsSession(); });
 
 
 </script>
