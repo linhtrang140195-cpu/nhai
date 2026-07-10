@@ -4589,7 +4589,7 @@ function renderVoteRuntimeNote(city){
     return;
   }
   noteEl.className='vote-runtime-note success';
-  noteEl.textContent=`Đã chọn ${usedVotes}/${voteState.maxVotes} vấn đề tại ${cityLabel}. Còn ${remainingVotes} lượt bình chọn.`;
+  noteEl.textContent=`Đã chọn ${usedVotes}/${voteState.maxVotes} use case tại ${cityLabel}. Còn ${remainingVotes} lượt bình chọn.`;
 }
 
 function renderVote(city){
@@ -4743,7 +4743,7 @@ renderVoteRuntimeNote=function(){
     return;
   }
   noteEl.className='vote-runtime-note success';
-  noteEl.textContent=`Đã chọn ${usedVotes}/${voteState.maxVotes} vấn đề tại ${cityLabel}. Còn ${remainingVotes} lượt bình chọn.`;
+  noteEl.textContent=`Đã chọn ${usedVotes}/${voteState.maxVotes} use case tại ${cityLabel}. Còn ${remainingVotes} lượt bình chọn.`;
 };
 
 const _originalRenderVote=renderVote;
