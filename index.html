@@ -4133,6 +4133,7 @@ const voteState={
   deviceId:'',
   counts:{},
   myVotes:[],
+  myVotesByCity:{HN:[],HCM:[]},
   loading:false,
   ready:false,
   submittingCaseId:'',
@@ -4247,8 +4248,20 @@ function endAnalyticsSession(){
 function getMyVoteIds(){
   return Array.isArray(voteState.myVotes)?voteState.myVotes:[];
 }
-function getRemainingVotes(){
-  return Math.max(voteState.maxVotes-getMyVoteIds().length,0);
+function normalizeVoteCity(city){
+  return city==='HCM'?'HCM':'HN';
+}
+function getCaseVoteCity(caseId){
+  const found=TOP_PICK.find(c=>c.id===caseId);
+  return normalizeVoteCity(found&&found.city);
+}
+function getMyVoteIdsByCity(city){
+  const key=normalizeVoteCity(city);
+  const source=voteState.myVotesByCity&&Array.isArray(voteState.myVotesByCity[key])?voteState.myVotesByCity[key]:[];
+  return source.slice();
+}
+function getRemainingVotes(city){
+  return Math.max(voteState.maxVotes-getMyVoteIdsByCity(city).length,0);
 }
 function applyVoteSnapshot(payload){
   TOP_PICK.forEach(c=>{voteState.counts[c.id]=0;});
@@ -4257,6 +4270,22 @@ function applyVoteSnapshot(payload){
     voteState.counts[caseId]=Number(nextCounts[caseId]||0);
   });
   voteState.myVotes=Array.isArray(payload&&payload.deviceVotes)?payload.deviceVotes.slice():[];
+  voteState.myVotesByCity={HN:[],HCM:[]};
+  const payloadVotesByCity=payload&&payload.deviceVotesByCity&&typeof payload.deviceVotesByCity==='object'?payload.deviceVotesByCity:null;
+  if(payloadVotesByCity){
+    ['HN','HCM'].forEach(city=>{
+      const votes=Array.isArray(payloadVotesByCity[city])?payloadVotesByCity[city]:[];
+      voteState.myVotesByCity[city]=votes.slice();
+    });
+  }else{
+    getMyVoteIds().forEach(caseId=>{
+      const city=getCaseVoteCity(caseId);
+      voteState.myVotesByCity[city].push(caseId);
+    });
+  }
+  if(typeof payload?.maxVotesPerCity==='number'&&payload.maxVotesPerCity>0){
+    voteState.maxVotes=payload.maxVotesPerCity;
+  }
   if(typeof payload?.maxVotes==='number'&&payload.maxVotes>0){
     voteState.maxVotes=payload.maxVotes;
   }
@@ -4537,9 +4566,13 @@ function toggleVoteDetail(card){
   if(!isOpen) card.classList.add('expanded');
 }
 
-function renderVoteRuntimeNote(){
+function renderVoteRuntimeNote(city){
   const noteEl=document.getElementById('voteRuntimeNote');
   if(!noteEl)return;
+  const currentCity=normalizeVoteCity(city);
+  const cityLabel=currentCity==='HCM'?'TP.HCM':'Hà Nội';
+  const usedVotes=getMyVoteIdsByCity(currentCity).length;
+  const remainingVotes=getRemainingVotes(currentCity);
   if(!isVoteBackendReady()){
     noteEl.className='vote-runtime-note warn';
     noteEl.textContent='Vote thật chưa được cấu hình. Điền thông tin Supabase trong vote-config.js để bật bình chọn công khai.';
@@ -4556,7 +4589,7 @@ function renderVoteRuntimeNote(){
     return;
   }
   noteEl.className='vote-runtime-note success';
-  noteEl.textContent=`Thiết bị này đã vote ${getMyVoteIds().length}/${voteState.maxVotes} team. Còn ${getRemainingVotes()} lượt bình chọn.`;
+  noteEl.textContent=`Đã chọn ${usedVotes}/${voteState.maxVotes} vấn đề tại ${cityLabel}. Còn ${remainingVotes} lượt bình chọn.`;
 }
 
 function renderVote(city){
@@ -4588,11 +4621,12 @@ function renderVote(city){
   if(countEl){
     const parts=[sorted.length?sorted.length+' use case':'Chưa tới sự kiện'];
     if(isVoteBackendReady()){
-      parts.push(voteState.loading?'Đang tải vote':'Còn '+getRemainingVotes()+'/'+voteState.maxVotes+' lượt trên thiết bị này');
+      const cityLabel=city==='HCM'?'TP.HCM':'Hà Nội';
+      parts.push(voteState.loading?'Đang tải vote':`${cityLabel}: còn ${getRemainingVotes(city)}/${voteState.maxVotes} lượt bình chọn`);
     }
     countEl.textContent=parts.join(' · ');
   }
-  renderVoteRuntimeNote();
+  renderVoteRuntimeNote(city);
 
   const leadEl=document.getElementById('voteLead');
   const rankedCases=sorted.filter(c=>(voteState.counts[c.id]||0)>0);
@@ -4618,7 +4652,7 @@ function renderVote(city){
   const editionLabel={'hn01':'NHAI DAY #1','hcm01':'NHAI DAY #1','hn02':'NHAI DAY #2','hcm02':'NHAI DAY #2','hn03':'NHAI DAY #3','hcm03':'NHAI DAY #3','hn04':'NHAI DAY #4','hcm04':'NHAI DAY #4'};
   const cityLabel={'HN':'Hà Nội','HCM':'TP.HCM'};
   const myVoteIds=getMyVoteIds();
-  const remainingVotes=getRemainingVotes();
+  const remainingVotes=getRemainingVotes(city);
 
   document.getElementById('voteGrid').innerHTML=sorted.map((c,i)=>{
     const cnt=voteState.counts[c.id]||0;
@@ -4633,7 +4667,7 @@ function renderVote(city){
     const bg=c.grad||'linear-gradient(135deg,#1a1640,#2d1a8e)';
     const hasMedia=!!(c.gallery&&c.gallery.length);
     const accessText=(hasMedia||c.demo)?'Xem demo':(c.accessLabel||'');
-    const voteTitle=isMyVote?'Bấm lại để bỏ vote':(remainingVotes<=0?'Đã dùng hết 3 lượt vote':(isVoteBackendReady()?'Vote cho case này':'Đang chờ cấu hình vote thật'));
+    const voteTitle=isMyVote?'Bấm lại để bỏ vote':(remainingVotes<=0?`Đã dùng hết ${voteState.maxVotes} lượt vote cho ${ctLbl}`:(isVoteBackendReady()?'Vote cho case này':'Đang chờ cấu hình vote thật'));
     const stateLabel=isMyVote?'Đã vote':(remainingVotes<=0?'Hết lượt':(isVoteBackendReady()?'Còn '+remainingVotes+' lượt':'Đang mở'));
     const stateClass=isMyVote?'voted':(remainingVotes<=0?'locked':'live');
     return `<div class="vc2${isMyVote?' my-vote':''}" onclick="toggleVc2(this)">
@@ -4688,6 +4722,11 @@ renderVoteRuntimeNote=function(){
     if(typeof _originalRenderVoteRuntimeNote==='function') _originalRenderVoteRuntimeNote();
     return;
   }
+  const cityBtn=document.querySelector('.vf-btn.on');
+  const city=cityBtn&&cityBtn.textContent.includes('HCM')?'HCM':'HN';
+  const cityLabel=city==='HCM'?'TP.HCM':'Hà Nội';
+  const usedVotes=getMyVoteIdsByCity(city).length;
+  const remainingVotes=getRemainingVotes(city);
   if(!isVoteBackendReady()){
     noteEl.className='vote-runtime-note warn';
     noteEl.textContent='Vote thật chưa được cấu hình. Điền thông tin Supabase trong vote-config.js để bật bình chọn công khai.';
@@ -4704,7 +4743,7 @@ renderVoteRuntimeNote=function(){
     return;
   }
   noteEl.className='vote-runtime-note success';
-  noteEl.textContent=`Đã chọn ${getMyVoteIds().length}/${voteState.maxVotes} vấn đề. Còn ${getRemainingVotes()} lượt bình chọn.`;
+  noteEl.textContent=`Đã chọn ${usedVotes}/${voteState.maxVotes} vấn đề tại ${cityLabel}. Còn ${remainingVotes} lượt bình chọn.`;
 };
 
 const _originalRenderVote=renderVote;
@@ -4716,7 +4755,9 @@ renderVote=function(city){
   if(countEl){
     const raw=(countEl.textContent||'').split('·')[0].trim();
     if(raw){
-      const suffix=isVoteBackendReady()?(voteState.loading?'Đang tải vote':`Còn ${getRemainingVotes()}/${voteState.maxVotes} lượt bình chọn`):'';
+      const currentCity=city||(document.querySelector('.vf-btn.on')?.textContent.includes('HCM')?'HCM':'HN');
+      const cityLabel=currentCity==='HCM'?'TP.HCM':'Hà Nội';
+      const suffix=isVoteBackendReady()?(voteState.loading?'Đang tải vote':`${cityLabel}: còn ${getRemainingVotes(currentCity)}/${voteState.maxVotes} lượt bình chọn`):'';
       countEl.textContent=suffix?`${raw} · ${suffix}`:raw;
     }
   }
@@ -4731,8 +4772,10 @@ async function doVote(caseId,city,btn){
   }
   if(voteState.loading||voteState.submittingCaseId)return;
   const isMyVote=getMyVoteIds().includes(caseId);
-  if(!isMyVote&&getRemainingVotes()<=0){
-    voteState.error='Thiet bi nay da dung het 3 luot vote.';
+  const currentCity=normalizeVoteCity(city||getCaseVoteCity(caseId));
+  const cityLabel=currentCity==='HCM'?'TP.HCM':'Hà Nội';
+  if(!isMyVote&&getRemainingVotes(currentCity)<=0){
+    voteState.error=`Thiet bi nay da dung het ${voteState.maxVotes} luot vote cho ${cityLabel}.`;
     renderVote(city);
     return;
   }
