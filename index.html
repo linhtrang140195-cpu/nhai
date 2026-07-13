@@ -1428,7 +1428,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 .vote-runtime-note.error{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.26);color:#ffb4b4;}
 .vote-sort-wrap{position:relative;}
 .vote-sort-select{appearance:none;-webkit-appearance:none;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--cream);font-size:13px;font-weight:600;padding:7px 28px 7px 14px;border-radius:100px;cursor:pointer;font-family:'Be Vietnam Pro';}
-.vote-sort-wrap::after{content:'â–¾';position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px;}
+.vote-sort-wrap::after{content:'▼';position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px;}
 .vote-top3-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:20px 0 12px;}
 .vote-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
 .vc2{background:#0e0c1e;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;transition:transform .18s,box-shadow .18s,border-color .18s;cursor:pointer;display:flex;flex-direction:column;}
@@ -3464,7 +3464,7 @@ function renderEvents(){
               <div class="wc-bg" style="background:linear-gradient(135deg,#1e3a5f,#1d4ed8,#3b82f6,#60a5fa)"></div>
               <div class="wc-overlay"></div>
               <div class="wc-city-badge">🌆 TP.HCM · 03/07/2026</div>
-              <div class="wc-avatar">âš½</div>
+              <div class="wc-avatar">⚽</div>
               <div class="wc-body">
                 <div class="wc-category">🏆 Master Chef · TP.HCM</div>
                 <div class="wc-meta-row">
@@ -3748,7 +3748,7 @@ const TOP_PICK=[
 
 
    demo:'',
-   accessLabel:'File ná»™i bá»™',
+   accessLabel:'File nội bộ',
    gallery:[
      'assets/demos/hn-dinh-thi-thu-ba-ai-du-lieu-qdct-grab/shot-1.png',
      'assets/demos/hn-dinh-thi-thu-ba-ai-du-lieu-qdct-grab/shot-2.png',
@@ -3908,7 +3908,7 @@ const TOP_PICK=[
 
 
    demo:'',
-   accessLabel:'File ná»™i bá»™',
+   accessLabel:'File nội bộ',
    gallery:[
      'assets/demos/hcm-vuu-khai-trien-ho-tro-kiem-tra-phieu/shot-1.png',
      'assets/demos/hcm-vuu-khai-trien-ho-tro-kiem-tra-phieu/shot-2.png',
@@ -4276,8 +4276,8 @@ function openDemoModal(title,media,link,accessLabel){
   window.__demoModalMedia=media||[];
   titleEl.textContent=title||'Demo';
   actions.innerHTML=[
-    link?`<a class="demo-modal-link" href="${link}" target="_blank" onclick="event.stopPropagation()">🔗 Xem link demo</a>`:'',
-    accessLabel?`<span class="demo-modal-note">🔒 ${accessLabel}</span>`:'',
+    link?`<a class="demo-modal-link" href="${link}" target="_blank" onclick="event.stopPropagation()">Xem link demo</a>`:'',
+    accessLabel?`<span class="demo-modal-note">${accessLabel}</span>`:'',
     !link&&!accessLabel?`<span class="demo-modal-note">Ảnh minh họa nội dung demo</span>`:''
   ].filter(Boolean).join('');
   renderDemoStage((media||[])[0],title||'Demo',0,(media||[]).length);
@@ -4394,7 +4394,7 @@ function renderVote(city){
         <div class="vc2-rank ${rankClass}">${rankDisplay}</div>
         <div class="vc2-city">${ctLbl}</div>
         <span>${c.emoji}</span>
-        ${c.demo?'<div class="vc2-video-badge">â–¶ Demo</div>':(c.accessLabel?`<div class="vc2-video-badge">${e(c.accessLabel)}</div>`:'')}
+        ${c.demo?'<div class="vc2-video-badge">Demo</div>':(c.accessLabel?`<div class="vc2-video-badge">${e(c.accessLabel)}</div>`:'')}
       </div>
       <div class="vc2-body">
         <div class="vc2-eyebrow">${e(eyebrow)}</div>
@@ -4423,7 +4423,7 @@ function renderVote(city){
           <div class="vc2-det-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
         </div>`:''}
         <div class="vc2-det-actions">
-          ${accessText?`<button type="button" class="vc2-det-demo${(hasMedia||c.demo||c.accessLabel)?'':' no-link'}" onclick="event.stopPropagation();openCaseDemo('${c.id}')">${(hasMedia||c.demo)?'🔗':'🔒'} ${e(accessText)}</button>`:''}
+          ${accessText?`<button type="button" class="vc2-det-demo${(hasMedia||c.demo||c.accessLabel)?'':' no-link'}" onclick="event.stopPropagation();openCaseDemo('${c.id}')">${e(accessText)}</button>`:''}
           <span class="vc2-collapse" onclick="event.stopPropagation();this.closest('.vc2').classList.remove('open')">Thu gọn ↑</span>
         </div>
       </div>
@@ -4554,7 +4554,7 @@ function renderVote(city){
         <div class="vc2-rank ${rankClass}">${rankDisplay}</div>
         <div class="vc2-city">${ctLbl}</div>
         <span>${c.emoji}</span>
-        ${c.demo?'<div class="vc2-video-badge">â–¶ Demo</div>':(c.accessLabel?`<div class="vc2-video-badge">${e(c.accessLabel)}</div>`:'')}
+        ${c.demo?'<div class="vc2-video-badge">Demo</div>':(c.accessLabel?`<div class="vc2-video-badge">${e(c.accessLabel)}</div>`:'')}
       </div>
       <div class="vc2-body">
         <div class="vc2-eyebrow">${e(eyebrow)}</div>
@@ -4584,7 +4584,7 @@ function renderVote(city){
           <div class="vc2-det-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
         </div>`:''}
         <div class="vc2-det-actions">
-          ${accessText?`<button type="button" class="vc2-det-demo${(hasMedia||c.demo||c.accessLabel)?'':' no-link'}" onclick="event.stopPropagation();openCaseDemo('${c.id}')">${(hasMedia||c.demo)?'🔗':'🔒'} ${e(accessText)}</button>`:''}
+          ${accessText?`<button type="button" class="vc2-det-demo${(hasMedia||c.demo||c.accessLabel)?'':' no-link'}" onclick="event.stopPropagation();openCaseDemo('${c.id}')">${e(accessText)}</button>`:''}
           <span class="vc2-collapse" onclick="event.stopPropagation();this.closest('.vc2').classList.remove('open')">Thu gọn ↑</span>
         </div>
       </div>
@@ -4779,9 +4779,6 @@ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==
 
 
 </html>
-
-
-
 
 
 

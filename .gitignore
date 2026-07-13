@@ -1,1 +1,19 @@
-assets/
+assets/**
+
+# Keep public images that the static site renders directly.
+# Large/internal media such as videos, spreadsheets, docs, and raw uploads stay ignored.
+!assets/
+!assets/demos/
+assets/demos/**
+!assets/demos/**/
+!assets/demos/**/*.jpg
+!assets/demos/**/*.jpeg
+!assets/demos/**/*.png
+!assets/demos/**/*.webp
+!assets/recap/
+assets/recap/**
+!assets/recap/**/
+!assets/recap/**/*.jpg
+!assets/recap/**/*.jpeg
+!assets/recap/**/*.png
+!assets/recap/**/*.webp
