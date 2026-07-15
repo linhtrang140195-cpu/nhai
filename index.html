@@ -3334,10 +3334,10 @@ const EVENTS=[
    ]},
 
 
-  {id:'hn02',name:'NHAI DAY 02 — Hà Nội',date:'Tháng 8/2026',city:'HN',status:'soon',emoji:'🚀',kpis:[],awards:[],note:'',tags:[],quickNotes:[],photos:[]},
+  {id:'hn02',name:'NHAI DAY 02 — Hà Nội',date:'Tháng 7/2026',city:'HN',status:'soon',emoji:'🚀',kpis:[],awards:[],note:'',tags:[],quickNotes:[],photos:[]},
 
 
-  {id:'hcm02',name:'NHAI DAY 02 — HCM',date:'Tháng 8/2026',city:'HCM',status:'soon',emoji:'🌆',kpis:[],awards:[],note:'',tags:[],quickNotes:[],photos:[]},
+  {id:'hcm02',name:'NHAI DAY 02 — HCM',date:'Tháng 7/2026',city:'HCM',status:'soon',emoji:'🌆',kpis:[],awards:[],note:'',tags:[],quickNotes:[],photos:[]},
 
 
 ];
@@ -3391,7 +3391,7 @@ function renderEvents(){
     if(!ed.done) return `<div class="ed-panel ${i===0?'on':''}" id="ed-${i}">
       <div class="ed-coming"><span class="ed-cs-ico">🚀</span>
       <div class="ed-cs-title">${ed.label} — Sắp diễn ra</div>
-      <div class="ed-cs-sub">Tháng 8/2026 · Hà Nội & TP.HCM</div>
+      <div class="ed-cs-sub">Tháng 7/2026 · Hà Nội & TP.HCM</div>
       <button class="btn-soon" onclick="openReg()">🔔 Đăng ký giữ chỗ</button></div></div>`;
 
     const mkAwardList=(list,region)=>list.map(a=>`
@@ -4031,6 +4031,12 @@ const analyticsState={
 
 TOP_PICK.forEach(c=>{voteState.counts[c.id]=0;});
 
+// Display-only vote boost. This does not change Supabase data or ranking order.
+const VOTE_DISPLAY_OFFSET=10;
+function getDisplayVoteCount(caseId){
+  return (voteState.counts[caseId]||0)+VOTE_DISPLAY_OFFSET;
+}
+
 function createLocalDeviceId(){
   return 'nd-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10);
 }
@@ -4508,11 +4514,11 @@ function renderVote(city){
   renderVoteRuntimeNote(city);
 
   const leadEl=document.getElementById('voteLead');
-  const rankedCases=sorted.filter(c=>(voteState.counts[c.id]||0)>0);
-  const maxVotes=rankedCases.length?(voteState.counts[rankedCases[0].id]||0):1;
+  const rankedCases=sorted.filter(c=>getDisplayVoteCount(c.id)>0);
+  const maxVotes=rankedCases.length?getDisplayVoteCount(rankedCases[0].id):1;
   if(rankedCases.length){
     leadEl.innerHTML=rankedCases.slice(0,6).map((c,i)=>{
-      const cnt=voteState.counts[c.id]||0;
+      const cnt=getDisplayVoteCount(c.id);
       const pct=maxVotes?Math.round(cnt/maxVotes*100):0;
       const medals=['🥇','🥈','🥉'];
       return `<div class="vl-chip">
@@ -4534,7 +4540,7 @@ function renderVote(city){
   const remainingVotes=getRemainingVotes(city);
 
   document.getElementById('voteGrid').innerHTML=sorted.map((c,i)=>{
-    const cnt=voteState.counts[c.id]||0;
+    const cnt=getDisplayVoteCount(c.id);
     const isMyVote=myVoteIds.includes(c.id);
     const canVote=isVoteBackendReady()&&!voteState.loading&&!voteState.submittingCaseId&&!isMyVote&&remainingVotes>0;
     const rankNum=i+1;
