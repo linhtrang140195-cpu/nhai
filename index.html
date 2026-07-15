@@ -2211,8 +2211,8 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 
 
       <div class="vote-open-banner">
-        <span class="vob-badge">ĐANG MỞ</span>
-        <span class="vob-text"><b>Top Pick Dish</b> — Bình chọn output ấn tượng nhất · tối đa 3 team / thiết bị</span>
+        <span class="vob-badge">ĐÃ ĐÓNG</span>
+        <span class="vob-text"><b>Top Pick Dish</b> — Đã đóng bình chọn · Cảm ơn mọi người đã tham gia</span>
         <span class="vob-date">📅 10/07 – 15/07/2026</span>
       </div>
 
@@ -2503,7 +2503,7 @@ let cases = ls('nd_cases3',[
 let anns = ls('nd_anns2',[
 
 
-  {ico:'🎉',title:'Đã có recap NHAI DAY! 01 - Hà Nội',text:'Phần tổng kết và kết quả Hà Nội đã được cập nhật. Top Pick Dish hiện đang mở bình chọn và sẽ chốt kết quả sau khi đóng vote.',date:'26/06/2026 · AI Help Team',r1:0,r2:0},
+  {ico:'🎉',title:'Đã có recap NHAI DAY! 01 - Hà Nội',text:'Phần tổng kết và kết quả Hà Nội đã được cập nhật. Top Pick Dish đã đóng bình chọn và đang giữ kết quả để mọi người cùng xem.',date:'26/06/2026 · AI Help Team',r1:0,r2:0},
 
 
   {ico:'🧙',title:'Danh sách mentor đã cập nhật',text:'8 mentor từ các team Creative, Operations, Engineering, Game Dev, Marketing & Esports đã sẵn sàng đồng hành cùng bạn! Xem chi tiết ở section Mentors.',date:'18/06/2026 · AI Help Team',r1:15,r2:7},
@@ -3275,7 +3275,7 @@ const EVENTS=[
      {name:'✅ Hoàn thiện trước 17:30',val:'500.000đ',winner:'Tất cả team có demo trước 17:30'},
 
 
-     {name:'💡 Top Pick Dish',val:'1.000.000đ',winner:'Chưa chốt kết quả · đang mở bình chọn →'},
+     {name:'💡 Top Pick Dish',val:'1.000.000đ',winner:'Đã đóng bình chọn · đang tổng hợp kết quả →'},
 
 
    ],
@@ -3314,7 +3314,7 @@ const EVENTS=[
      {name:'✅ Hoàn thiện trước 17:30',val:'500.000đ',winner:'Tất cả team có demo trước 17:30'},
 
 
-     {name:'💡 Top Pick Dish',val:'1.000.000đ',winner:'Chưa chốt kết quả · đang mở bình chọn →'},
+     {name:'💡 Top Pick Dish',val:'1.000.000đ',winner:'Đã đóng bình chọn · đang tổng hợp kết quả →'},
 
 
    ],
@@ -3521,7 +3521,7 @@ function renderEvents(){
       </div>
 
       <div class="award-section">
-        <div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#b79bff;background:rgba(123,77,219,.1);border-color:rgba(123,77,219,.25)">1.000.000đ · Đang mở bình chọn</span></div>
+        <div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#b79bff;background:rgba(123,77,219,.1);border-color:rgba(123,77,219,.25)">1.000.000đ · Đã đóng bình chọn</span></div>
         <button class="btn-recap" onclick="switchResTab('vote',document.querySelectorAll('.rtab')[1])">Xem & bình chọn →</button>
       </div>
     </div>`;
@@ -4018,7 +4018,8 @@ const voteState={
   submittingCaseId:'',
   error:'',
   campaignId:VOTE_CONFIG.campaignId||'top-pick-day01-2026',
-  maxVotes:Number(VOTE_CONFIG.maxVotes)||3
+  maxVotes:Number(VOTE_CONFIG.maxVotes)||3,
+  votingClosed:false
 };
 
 const analyticsState={
@@ -4174,6 +4175,7 @@ function applyVoteSnapshot(payload){
   if(typeof payload?.maxVotes==='number'&&payload.maxVotes>0){
     voteState.maxVotes=payload.maxVotes;
   }
+  voteState.votingClosed=!!(payload&&payload.votingClosed);
 }
 async function loadVoteSnapshot(){
   if(!isVoteBackendReady()){
@@ -4507,7 +4509,7 @@ function renderVote(city){
     const parts=[sorted.length?sorted.length+' use case':'Chưa tới sự kiện'];
     if(isVoteBackendReady()){
       const cityLabel=city==='HCM'?'TP.HCM':'Hà Nội';
-      parts.push(voteState.loading?'Đang tải vote':`${cityLabel}: còn ${getRemainingVotes(city)}/${voteState.maxVotes} lượt bình chọn`);
+      parts.push(voteState.loading?'Đang tải vote':(voteState.votingClosed?'Đã đóng bình chọn':`${cityLabel}: còn ${getRemainingVotes(city)}/${voteState.maxVotes} lượt bình chọn`));
     }
     countEl.textContent=parts.join(' · ');
   }
@@ -4542,7 +4544,7 @@ function renderVote(city){
   document.getElementById('voteGrid').innerHTML=sorted.map((c,i)=>{
     const cnt=getDisplayVoteCount(c.id);
     const isMyVote=myVoteIds.includes(c.id);
-    const canVote=isVoteBackendReady()&&!voteState.loading&&!voteState.submittingCaseId&&!isMyVote&&remainingVotes>0;
+    const canVote=isVoteBackendReady()&&!voteState.votingClosed&&!voteState.loading&&!voteState.submittingCaseId&&!isMyVote&&remainingVotes>0;
     const rankNum=i+1;
     const rankClass=hasAnyVote?(rankNum===1?'r1':rankNum===2?'r2':rankNum===3?'r3':'rn'):'pending';
     const rankDisplay=hasAnyVote?(rankNum<=3?String(rankNum):'#'+rankNum):'•';
@@ -4552,9 +4554,9 @@ function renderVote(city){
     const bg=c.grad||'linear-gradient(135deg,#1a1640,#2d1a8e)';
     const hasMedia=!!(c.gallery&&c.gallery.length);
     const accessText=(hasMedia||c.demo)?'Xem demo':(c.accessLabel||'');
-    const voteTitle=isMyVote?'Bấm lại để bỏ vote':(remainingVotes<=0?`Đã dùng hết ${voteState.maxVotes} lượt vote cho ${ctLbl}`:(isVoteBackendReady()?'Vote cho case này':'Đang chờ cấu hình vote thật'));
-    const stateLabel=isMyVote?'Đã vote':(remainingVotes<=0?'Hết lượt':(isVoteBackendReady()?'Còn '+remainingVotes+' lượt':'Đang mở'));
-    const stateClass=isMyVote?'voted':(remainingVotes<=0?'locked':'live');
+    const voteTitle=voteState.votingClosed?'Bình chọn đã đóng':(isMyVote?'Bấm lại để bỏ vote':(remainingVotes<=0?`Đã dùng hết ${voteState.maxVotes} lượt vote cho ${ctLbl}`:(isVoteBackendReady()?'Vote cho case này':'Đang chờ cấu hình vote thật')));
+    const stateLabel=voteState.votingClosed?'Đã đóng':(isMyVote?'Đã vote':(remainingVotes<=0?'Hết lượt':(isVoteBackendReady()?'Còn '+remainingVotes+' lượt':'Đang mở')));
+    const stateClass=voteState.votingClosed?'locked':(isMyVote?'voted':(remainingVotes<=0?'locked':'live'));
     return `<div class="vc2${isMyVote?' my-vote':''}" onclick="toggleVc2(this)">
       <div class="vc2-thumb" style="background:${bg}">
         <div class="vc2-rank ${rankClass}">${rankDisplay}</div>
@@ -4571,7 +4573,7 @@ function renderVote(city){
       </div>
       <div class="vc2-footer">
         <div class="vc2-votes">${cnt}<span>votes</span></div>
-        <button class="vc2-vote-btn${isMyVote?' voted':''}" ${canVote||isMyVote?'':'disabled'}
+        <button class="vc2-vote-btn${isMyVote?' voted':''}" ${canVote||(!voteState.votingClosed&&isMyVote)?'':'disabled'}
           onclick="event.stopPropagation();doVote('${c.id}','${city}',this)"
           title="${e(voteTitle)}">${voteState.submittingCaseId===c.id?'…':'♥'}</button>
       </div>
@@ -4601,7 +4603,7 @@ function renderVote(city){
 const _originalRenderVoteRuntimeNote=renderVoteRuntimeNote;
 renderVoteRuntimeNote=function(){
   const bannerTextEl=document.querySelector('.vob-text');
-  if(bannerTextEl) bannerTextEl.innerHTML='<b>Top Pick Dish</b> — Bình chọn 3 vấn đề bạn quan tâm / ấn tượng nhất';
+  if(bannerTextEl) bannerTextEl.innerHTML='<b>Top Pick Dish</b> — Đã đóng bình chọn · Cảm ơn mọi người đã tham gia';
   const noteEl=document.getElementById('voteRuntimeNote');
   if(!noteEl){
     if(typeof _originalRenderVoteRuntimeNote==='function') _originalRenderVoteRuntimeNote();
@@ -4627,6 +4629,11 @@ renderVoteRuntimeNote=function(){
     noteEl.textContent=voteState.error;
     return;
   }
+  if(voteState.votingClosed){
+    noteEl.className='vote-runtime-note warn';
+    noteEl.textContent='Bình chọn Top Pick Dish đã đóng. Kết quả đang được giữ nguyên để mọi người cùng xem.';
+    return;
+  }
   noteEl.className='vote-runtime-note success';
   noteEl.textContent=`Đã chọn ${usedVotes}/${voteState.maxVotes} use case tại ${cityLabel}. Còn ${remainingVotes} lượt bình chọn.`;
 };
@@ -4642,7 +4649,7 @@ renderVote=function(city){
     if(raw){
       const currentCity=city||(document.querySelector('.vf-btn.on')?.textContent.includes('HCM')?'HCM':'HN');
       const cityLabel=currentCity==='HCM'?'TP.HCM':'Hà Nội';
-      const suffix=isVoteBackendReady()?(voteState.loading?'Đang tải vote':`${cityLabel}: còn ${getRemainingVotes(currentCity)}/${voteState.maxVotes} lượt bình chọn`):'';
+      const suffix=isVoteBackendReady()?(voteState.loading?'Đang tải vote':(voteState.votingClosed?'Đã đóng bình chọn':`${cityLabel}: còn ${getRemainingVotes(currentCity)}/${voteState.maxVotes} lượt bình chọn`)):'';
       countEl.textContent=suffix?`${raw} · ${suffix}`:raw;
     }
   }
@@ -4655,7 +4662,7 @@ async function doVote(caseId,city,btn){
     renderVote(city);
     return;
   }
-  if(voteState.loading||voteState.submittingCaseId)return;
+  if(voteState.loading||voteState.submittingCaseId||voteState.votingClosed)return;
   const isMyVote=getMyVoteIds().includes(caseId);
   const currentCity=normalizeVoteCity(city||getCaseVoteCity(caseId));
   const cityLabel=currentCity==='HCM'?'TP.HCM':'Hà Nội';
@@ -4710,7 +4717,7 @@ async function initVoteState(){
 const ROADMAP=[
   {status:'done',name:'NHAI DAY 01 — Hà Nội',date:'26/06/2026',recapId:'hn01'},
   {status:'done',name:'NHAI DAY 01 — HCM',date:'03/07/2026',recapId:'hcm01'},
-  {status:'active',name:'Top Pick Dish — Đang mở vote',date:'Bình chọn output ấn tượng nhất từ Day 01',voteCity:'HN'},
+  {status:'done',name:'Top Pick Dish — Đã đóng vote',date:'Đang tổng hợp kết quả Top Pick Dish từ Day 01',voteCity:'HN'},
   {status:'soon',name:'NHAI DAY 02 — Hà Nội',date:'31/07/2026',register:true},
   {status:'soon',name:'NHAI DAY 02 — HCM',date:'07/08/2026',register:true},
   {status:'tbd',name:'NHAI DAY 03 — Hà Nội',date:'28/08/2026 (dự kiến)'},
