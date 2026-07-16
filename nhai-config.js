@@ -96,11 +96,14 @@
       if (r.member2_name && r.member2_name.trim()) { const t2 = r.member2_team || t; tc[t2] = (tc[t2] || 0) + 1; }
       if (r.member3_name && r.member3_name.trim()) { const t3 = r.member3_team || t; tc[t3] = (tc[t3] || 0) + 1; }
     });
-    const top1 = Object.entries(tc).sort((a, b) => b[1] - a[1])[0];
-    if (!top1) return;
+    const top2 = Object.entries(tc).sort((a, b) => b[1] - a[1]).slice(0, 2);
+    if (!top2.length) return;
+    const medals = ['🥇','🥈'];
     el.innerHTML =
-      '<span style="font-size:13px;color:rgba(255,255,255,0.38);white-space:nowrap">Top team cộng dồn:</span>' +
-      `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 12px;font-size:13px;color:rgba(255,255,255,0.82)">🥇 <b style="font-weight:600">${top1[0]}</b></span>`;
+      '<span style="font-size:13px;color:rgba(255,255,255,0.38);white-space:nowrap">Top team:</span>' +
+      top2.map(([t, c], i) =>
+        `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 12px;font-size:13px;color:rgba(255,255,255,0.82)">${medals[i]} <b style="font-weight:600">${t}</b> <span style="color:rgba(255,255,255,0.42)">${c}</span></span>`
+      ).join('');
     el.style.display = 'flex';
   }
 
