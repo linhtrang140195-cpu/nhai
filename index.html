@@ -3203,6 +3203,25 @@ async function submitReg(){
 
 
 
+  // Submit to Supabase (fire-and-forget, non-blocking)
+  const _sbUrl='https://xmtxdfeengpbapgudprx.supabase.co';
+  const _sbKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdHhkZmVlbmdwYmFwZ3VkcHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MDg0MTAsImV4cCI6MjA5OTE4NDQxMH0.NNePCWoFDuRWmeDI01FK5XOF9IbQq4E3H6wJEju-tRY';
+  fetch(`${_sbUrl}/rest/v1/registrations`,{
+    method:'POST',
+    headers:{apikey:_sbKey,Authorization:`Bearer ${_sbKey}`,'Content-Type':'application/json',Prefer:'return=representation'},
+    body:JSON.stringify({
+      season_id: window.nhaiCurrentSeason||'nhai-day-02',
+      full_name: name, city, team,
+      registration_type: type,
+      member2_name: document.getElementById('m2n').value.trim()||null,
+      member2_team: document.getElementById('m2t').value||null,
+      member3_name: document.getElementById('m3n').value.trim()||null,
+      member3_team: document.getElementById('m3t').value||null,
+      team_matching_note: document.getElementById('fMatch').value.trim()||null,
+      problem_to_solve: document.getElementById('fProb').value.trim()||null
+    })
+  }).catch(e=>console.warn('Supabase reg:',e));
+
   // Update local count optimistically
 
 
@@ -3474,12 +3493,12 @@ function renderEvents(){
 
     return `<div class="ed-panel ${i===0?'on':''}" id="ed-${i}">
       <div class="ed-stats-bar">
-        <div class="ed-kpi"><span class="ek-n">67</span><div class="ek-l">Người tham gia</div></div>
-        <div class="ed-kpi"><span class="ek-n">28</span><div class="ek-l">Team tham gia</div></div>
-        <div class="ed-kpi"><span class="ek-n">4.71★</span><div class="ek-l">Trải nghiệm chung</div></div>
-        <div class="ed-kpi"><span class="ek-n">4.61★</span><div class="ek-l">Đánh giá mức độ hữu ích</div></div>
-        <div class="ed-kpi"><span class="ek-n">93.5%</span><div class="ek-l">Muốn tiếp tục</div></div>
-        <div class="ed-kpi"><span class="ek-n">100%</span><div class="ek-l">Có output/demo phát triển tiếp</div></div>
+        <div class="ed-kpi"><span class="ek-n" id="ek-p-${i}">—</span><div class="ek-l">Người tham gia</div></div>
+        <div class="ed-kpi"><span class="ek-n" id="ek-t-${i}">—</span><div class="ek-l">Team tham gia</div></div>
+        <div class="ed-kpi"><span class="ek-n" id="ek-xp-${i}">—</span><div class="ek-l">Trải nghiệm chung</div></div>
+        <div class="ed-kpi"><span class="ek-n" id="ek-mn-${i}">—</span><div class="ek-l">Đánh giá mức độ hữu ích</div></div>
+        <div class="ed-kpi"><span class="ek-n" id="ek-ct-${i}">—</span><div class="ek-l">Muốn tiếp tục</div></div>
+        <div class="ed-kpi"><span class="ek-n" id="ek-dm-${i}">—</span><div class="ek-l">Có output/demo phát triển tiếp</div></div>
       </div>
 
       <div class="award-section">

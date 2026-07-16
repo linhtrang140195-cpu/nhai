@@ -45,13 +45,13 @@
   let registrationCount = 0;
 
   async function loadConfig() {
-    const [cfg, ss, m, e, f, regCount] = await Promise.all([
+    const [cfg, ss, m, e, f, regs] = await Promise.all([
       sb('site_config'),
       sb('season_stats?order=season_id'),
       sb('mentors?is_active=eq.true&order=display_order'),
       sb('events?order=display_order'),
       sb('faqs?is_active=eq.true&order=display_order'),
-      sb('registrations?select=id&limit=5000').then(r => r.length)
+      sb('registrations?select=season_id,member2_name,member3_name&limit=5000')
     ]);
 
     cfg.forEach(row => { siteConfig[row.key] = row.value; });
@@ -59,7 +59,20 @@
     mentors = m || [];
     events = e || [];
     faqs = f || [];
-    registrationCount = regCount || 0;
+
+    // headcount: mỗi registration + TV2 + TV3
+    const allRegs = regs || [];
+    registrationCount = allRegs.length;
+    const headcountBySeason = {};
+    allRegs.forEach(r => {
+      if (!headcountBySeason[r.season_id]) headcountBySeason[r.season_id] = 0;
+      headcountBySeason[r.season_id]++;
+      if (r.member2_name && r.member2_name.trim()) headcountBySeason[r.season_id]++;
+      if (r.member3_name && r.member3_name.trim()) headcountBySeason[r.season_id]++;
+    });
+
+    // Expose current season cho form đăng ký trong index.html
+    window.nhaiCurrentSeason = siteConfig.current_season || 'nhai-day-02';
 
     applyConfig();
     updateMentors();
@@ -67,6 +80,26 @@
     updateFAQ();
     updateRegistrationCount();
     updateSeasonStats();
+    updateEditionStats(headcountBySeason);
+  }
+
+  // ===== 6b. UPDATE EDITION STATS (Results section per-season) =====
+  const SEASON_ED = ['nhai-day-01','nhai-day-02','nhai-day-03','nhai-day-04'];
+  function updateEditionStats(headcountBySeason) {
+    SEASON_ED.forEach((sid, i) => {
+      const ss = seasonStats.find(s => s.season_id === sid);
+      const hc = headcountBySeason[sid];
+
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.textContent = val; };
+      if (hc) set(`ek-p-${i}`, hc);
+      if (ss) {
+        if (ss.total_teams)      set(`ek-t-${i}`,  ss.total_teams);
+        if (ss.avg_experience)   set(`ek-xp-${i}`, ss.avg_experience + '★');
+        if (ss.avg_mentor)       set(`ek-mn-${i}`, ss.avg_mentor + '★');
+        if (ss.pct_want_continue) set(`ek-ct-${i}`, ss.pct_want_continue + '%');
+        if (ss.pct_has_demo)     set(`ek-dm-${i}`, ss.pct_has_demo + '%');
+      }
+    });
   }
 
   // ===== 1. APPLY SITE CONFIG (toggles) =====
