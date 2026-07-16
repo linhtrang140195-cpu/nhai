@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 
 <html lang="vi">
@@ -2336,7 +2336,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
     <div class="m-title">Đăng ký NHAI DAY!</div>
 
 
-    <div class="m-sub">Điền thông tin, chúng tôi sẽ chuyển bạn sang Google Form để hoàn tất 🧙</div>
+    <div class="m-sub">Điền thông tin và nhấn Xác nhận — đăng ký trực tiếp, không cần Google Form 🚀</div>
 
 
     <div class="fg"><label class="lbl">Họ và tên <span class="r">*</span></label><input class="inp" type="text" id="fName" placeholder="Nguyễn Văn A"></div>
@@ -3138,117 +3138,56 @@ function onType(){
 
 
 async function submitReg(){
-
-
   const name=document.getElementById('fName').value.trim();
-
-
   const city=document.querySelector('input[name="city"]:checked')?.value;
-
-
   const team=document.getElementById('fTeam').value;
-
-
   const type=document.querySelector('input[name="rtype"]:checked')?.value;
-
-
   if(!name||!city||!team||!type){toast('⚠️ Vui lòng điền đủ thông tin bắt buộc');return;}
 
+  const btn=document.querySelector('#regForm .fsub');
+  if(btn){btn.disabled=true;btn.textContent='Đang gửi...';}
 
-
-
-
-  // Build Google Form prefill URL
-
-
-  const base='https://docs.google.com/forms/d/e/1FAIpQLSdNrGp6D29SwQRVfe0uLUgtq6xaKYnvrJW7fi98qMygoEoGjA/viewform';
-
-
-  const params=new URLSearchParams({
-
-
-    'entry.78280579' : name,
-
-
-    'entry.1532203714': city,
-
-
-    'entry.1523925802': team,
-
-
-    'entry.108992240' : type,
-
-
-    'entry.129496642' : document.getElementById('m2n').value.trim(),
-
-
-    'entry.1237594382': document.getElementById('m2t').value,
-
-
-    'entry.248060765' : document.getElementById('m3n').value.trim(),
-
-
-    'entry.1651595817': document.getElementById('m3t').value,
-
-
-    'entry.259578971' : document.getElementById('fMatch').value.trim(),
-
-
-    'entry.843834406' : document.getElementById('fProb').value.trim(),
-
-
-  });
-
-
-
-
-
-  // Submit to Supabase (fire-and-forget, non-blocking)
   const _sbUrl='https://xmtxdfeengpbapgudprx.supabase.co';
   const _sbKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdHhkZmVlbmdwYmFwZ3VkcHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MDg0MTAsImV4cCI6MjA5OTE4NDQxMH0.NNePCWoFDuRWmeDI01FK5XOF9IbQq4E3H6wJEju-tRY';
-  fetch(`${_sbUrl}/rest/v1/registrations`,{
-    method:'POST',
-    headers:{apikey:_sbKey,Authorization:`Bearer ${_sbKey}`,'Content-Type':'application/json',Prefer:'return=representation'},
-    body:JSON.stringify({
-      season_id: window.nhaiCurrentSeason||'nhai-day-02',
-      full_name: name, city, team,
-      registration_type: type,
-      member2_name: document.getElementById('m2n').value.trim()||null,
-      member2_team: document.getElementById('m2t').value||null,
-      member3_name: document.getElementById('m3n').value.trim()||null,
-      member3_team: document.getElementById('m3t').value||null,
-      team_matching_note: document.getElementById('fMatch').value.trim()||null,
-      problem_to_solve: document.getElementById('fProb').value.trim()||null
-    })
-  }).catch(e=>console.warn('Supabase reg:',e));
+  const _webhook='https://script.google.com/a/macros/garena.vn/s/AKfycbxCy-zbv5IISskZZdT0IAKXNZkiGDFA8QsCRvxhzxGK0zDavEtDajfs-40H9bSTNKo/exec';
 
-  // Update local count optimistically
+  const payload={
+    season_id: window.nhaiCurrentSeason||'nhai-day-02',
+    full_name: name, city, team,
+    registration_type: type,
+    member2_name: document.getElementById('m2n').value.trim()||null,
+    member2_team: document.getElementById('m2t').value||null,
+    member3_name: document.getElementById('m3n').value.trim()||null,
+    member3_team: document.getElementById('m3t').value||null,
+    team_matching_note: document.getElementById('fMatch').value.trim()||null,
+    problem_to_solve: document.getElementById('fProb').value.trim()||null
+  };
 
+  try{
+    const res=await fetch(`${_sbUrl}/rest/v1/registrations`,{
+      method:'POST',
+      headers:{apikey:_sbKey,Authorization:`Bearer ${_sbKey}`,'Content-Type':'application/json',Prefer:'return=representation'},
+      body:JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error(await res.text());
 
-  if(city.includes('Hà Nội'))regCounts.hn++;else regCounts.hcm++;
+    // Notify Google Sheet (fire-and-forget)
+    fetch(_webhook,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(()=>{});
 
+    // Update local counts optimistically
+    if(city.includes('Hà Nội'))regCounts.hn++;else regCounts.hcm++;
+    const tk=team.split(' (')[0];teamCounts[tk]=(teamCounts[tk]||0)+1;
+    ss('nd_teams',teamCounts);
 
-  const tk=team.split(' (')[0];teamCounts[tk]=(teamCounts[tk]||0)+1;
-
-
-  ss('nd_teams',teamCounts);
-
-
-
-
-
-  // Redirect to Google Form
-
-
-  window.open(base+'?'+params.toString(), '_blank');
-
-
-  closeReg();
-
-
-  toast('✅ Đang mở form đăng ký — điền email và Submit là xong!');
-
-
+    // Show success screen
+    document.getElementById('regOKMsg').textContent=`Cảm ơn ${name}! Đăng ký của bạn đã được ghi nhận cho ${city}. Hẹn gặp bạn tại NHAI DAY! 🎉`;
+    document.getElementById('regForm').style.display='none';
+    document.getElementById('regOK').style.display='block';
+  }catch(e){
+    console.error('Reg error:',e);
+    toast('❌ Đăng ký thất bại, vui lòng thử lại!');
+    if(btn){btn.disabled=false;btn.textContent='✦ Xác nhận đăng ký';}
+  }
 }
 
 
