@@ -2600,6 +2600,16 @@ let mentors = ls('nd_mentors3',[
 ]);
 
 
+mentors=mentors.map(m=>{
+  const fixed={...m};
+  fixed.name=String(fixed.name||'')
+    .replace(/^AT Nguy.*n$/,'AT Nguyễn')
+    .replace(/^H.*i S.*n$/,'Hải Sơn')
+    .replace(/^Trung Ki.*n$/,'Trung Kiên');
+  return fixed;
+});
+try{localStorage.setItem('nd_mentors3',JSON.stringify(mentors));}catch(e){}
+
 let teamCounts = ls('nd_teams',{'People Team':8,'CODE':6,'CS':5,'Studio':4,'FF (Free Fire)':4,'AOV / DF':3,'FCO / FCM':2,'Backend Squad':1});
 
 
