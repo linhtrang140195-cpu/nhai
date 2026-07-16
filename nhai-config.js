@@ -103,20 +103,35 @@
 
   // ===== 2. UPDATE MENTORS =====
   function updateMentors() {
-    const container = document.querySelector('.mentors-grid, .mentor-list, #mentors-container');
+    const container = document.querySelector('#mentorGrid, .mentors-grid, .mentor-list, #mentors-container');
     if (!container || !mentors.length) return;
 
-    container.innerHTML = mentors.map(m => `
-      <div class="mentor-card" style="text-align:center;padding:16px">
-        ${m.avatar_url
-          ? `<img src="${m.avatar_url}" alt="${m.name}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block">`
-          : `<div style="width:80px;height:80px;border-radius:50%;background:rgba(167,139,250,0.2);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;color:#A78BFA">${(m.name || '?').split(' ').map(n => n[0]).join('').slice(0, 2)}</div>`
-        }
-        <div style="font-weight:600;font-size:15px">${m.name}</div>
-        <div style="color:#8B92A5;font-size:13px;margin-top:2px">${m.role || ''}</div>
-        ${m.tag ? `<span style="display:inline-block;margin-top:6px;font-size:11px;padding:2px 10px;border-radius:99px;background:rgba(245,200,66,0.15);color:#F5C842;border:1px solid rgba(245,200,66,0.3)">${m.tag}</span>` : ''}
+    const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+    container.innerHTML = mentors.map((m, i) => `
+      <div class="mentor-card">
+        <img class="mentor-avatar" id="mav${i}"
+          src="${esc(m.avatar_url || '')}"
+          alt="${esc(m.name)}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+          ${m.avatar_url ? '' : 'style="display:none"'}>
+        <div class="mentor-avatar" style="display:${m.avatar_url ? 'none' : 'flex'};align-items:center;justify-content:center;font-size:24px;font-weight:600;color:#f2b933;background:rgba(242,185,51,.15)">
+          ${esc((m.name || '?').split(' ').map(n => n[0]).join('').slice(0, 2))}
+        </div>
+        <div class="mentor-name">${esc(m.name || 'Tên mentor')}</div>
+        <div class="mentor-role">${esc(m.role || 'Chức danh')}</div>
+        ${m.tag ? `<div class="mentor-tag">${esc(m.tag)}</div>` : ''}
       </div>
     `).join('');
+
+    // Sync vào localStorage để page's own JS không overwrite lại
+    try {
+      const mapped = mentors.map(m => ({
+        name: m.name, role: m.role, tag: m.tag,
+        avatar: m.avatar_url || '', bio: m.bio || ''
+      }));
+      localStorage.setItem('nd_mentors3', JSON.stringify(mapped));
+    } catch(e) {}
   }
 
   // ===== 3. UPDATE EVENTS / ROADMAP =====
