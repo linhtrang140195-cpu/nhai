@@ -51,8 +51,7 @@
       sb('mentors?is_active=eq.true&order=display_order'),
       sb('events?order=display_order'),
       sb('faqs?is_active=eq.true&order=display_order'),
-      sb('registrations?select=id&limit=1&order=id', { headers: { Prefer: 'count=exact' } })
-        .then(() => sb('registrations?select=id')).then(r => r.length)
+      sb('registrations?select=id&limit=5000').then(r => r.length)
     ]);
 
     cfg.forEach(row => { siteConfig[row.key] = row.value; });
@@ -201,7 +200,8 @@
   function updateRegistrationCount() {
     const offset = parseInt(siteConfig.display_count_offset) || 0;
     const total = registrationCount + offset;
-    const els = document.querySelectorAll('.registration-count, .interest-count, #reg-count');
+    // #sCare = element "lượt quan tâm" trên website
+    const els = document.querySelectorAll('.registration-count, .interest-count, #reg-count, #sCare');
     els.forEach(el => { el.textContent = total; });
   }
 

@@ -277,15 +277,39 @@ function renderDashboard(){
 }
 
 function renderSchedule(){
-  return `<div style="margin-bottom:14px"><button class="btn btn-primary" onclick="openModal('event')">+ Thêm event</button></div>
-  <div class="card">${state.events.map(ev=>`
+  const evs=[...state.events].sort((a,b)=>(a.display_order||0)-(b.display_order||0));
+  return `<div style="margin-bottom:14px;display:flex;gap:8px;align-items:center">
+    <button class="btn btn-primary" onclick="openModal('event')">+ Thêm event</button>
+    <span style="font-size:11px;color:var(--textM)">Dùng ↑↓ để sắp xếp thứ tự hiển thị trên web</span>
+  </div>
+  <div class="card">${evs.map((ev,i)=>`
     <div class="list-row" onclick="openModal('event','${ev.id}')">
+      <div style="display:flex;flex-direction:column;gap:2px;margin-right:4px">
+        <button class="btn" style="font-size:10px;padding:1px 6px;line-height:1.4" title="Lên" onclick="event.stopPropagation();moveEvent('${ev.id}',-1)" ${i===0?"disabled":""}>↑</button>
+        <button class="btn" style="font-size:10px;padding:1px 6px;line-height:1.4" title="Xuống" onclick="event.stopPropagation();moveEvent('${ev.id}',1)" ${i===evs.length-1?"disabled":""}>↓</button>
+      </div>
+      <span style="font-size:10px;color:var(--textM);min-width:16px;text-align:center">${ev.display_order??i+1}</span>
       <span style="font-size:18px">${ev.status==="completed"?"✅":"📌"}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:500">${ev.name}</div><div style="font-size:10px;color:var(--textM)">${ev.date||"TBD"} · ${ev.season_id||""}</div></div>
       ${ev.city?`<span class="badge ${ev.city==="Hà Nội"?"badge-hn":"badge-hcm"}">${ev.city}</span>`:""}
       <span class="badge ${ev.status==="completed"?"badge-success":ev.status==="upcoming"?"badge-gold":"badge-muted"}">${ev.status}</span>
       <button class="btn btn-danger" style="font-size:10px;padding:3px 6px" onclick="event.stopPropagation();deleteItem('events','${ev.id}')">Xóa</button>
     </div>`).join("")||'<div class="empty-state">Chưa có</div>'}</div>`;
+}
+
+async function moveEvent(id,dir){
+  const evs=[...state.events].sort((a,b)=>(a.display_order||0)-(b.display_order||0));
+  const idx=evs.findIndex(e=>e.id===id);
+  if(idx<0)return;
+  const swapIdx=idx+dir;
+  if(swapIdx<0||swapIdx>=evs.length)return;
+  const a=evs[idx],b=evs[swapIdx];
+  const ao=a.display_order??idx+1, bo=b.display_order??swapIdx+1;
+  await Promise.all([
+    sb(`events?id=eq.${a.id}`,{method:"PATCH",body:{display_order:bo}}),
+    sb(`events?id=eq.${b.id}`,{method:"PATCH",body:{display_order:ao}})
+  ]);
+  loadAll();
 }
 
 function renderResults(){
@@ -782,13 +806,14 @@ function openModal(type,id){
     <div class="two-col"><div><label>Ngày</label><input type="date" id="f_date" value="${m.date||""}"/></div>
     <div><label>Thành phố</label><select id="f_city"><option value="">Chọn...</option><option ${m.city==="Hà Nội"?"selected":""}>Hà Nội</option><option ${m.city==="Hồ Chí Minh"?"selected":""}>Hồ Chí Minh</option></select></div></div>
     <label>Trạng thái</label><select id="f_status"><option value="upcoming" ${m.status==="upcoming"?"selected":""}>Upcoming</option><option value="completed" ${m.status==="completed"?"selected":""}>Completed</option><option value="voting_open" ${m.status==="voting_open"?"selected":""}>Voting open</option><option value="voting_closed" ${m.status==="voting_closed"?"selected":""}>Voting closed</option></select>
-    <label>Season</label><select id="f_season_id">${state.seasons.map(s=>`<option value="${s.id}" ${(m.season_id||state.currentSeason)===s.id?"selected":""}>${s.name}</option>`).join("")}</select>`;
+    <label>Season</label><select id="f_season_id">${state.seasons.map(s=>`<option value="${s.id}" ${(m.season_id||state.currentSeason)===s.id?"selected":""}>${s.name}</option>`).join("")}</select>
+    <label>Thứ tự hiển thị (display_order)</label><input type="number" id="f_display_order" value="${m.display_order??state.events.length+1}" placeholder="1, 2, 3..."/>`;
   } else if(type==="faq"){
     body=`<label>Câu hỏi *</label><input type="text" id="f_question" value="${(m.question||"").replace(/"/g,"&quot;")}"/>
     <label>Trả lời *</label><textarea id="f_answer" rows="4">${m.answer||""}</textarea>`;
   }
   const save=type==="mentor"?`saveMentor('${id||""}')`
-    :type==="event"?`upsert('events',{${id?"":"id:getField('id'),"} name:getField('name'),date:getField('date')||null,city:getField('city')||null,status:getField('status'),season_id:getField('season_id'),display_order:${(m.display_order||state.events.length)+1}},'${id||""}')`
+    :type==="event"?`upsert('events',{${id?"":"id:getField('id'),"} name:getField('name'),date:getField('date')||null,city:getField('city')||null,status:getField('status'),season_id:getField('season_id'),display_order:parseInt(getField('display_order'))||${(m.display_order||state.events.length)+1}},'${id||""}')`
     :`upsert('faqs',{question:getField('question'),answer:getField('answer'),display_order:${(m.display_order||state.faqs.length)+1},is_active:true},'${id||""}')`;
   const titles={mentor:"Mentor",event:"Event",faq:"FAQ"};
   document.getElementById("modalArea").innerHTML=`
