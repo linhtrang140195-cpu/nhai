@@ -88,11 +88,9 @@
   function updateHeroTeamRank(allRegs) {
     const el = document.getElementById('heroTeamRank');
     if (!el) return;
-    const curSeason = window.nhaiCurrentSeason || 'nhai-day-02';
-    const cur = allRegs.filter(r => r.season_id === curSeason);
-    if (!cur.length) return;
+    if (!allRegs.length) return;
     const tc = {};
-    cur.forEach(r => {
+    allRegs.forEach(r => {
       const t = r.team || 'Khác';
       tc[t] = (tc[t] || 0) + 1;
       if (r.member2_name && r.member2_name.trim()) { const t2 = r.member2_team || t; tc[t2] = (tc[t2] || 0) + 1; }
@@ -101,7 +99,7 @@
     const top1 = Object.entries(tc).sort((a, b) => b[1] - a[1])[0];
     if (!top1) return;
     el.innerHTML =
-      '<span style="font-size:13px;color:rgba(255,255,255,0.38);white-space:nowrap">Top team mùa này:</span>' +
+      '<span style="font-size:13px;color:rgba(255,255,255,0.38);white-space:nowrap">Top team cộng dồn:</span>' +
       `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 12px;font-size:13px;color:rgba(255,255,255,0.82)">🥇 <b style="font-weight:600">${top1[0]}</b></span>`;
     el.style.display = 'flex';
   }
