@@ -1119,10 +1119,10 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
   radial-gradient(circle at 86% 78%,rgba(123,77,219,.12),transparent 32%),
   rgba(255,255,255,.02);
   border:1px solid var(--line);border-radius:24px;padding:26px 24px 18px;margin-top:32px;overflow:hidden;}
-.roadmap-track{display:flex;gap:28px;overflow-x:auto;padding:8px 4px 16px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.12) transparent;}
+.roadmap-track{display:flex;gap:18px;overflow-x:auto;padding:8px 4px 16px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.12) transparent;}
 .roadmap-track::-webkit-scrollbar{height:6px;}
 .roadmap-track::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:999px;}
-.rm-card{position:relative;flex:0 0 248px;padding-top:30px;}
+.rm-card{position:relative;flex:0 0 226px;padding-top:30px;}
 .rm-card::before{content:'';position:absolute;top:23px;left:-30px;width:36px;height:14px;border-top:4px solid rgba(141,127,201,.32);border-bottom:4px solid rgba(141,127,201,.14);border-right:none;border-radius:14px 0 0 14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);}
 .rm-card.first::before{display:none;}
 .rm-pipe{position:absolute;top:0;left:0;right:0;height:34px;pointer-events:none;}
@@ -1134,11 +1134,17 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 .rm-card.done .rm-pipe-port{border-color:#2b7a57;}
 .rm-card.active .rm-pipe-main{background:linear-gradient(180deg,#594223,#342411);border-color:rgba(242,185,51,.22);}
 .rm-card.active .rm-pipe-port{border-color:#b47f1f;}
+.rm-card.register .rm-pipe-main{background:linear-gradient(180deg,#f4c84a,#9c6712);border-color:rgba(242,185,51,.45);box-shadow:0 0 22px rgba(242,185,51,.24),inset 0 1px 0 rgba(255,255,255,.2);}
+.rm-card.register .rm-pipe-port{border-color:#f2b933;box-shadow:0 0 0 2px rgba(242,185,51,.16),0 0 18px rgba(242,185,51,.22);}
+.rm-card.result .rm-pipe-main{background:linear-gradient(180deg,#1d7460,#154136);border-color:rgba(66,211,184,.34);}
+.rm-card.result .rm-pipe-port{border-color:#42d3b8;}
 .rm-card.soon .rm-pipe-main,.rm-card.tbd .rm-pipe-main{opacity:.76;}
-.rm-shell{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:8px;position:relative;box-shadow:0 14px 34px rgba(0,0,0,.22);min-height:172px;}
+.rm-shell{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:8px;position:relative;box-shadow:0 14px 34px rgba(0,0,0,.22);height:178px;box-sizing:border-box;overflow:hidden;}
 .rm-shell::before{content:'';position:absolute;top:-11px;left:24px;width:18px;height:18px;border-radius:50%;background:#1c1739;border:4px solid rgba(255,255,255,.16);box-shadow:0 0 0 4px rgba(10,8,32,.95);}
 .rm-card.done .rm-shell{border-color:rgba(74,222,128,.24);background:linear-gradient(180deg,rgba(74,222,128,.08),rgba(255,255,255,.025));}
 .rm-card.active .rm-shell{border-color:rgba(242,185,51,.24);background:linear-gradient(180deg,rgba(242,185,51,.08),rgba(123,77,219,.06));}
+.rm-card.register .rm-shell{border-color:rgba(242,185,51,.42);background:linear-gradient(180deg,rgba(242,185,51,.14),rgba(123,77,219,.06));box-shadow:0 18px 44px rgba(242,185,51,.12),0 14px 34px rgba(0,0,0,.24);}
+.rm-card.result .rm-shell{border-color:rgba(66,211,184,.3);background:linear-gradient(180deg,rgba(66,211,184,.1),rgba(255,255,255,.025));}
 .rm-card.soon .rm-shell,.rm-card.tbd .rm-shell{opacity:.72;}
 .rm-card-status{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;}
 .rms-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 4px rgba(255,255,255,.03);}
@@ -1148,15 +1154,23 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 .done .rms-lbl{color:#86efac;}
 .active .rms-lbl{color:#f6cb68;}
 .soon .rms-lbl,.tbd .rms-lbl{color:var(--muted);}
-.rm-card-name{font-size:18px;font-weight:800;color:var(--cream);line-height:1.25;max-width:15ch;}
-.rm-card-date{font-size:12px;color:var(--muted);line-height:1.45;max-width:18ch;}
+.rm-card-name{font-size:18px;font-weight:800;color:var(--cream);line-height:1.25;max-width:15ch;min-height:45px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.rm-card-date{font-size:12px;color:var(--muted);line-height:1.45;max-width:18ch;min-height:34px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .rm-card-cta{margin-top:auto;padding-top:6px;}
-.rm-cta-link{font-size:11.5px;color:#ddd6fe;background:rgba(123,77,219,.15);border:1px solid rgba(123,77,219,.4);padding:6px 12px;border-radius:999px;cursor:pointer;font-family:'Be Vietnam Pro';font-weight:700;transition:.15s;}
+.rm-cta-link{font-size:11.5px;color:#ddd6fe;background:rgba(123,77,219,.15);border:1px solid rgba(123,77,219,.4);padding:6px 12px;border-radius:999px;cursor:pointer;font-family:'Be Vietnam Pro';font-weight:700;transition:.15s;margin-top:auto;align-self:flex-start;text-align:center;box-sizing:border-box;}
 .rm-cta-link:hover{background:rgba(123,77,219,.28);border-color:rgba(123,77,219,.7);}
 .rm-card.done .rm-cta-link{color:#4ade80;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.35);}
 .rm-card.done .rm-cta-link:hover{background:rgba(74,222,128,.2);}
 .rm-card.active .rm-cta-link{color:#f2b933;background:rgba(242,185,51,.12);border-color:rgba(242,185,51,.4);}
 .rm-card.active .rm-cta-link:hover{background:rgba(242,185,51,.22);}
+.rm-card.register .rm-card-status{color:#ffd66b;}
+.rm-card.register .rms-dot{background:#f2b933;box-shadow:0 0 10px rgba(242,185,51,.7);}
+.rm-card.register .rm-cta-link{color:#170f09;background:linear-gradient(135deg,#ffd95a,#f2b933);border-color:rgba(255,217,90,.8);box-shadow:0 8px 22px rgba(242,185,51,.24);width:100%;}
+.rm-card.register .rm-cta-link:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(242,185,51,.34);}
+.rm-card.result .rm-card-status{color:#8df4dc;}
+.rm-card.result .rms-dot{background:#42d3b8;box-shadow:0 0 10px rgba(66,211,184,.55);}
+.rm-card.result .rm-cta-link{color:#9ff7e7;background:rgba(66,211,184,.12);border-color:rgba(66,211,184,.42);width:100%;}
+.rm-card.result .rm-cta-link:hover{background:rgba(66,211,184,.2);}
 /* ROADMAP (legacy) */
 
 
@@ -1245,6 +1259,20 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 .award-sec-label h3{font-size:18px;font-weight:800;color:var(--cream);}
 
 .award-badge{font-size:12.5px;font-weight:700;background:rgba(242,185,51,.12);color:var(--gold);padding:3px 11px;border-radius:100px;border:1px solid rgba(242,185,51,.2);}
+.result-top-pick-card{position:relative;overflow:hidden;border:1px solid rgba(242,185,51,.32);border-radius:18px;padding:18px;display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;background:linear-gradient(135deg,rgba(242,185,51,.14),rgba(123,77,219,.12) 45%,rgba(255,255,255,.025));box-shadow:0 16px 42px rgba(0,0,0,.28);}
+.result-top-pick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+.result-top-pick-card::after{content:'';position:absolute;right:-80px;bottom:-90px;width:250px;height:160px;background:radial-gradient(circle,rgba(242,185,51,.18),transparent 64%);pointer-events:none;}
+.rtp-medal{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,#ffd95a,#b87515);box-shadow:0 12px 30px rgba(242,185,51,.22);}
+.rtp-kicker{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;}
+.rtp-badge{font-size:10.5px;letter-spacing:.04em;text-transform:none;color:#bdf3ce;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);padding:4px 8px;border-radius:999px;}
+.rtp-title{font-size:20px;line-height:1.2;font-weight:900;color:var(--cream);margin-bottom:5px;}
+.rtp-meta{font-size:13px;color:var(--muted);line-height:1.45;}
+.rtp-meta b{color:var(--cream);}
+.rtp-side{text-align:right;position:relative;z-index:1;display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+.rtp-votes strong{display:block;font-size:30px;line-height:1;font-weight:950;color:var(--gold);}
+.rtp-votes span{font-size:12px;color:var(--muted);}
+.rtp-btn{font-size:12px;font-weight:800;color:#170f09;background:linear-gradient(135deg,#ffd95a,#f2b933);border:1px solid rgba(255,217,90,.7);padding:7px 13px;border-radius:999px;cursor:pointer;font-family:'Be Vietnam Pro';box-shadow:0 8px 22px rgba(242,185,51,.18);}
+@media(max-width:720px){.result-top-pick-grid{grid-template-columns:1fr}.result-top-pick-card{grid-template-columns:1fr}.rtp-side{text-align:left;align-items:flex-start}.rtp-medal{width:52px;height:52px}.rtp-title{font-size:18px}}
 
 .winner-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 
@@ -1430,6 +1458,23 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 .vote-sort-select{appearance:none;-webkit-appearance:none;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--cream);font-size:13px;font-weight:600;padding:7px 28px 7px 14px;border-radius:100px;cursor:pointer;font-family:'Be Vietnam Pro';}
 .vote-sort-wrap::after{content:'▼';position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px;}
 .vote-top3-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:20px 0 12px;}
+.vote-winner-card{display:none;margin:0 0 18px;}
+.vote-winner-card.show{display:block;}
+.winner-announce{position:relative;overflow:hidden;border:1px solid rgba(242,185,51,.36);border-radius:18px;background:
+  radial-gradient(circle at 14% 18%,rgba(242,185,51,.2),transparent 28%),
+  linear-gradient(135deg,rgba(242,185,51,.13),rgba(123,77,219,.12) 46%,rgba(14,12,30,.9));
+  box-shadow:0 18px 46px rgba(0,0,0,.32),0 0 0 1px rgba(255,255,255,.03) inset;padding:18px;display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;}
+.winner-announce::after{content:'';position:absolute;inset:auto -18% -55% 42%;height:130px;background:radial-gradient(circle,rgba(242,185,51,.22),transparent 62%);pointer-events:none;}
+.winner-medal{width:62px;height:62px;border-radius:18px;display:grid;place-items:center;font-size:34px;background:linear-gradient(135deg,#f8d66b,#b87515);box-shadow:0 12px 30px rgba(242,185,51,.24);}
+.winner-kicker{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:5px;}
+.winner-badge{font-size:10.5px;letter-spacing:.04em;text-transform:none;color:#bdf3ce;background:rgba(74,222,128,.11);border:1px solid rgba(74,222,128,.28);padding:4px 8px;border-radius:999px;}
+.winner-title{font-size:22px;line-height:1.15;font-weight:900;color:var(--cream);margin-bottom:5px;}
+.winner-meta{font-size:13px;color:var(--muted);line-height:1.45;}
+.winner-meta b{color:var(--cream);}
+.winner-score{text-align:right;min-width:92px;position:relative;z-index:1;}
+.winner-score strong{display:block;font-size:34px;line-height:1;font-weight:950;color:var(--gold);}
+.winner-score span{font-size:12px;color:var(--muted);}
+@media(max-width:720px){.winner-announce{grid-template-columns:1fr;gap:10px}.winner-medal{width:52px;height:52px}.winner-score{text-align:left}.winner-title{font-size:19px}}
 .vote-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
 .vc2{background:#0e0c1e;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;transition:transform .18s,box-shadow .18s,border-color .18s;cursor:pointer;display:flex;flex-direction:column;}
 .vc2:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.5);border-color:rgba(255,255,255,.16);}
@@ -2219,6 +2264,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 
       <div class="vote-runtime-note info" id="voteRuntimeNote">Đang chuẩn bị dữ liệu vote...</div>
       <div class="vote-lead" id="voteLead"></div>
+      <div class="vote-winner-card" id="voteWinnerCard"></div>
 
 
       <div class="vote-meta-row">
@@ -3533,6 +3579,81 @@ function toggleWinnerDetail(card){
   document.querySelectorAll('.winner-card.wc-open').forEach(c=>c.classList.remove('wc-open'));
   if(!isOpen) card.classList.add('wc-open');
 }
+
+function getResultsTopPickWinner(eventIds){
+  const allowed=new Set(eventIds||[]);
+  const pool=TOP_PICK.filter(c=>allowed.has(c.event));
+  if(!pool.length) return null;
+  return pool.slice().sort((a,b)=>{
+    const diff=getDisplayVoteCount(b.id)-getDisplayVoteCount(a.id);
+    return diff||a.title.localeCompare(b.title,'vi');
+  })[0];
+}
+
+function renderResultsTopPickWinners(){
+  const panel=document.getElementById('ed-0');
+  if(!panel) return;
+  const sections=Array.from(panel.querySelectorAll('.award-section'));
+  const topPickSection=sections.find(sec=>sec.textContent.includes('Top Pick Dish'));
+  if(!topPickSection) return;
+  const winner=getResultsTopPickWinner(['hn01','hcm01']);
+  if(!winner) return;
+  const cityLabel=winner.city==='HCM'?'TP.HCM':'Hà Nội';
+  const eventLabel={'hn01':'NHAI DAY #1','hcm01':'NHAI DAY #1'}[winner.event]||'NHAI DAY';
+  const votes=getDisplayVoteCount(winner.id);
+  const badge=voteState.votingClosed?'Đã công bố':'Đang dẫn đầu';
+  topPickSection.innerHTML=`<div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#bdf3ce;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.25)">1.000.000đ · ${badge}</span></div>
+    <div class="result-top-pick-card">
+      <div class="rtp-medal">🏆</div>
+      <div>
+        <div class="rtp-kicker">Top Pick Dish Winner <span class="rtp-badge">${badge}</span></div>
+        <div class="rtp-title">${e(winner.title)}</div>
+        <div class="rtp-meta"><b>${e(eventLabel)}</b> · ${e(cityLabel)}${winner.person?' · '+e(winner.person):''}</div>
+      </div>
+      <div class="rtp-side">
+        <div class="rtp-votes"><strong>${votes}</strong><span>votes</span></div>
+        <button class="rtp-btn" onclick="switchResTab('vote',document.querySelectorAll('.rtab')[1])">Xem kết quả →</button>
+      </div>
+    </div>`;
+}
+
+renderResultsTopPickWinners=function(){
+  const panel=document.getElementById('ed-0');
+  if(!panel) return;
+  const sections=Array.from(panel.querySelectorAll('.award-section'));
+  const topPickSection=sections.find(sec=>sec.textContent.includes('Top Pick Dish'));
+  if(!topPickSection) return;
+  const firstSection=sections[0];
+  if(firstSection&&firstSection!==topPickSection){
+    panel.insertBefore(topPickSection, firstSection);
+  }
+  const badge=voteState.votingClosed?'Đã công bố':'Đang dẫn đầu';
+  const groups=[
+    {label:'Hà Nội',ids:['hn01']},
+    {label:'TP.HCM',ids:['hcm01']}
+  ];
+  const cards=groups.map(group=>{
+    const winner=getResultsTopPickWinner(group.ids);
+    if(!winner) return '';
+    const votes=getDisplayVoteCount(winner.id);
+    const eventLabel={'hn01':'NHAI DAY #1','hcm01':'NHAI DAY #1'}[winner.event]||'NHAI DAY';
+    return `<div class="result-top-pick-card">
+      <div class="rtp-medal">🏆</div>
+      <div>
+        <div class="rtp-kicker">Top Pick Dish Winner <span class="rtp-badge">${badge}</span></div>
+        <div class="rtp-title">${e(winner.title)}</div>
+        <div class="rtp-meta"><b>${e(eventLabel)}</b> · ${e(group.label)}${winner.person?' · '+e(winner.person):''}</div>
+      </div>
+      <div class="rtp-side">
+        <div class="rtp-votes"><strong>${votes}</strong><span>votes</span></div>
+        <button class="rtp-btn" onclick="switchResTab('vote',document.querySelectorAll('.rtab')[1]);filterVoteCity('${winner.city}',document.querySelectorAll('.vf-btn')[${winner.city==='HCM'?1:0}])">Xem kết quả →</button>
+      </div>
+    </div>`;
+  }).join('');
+  topPickSection.innerHTML=`<div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#bdf3ce;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.25)">1.000.000đ · ${badge}</span></div>
+    <div class="result-top-pick-grid">${cards}</div>`;
+};
+
 function switchEdition(i){
 
   document.querySelectorAll('.ed-tab').forEach((b,j)=>b.classList.toggle('on',j===i));
@@ -4176,6 +4297,7 @@ function applyVoteSnapshot(payload){
     voteState.maxVotes=payload.maxVotes;
   }
   voteState.votingClosed=!!(payload&&payload.votingClosed);
+  if(typeof renderResultsTopPickWinners==='function') renderResultsTopPickWinners();
 }
 async function loadVoteSnapshot(){
   if(!isVoteBackendReady()){
@@ -4329,6 +4451,35 @@ document.addEventListener('keydown',ev=>{
   if(ev.key==='Escape'){ closeImageLightbox(); closeDemoModal(); }
 });
 
+
+function renderVoteWinnerAnnouncement(sorted, city){
+  const winnerEl=document.getElementById('voteWinnerCard');
+  if(!winnerEl) return;
+  const valid=sorted.filter(c=>getDisplayVoteCount(c.id)>0).sort((a,b)=>{
+    const diff=getDisplayVoteCount(b.id)-getDisplayVoteCount(a.id);
+    return diff||a.title.localeCompare(b.title,'vi');
+  });
+  if(!valid.length){
+    winnerEl.classList.remove('show');
+    winnerEl.innerHTML='';
+    return;
+  }
+  const winner=valid[0];
+  const cnt=getDisplayVoteCount(winner.id);
+  const cityLabel=city==='HCM'?'TP.HCM':'Hà Nội';
+  const editionLabel={'hn01':'NHAI DAY #1','hcm01':'NHAI DAY #1','hn02':'NHAI DAY #2','hcm02':'NHAI DAY #2','hn03':'NHAI DAY #3','hcm03':'NHAI DAY #3','hn04':'NHAI DAY #4','hcm04':'NHAI DAY #4'};
+  const announcedBadge=voteState.votingClosed?'<span class="winner-badge">Đã công bố</span>':'<span class="winner-badge">Đang dẫn đầu</span>';
+  winnerEl.innerHTML=`<div class="winner-announce">
+    <div class="winner-medal">🏆</div>
+    <div>
+      <div class="winner-kicker">Top Pick Dish Winner ${announcedBadge}</div>
+      <div class="winner-title">${e(winner.title)}</div>
+      <div class="winner-meta"><b>${e(editionLabel[winner.event]||'NHAI DAY')}</b> · ${e(cityLabel)}${winner.person?' · '+e(winner.person):''}</div>
+    </div>
+    <div class="winner-score"><strong>${cnt}</strong><span>votes</span></div>
+  </div>`;
+  winnerEl.classList.add('show');
+}
 
 function renderVote(city){
   // read current filter state
@@ -4535,6 +4686,7 @@ function renderVote(city){
     leadEl.innerHTML='';
     leadEl.style.display='none';
   }
+  renderVoteWinnerAnnouncement(sorted, city);
 
   const editionLabel={'hn01':'NHAI DAY #1','hcm01':'NHAI DAY #1','hn02':'NHAI DAY #2','hcm02':'NHAI DAY #2','hn03':'NHAI DAY #3','hcm03':'NHAI DAY #3','hn04':'NHAI DAY #4','hcm04':'NHAI DAY #4'};
   const cityLabel={'HN':'Hà Nội','HCM':'TP.HCM'};
@@ -4773,11 +4925,49 @@ try{ renderFaq(); }catch(e){}
 try{ trackCare(); }catch(e){}
 
 
-try{ renderEvents(); }catch(e){}
+try{ renderEvents(); renderResultsTopPickWinners(); }catch(e){}
 
 
 try{ initVoteState(); }catch(e){}
 
+
+const ROADMAP_DISPLAY=[
+  {status:'register',name:'NHAI DAY 02 — Hà Nội',date:'31/07/2026',register:true},
+  {status:'register',name:'NHAI DAY 02 — HCM',date:'07/08/2026',register:true},
+  {status:'result',name:'Top Pick Dish — Đã có kết quả',date:'Kết quả Top Pick Dish từ NHAI DAY 01 đã được công bố.',voteCity:'HN'},
+  {status:'done',name:'NHAI DAY 01 — Hà Nội',date:'26/06/2026',recapId:'hn01'},
+  {status:'done',name:'NHAI DAY 01 — HCM',date:'03/07/2026',recapId:'hcm01'},
+  {status:'tbd',name:'NHAI DAY 03 — Hà Nội',date:'28/08/2026 (dự kiến)'},
+  {status:'tbd',name:'NHAI DAY 03 — HCM',date:'11/09/2026 (dự kiến)'},
+  {status:'tbd',name:'NHAI DAY 04 — Hà Nội',date:'02/10/2026 (dự kiến)'},
+  {status:'tbd',name:'NHAI DAY 04 — HCM',date:'02/10/2026 (dự kiến)'},
+];
+
+renderRoadmap=function(){
+  const lblMap={done:'Đã hoàn thành',active:'Đang diễn ra',soon:'Sắp tới',register:'Đang mở đăng ký',result:'Đã có kết quả',tbd:'TBD'};
+  const track=document.getElementById('roadmapTrack');
+  if(!track) return;
+  track.innerHTML=ROADMAP_DISPLAY.map((r,i)=>{
+    const lbl=lblMap[r.status]||r.status;
+    let cta='';
+    if(r.recapId) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>openRecap('${r.recapId}'),60)">Xem recap →</button>`;
+    else if(r.voteCity) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>{switchResTab('vote',document.querySelectorAll('.rtab')[1]);filterVote('${r.voteCity}',document.querySelectorAll('.vf-btn')[0]);},60)">Xem kết quả →</button>`;
+    else if(r.register) cta=`<button class="rm-cta-link" onclick="openReg()">Đăng ký ngay →</button>`;
+    return `<div class="rm-card ${r.status} ${i===0?'first':''} ${i===ROADMAP_DISPLAY.length-1?'last':''}">
+      <div class="rm-pipe">
+        <div class="rm-pipe-main"></div>
+        <div class="rm-pipe-port left"></div>
+        <div class="rm-pipe-port right"></div>
+      </div>
+      <div class="rm-shell">
+        <div class="rm-card-status"><div class="rms-dot"></div><span class="rms-lbl">${lbl}</span></div>
+        <div class="rm-card-name">${r.name}</div>
+        <div class="rm-card-date">${r.date}</div>
+        ${cta}
+      </div>
+    </div>`;
+  }).join('');
+};
 
 try{ renderRoadmap(); }catch(e){}
 
