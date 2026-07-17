@@ -51,7 +51,7 @@
       sb('mentors?is_active=eq.true&order=display_order'),
       sb('events?order=display_order'),
       sb('faqs?is_active=eq.true&order=display_order'),
-      sb('registrations?select=season_id,member2_name,member3_name&limit=5000')
+      sb('registrations?select=season_id,team,member2_name,member2_team,member3_name,member3_team&limit=5000')
     ]);
 
     cfg.forEach(row => { siteConfig[row.key] = row.value; });
