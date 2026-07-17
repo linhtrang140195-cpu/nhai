@@ -62,14 +62,16 @@
 
     // headcount: mỗi registration + TV2 + TV3
     const allRegs = regs || [];
-    registrationCount = allRegs.length;
     const headcountBySeason = {};
+    let totalHeadcount = 0;
     allRegs.forEach(r => {
       if (!headcountBySeason[r.season_id]) headcountBySeason[r.season_id] = 0;
       headcountBySeason[r.season_id]++;
-      if (r.member2_name && r.member2_name.trim()) headcountBySeason[r.season_id]++;
-      if (r.member3_name && r.member3_name.trim()) headcountBySeason[r.season_id]++;
+      totalHeadcount++;
+      if (r.member2_name && r.member2_name.trim()) { headcountBySeason[r.season_id]++; totalHeadcount++; }
+      if (r.member3_name && r.member3_name.trim()) { headcountBySeason[r.season_id]++; totalHeadcount++; }
     });
+    registrationCount = totalHeadcount;
 
     // Expose current season và events cho form đăng ký trong index.html
     window.nhaiCurrentSeason = siteConfig.current_season || 'nhai-day-02';
