@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
@@ -157,7 +157,7 @@ async function loadAll(){
   const[s,e,m,f,r,a,ac,c,cfg,camp,v,ss]=await Promise.all([
     sb("seasons?order=display_order"),sb("events?order=display_order"),
     sb("mentors?order=display_order"),sb("faqs?order=display_order"),
-    sb("registrations?order=created_at.desc&limit=200"),sb("awards?order=created_at"),
+    sb("registrations?order=created_at.desc&limit=5000"),sb("awards?order=created_at"),
     sb("award_categories?order=display_order"),sb("cases?order=display_order"),
     sb("site_config"),sb("top_pick_campaigns?order=created_at"),
     sb("top_pick_votes?order=voted_at.desc&limit=100"),
@@ -169,6 +169,7 @@ async function loadAll(){
   const cfg2={};(cfg||[]).forEach(row=>{try{cfg2[row.key]=row.value}catch{}});state.config=cfg2;
   if(s.length&&!s.find(x=>x.id===state.currentSeason))state.currentSeason=s[0].id;
   state.loading=false;render();
+  autoBackupToSheet();
 }
 
 function toast(msg,type="success"){
@@ -255,9 +256,8 @@ function renderDashboard(){
   const s=state.seasons.find(x=>x.id===state.currentSeason);
   const ss=state.seasonStats.find(x=>x.season_id===state.currentSeason)||{};
   const totalAllSeasons=state.seasonStats.reduce((a,b)=>a+(b.total_participants||0),0);
-  // Headcount = đăng ký chính + TV2 + TV3
-  const headcount=state.registrations.length + state.registrations.filter(r=>r.member2_name&&r.member2_name.trim()).length + state.registrations.filter(r=>r.member3_name&&r.member3_name.trim()).length;
-  const displayTotal=totalAllSeasons||headcount;
+  const seasonRegs=state.registrations.filter(r=>r.season_id===state.currentSeason);
+  const headcount=seasonRegs.length + seasonRegs.filter(r=>r.member2_name&&r.member2_name.trim()).length + seasonRegs.filter(r=>r.member3_name&&r.member3_name.trim()).length;
   return `
   <div style="background:linear-gradient(135deg,var(--goldBg),rgba(217,90,48,0.04));border:1px solid var(--goldBd);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:16px">
     <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,200,66,0.15);border:1px solid var(--goldBd);display:flex;align-items:center;justify-content:center;font-size:20px">🍜</div>
@@ -265,11 +265,12 @@ function renderDashboard(){
     <div style="font-size:17px;font-weight:600">${s?s.name:"NHAI DAY"} · Admin Panel</div></div>
     <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--teal)"><span style="width:6px;height:6px;background:var(--teal);border-radius:50%;display:inline-block"></span>Supabase live</div>
   </div>
-  <div class="stat-grid">
-    <div class="stat"><div class="stat-bar" style="background:var(--gold)"></div><div style="font-size:14px;margin-bottom:6px">👥</div><div class="stat-num">${displayTotal||"—"}</div><div class="stat-label">Tổng tham gia</div><div class="stat-sub">${headcount} đầu người mùa này</div></div>
+  <div class="stat-grid" style="grid-template-columns:repeat(5,1fr)">
+    <div class="stat"><div class="stat-bar" style="background:var(--gold)"></div><div style="font-size:14px;margin-bottom:6px">📝</div><div class="stat-num">${headcount||"—"}</div><div class="stat-label">Đăng ký mùa này</div><div class="stat-sub">${seasonRegs.length} đăng ký</div></div>
+    <div class="stat"><div class="stat-bar" style="background:var(--teal)"></div><div style="font-size:14px;margin-bottom:6px">✅</div><div class="stat-num">${ss.total_participants||"—"}</div><div class="stat-label">Tham gia thực tế</div><div class="stat-sub">mùa này</div></div>
+    <div class="stat"><div class="stat-bar" style="background:var(--purple)"></div><div style="font-size:14px;margin-bottom:6px">🌟</div><div class="stat-num">${totalAllSeasons||"—"}</div><div class="stat-label">Tổng tất cả mùa</div><div class="stat-sub">${state.seasonStats.length} mùa</div></div>
     <div class="stat"><div class="stat-bar" style="background:var(--pink)"></div><div style="font-size:14px;margin-bottom:6px">🎖️</div><div class="stat-num">${state.awards.filter(a=>a.season_id===state.currentSeason).length||"—"}</div><div class="stat-label">Giải thưởng</div><div class="stat-sub">${state.awards.filter(a=>a.season_id===state.currentSeason&&a.status==="announced").length} công bố</div></div>
-    <div class="stat"><div class="stat-bar" style="background:var(--teal)"></div><div style="font-size:14px;margin-bottom:6px">❤️</div><div class="stat-num">${state.votes.length||"—"}</div><div class="stat-label">Votes</div><div class="stat-sub">${state.cases.filter(c=>c.season_id===state.currentSeason).length} cases</div></div>
-    <div class="stat"><div class="stat-bar" style="background:var(--purple)"></div><div style="font-size:14px;margin-bottom:6px">📅</div><div class="stat-num">${state.events.filter(e=>e.status==="upcoming").length||"—"}</div><div class="stat-label">Sắp tới</div></div>
+    <div class="stat"><div class="stat-bar" style="background:var(--gold)"></div><div style="font-size:14px;margin-bottom:6px">📅</div><div class="stat-num">${state.events.filter(e=>e.status==="upcoming").length||"—"}</div><div class="stat-label">Sắp tới</div></div>
   </div>
   <div class="card"><div class="card-header"><div class="card-title">📅 Lịch trình</div><button class="btn" onclick="setTab('schedule')">Xem tất cả</button></div>
   ${state.events.slice(0,5).map(ev=>`<div class="list-row"><span>${ev.status==="completed"?"✅":"📌"}</span><div style="flex:1"><div style="font-size:12px;font-weight:500">${ev.name}</div><div style="font-size:10px;color:var(--textM)">${ev.date||"TBD"}</div></div>${ev.city?`<span class="badge ${ev.city==="Hà Nội"?"badge-hn":"badge-hcm"}">${ev.city}</span>`:""}</div>`).join("")||'<div class="empty-state">Chưa có</div>'}
@@ -389,6 +390,65 @@ function saveGid(type,inputId){
   if(!seasonGids[state.currentSeason])seasonGids[state.currentSeason]={};
   seasonGids[state.currentSeason][type]=gid;
   saveGids();toast("Đã lưu gid!");render();
+}
+
+async function autoBackupToSheet(){
+  const url=(state.config.backup_sheet_url||"").trim();
+  if(!url||!state.registrations.length)return;
+  try{
+    const payload={
+      registrations:state.registrations,
+      site_config:Object.entries(state.config).map(([k,v])=>({key:k,value:typeof v==="object"?JSON.stringify(v):String(v)})),
+      season_stats:state.seasonStats,
+      mentors:state.mentors,
+      events:state.events,
+      faqs:state.faqs,
+      seasons:state.seasons,
+      awards:state.awards,
+      award_categories:state.awardCats,
+      cases:state.cases,
+      top_pick_campaigns:state.campaigns,
+      top_pick_votes:state.votes
+    };
+    await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});
+    console.log("Auto backup to Sheet done");
+  }catch(err){
+    console.warn("Auto backup failed:",err);
+  }
+}
+
+async function runBackupToSheet(){
+  const url=(state.config.backup_sheet_url||"").trim();
+  if(!url){toast("Chưa có Apps Script URL — lưu URL trước","danger");return;}
+  const statusEl=document.getElementById("backupStatus");
+  if(statusEl)statusEl.textContent="⏳ Đang backup...";
+  try{
+    const payload={
+      registrations:state.registrations,
+      site_config:Object.entries(state.config).map(([k,v])=>({key:k,value:typeof v==="object"?JSON.stringify(v):String(v)})),
+      season_stats:state.seasonStats,
+      mentors:state.mentors,
+      events:state.events,
+      faqs:state.faqs,
+      seasons:state.seasons,
+      awards:state.awards,
+      award_categories:state.awardCats,
+      cases:state.cases,
+      top_pick_campaigns:state.campaigns,
+      top_pick_votes:state.votes
+    };
+    const res=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});
+    const result=await res.json();
+    if(result.ok){
+      toast("Backup thành công! "+result.timestamp);
+      if(statusEl)statusEl.textContent="✅ Backup lúc "+new Date(result.timestamp).toLocaleString("vi-VN");
+    }else{
+      throw new Error(result.error||"Unknown error");
+    }
+  }catch(err){
+    toast("Backup lỗi: "+err.message,"danger");
+    if(statusEl)statusEl.textContent="❌ Lỗi: "+err.message;
+  }
 }
 
 async function importResultsFromSheet(){
@@ -603,28 +663,128 @@ function renderAudit(){
   </div>`).join("")||'<div class="empty-state">Chưa có vote</div>'}</div>`;
 }
 
+let regFilter={season:'current',city:'all',team:'all',search:'',sort:'created_at',sortDir:'desc'};
+
+function exportRegCSV(all){
+  const regs=all?state.registrations:getFilteredRegs();
+  if(!regs.length){toast("Không có dữ liệu để export","danger");return;}
+  const cols=["season_id","full_name","email","city","team","registration_type","member2_name","member2_email","member2_team","member3_name","member3_email","member3_team","problem_to_solve","team_matching_note","ai_level","expected_output","created_at"];
+  const header=cols.join(",");
+  const rows=regs.map(r=>cols.map(c=>{
+    const v=r[c]||"";
+    return typeof v==="string"&&(v.includes(",")||v.includes('"')||v.includes("\n"))
+      ?'"'+v.replace(/"/g,'""')+'"' : v;
+  }).join(","));
+  const csv=[header,...rows].join("\n");
+  const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download=(all?"all_registrations":"registrations_filtered")+".csv";
+  a.click();URL.revokeObjectURL(url);
+  toast("Đã export "+regs.length+" bản ghi!");
+}
+
+function getFilteredRegs(){
+  let regs=state.registrations;
+  if(regFilter.season==='current')regs=regs.filter(r=>r.season_id===state.currentSeason);
+  else if(regFilter.season!=='all')regs=regs.filter(r=>r.season_id===regFilter.season);
+  if(regFilter.city!=='all')regs=regs.filter(r=>r.city===regFilter.city);
+  if(regFilter.team!=='all')regs=regs.filter(r=>r.team===regFilter.team);
+  if(regFilter.search){
+    const q=regFilter.search.toLowerCase();
+    regs=regs.filter(r=>(r.full_name||'').toLowerCase().includes(q)||(r.email||'').toLowerCase().includes(q)||(r.member2_name||'').toLowerCase().includes(q)||(r.member3_name||'').toLowerCase().includes(q)||(r.problem_to_solve||'').toLowerCase().includes(q));
+  }
+  const s=regFilter.sort,d=regFilter.sortDir==='asc'?1:-1;
+  regs.sort((a,b)=>{const va=a[s]||'',vb=b[s]||'';return va<vb?-d:va>vb?d:0;});
+  return regs;
+}
+
+function setRegFilter(k,v){regFilter[k]=v;render();}
+function toggleRegSort(col){
+  if(regFilter.sort===col)regFilter.sortDir=regFilter.sortDir==='asc'?'desc':'asc';
+  else{regFilter.sort=col;regFilter.sortDir='desc';}
+  render();
+}
+
+async function deleteReg(id){
+  if(!confirm('Xác nhận xóa đăng ký này?'))return;
+  try{
+    const res=await fetch(SB_URL+'/rest/v1/registrations?id=eq.'+id,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    state.registrations=state.registrations.filter(r=>r.id!==id);
+    render();
+    toast('Đã xóa đăng ký');
+  }catch(e){toast('Lỗi xóa: '+e.message,'danger');}
+}
+
 function renderRegistrations(){
-  const total=state.registrations.length;
-  const totalHeadcount=total + state.registrations.filter(r=>r.member2_name&&r.member2_name.trim()).length + state.registrations.filter(r=>r.member3_name&&r.member3_name.trim()).length;
-  const hn=state.registrations.filter(r=>r.city==="Hà Nội");
-  const hnHead=hn.length + hn.filter(r=>r.member2_name&&r.member2_name.trim()).length + hn.filter(r=>r.member3_name&&r.member3_name.trim()).length;
-  const hcm=state.registrations.filter(r=>r.city==="Hồ Chí Minh");
-  const hcmHead=hcm.length + hcm.filter(r=>r.member2_name&&r.member2_name.trim()).length + hcm.filter(r=>r.member3_name&&r.member3_name.trim()).length;
-  return `<div class="stat-grid">
-    <div class="stat"><div class="stat-bar" style="background:var(--gold)"></div><div style="font-size:14px;margin-bottom:6px">👥</div><div class="stat-num">${totalHeadcount||"—"}</div><div class="stat-label">Tổng đầu người</div><div class="stat-sub">${total} đăng ký · ${totalHeadcount-total} thành viên</div></div>
-    <div class="stat"><div class="stat-bar" style="background:var(--pink)"></div><div style="font-size:14px;margin-bottom:6px">🔴</div><div class="stat-num">${hnHead||"—"}</div><div class="stat-label">Hà Nội</div><div class="stat-sub">${hn.length} đăng ký</div></div>
-    <div class="stat"><div class="stat-bar" style="background:var(--teal)"></div><div style="font-size:14px;margin-bottom:6px">🟢</div><div class="stat-num">${hcmHead||"—"}</div><div class="stat-label">TP.HCM</div><div class="stat-sub">${hcm.length} đăng ký</div></div>
-    <div class="stat"><div class="stat-bar" style="background:var(--purple)"></div><div style="font-size:14px;margin-bottom:6px">📅</div><div class="stat-num">${state.seasons.find(s=>s.id===state.currentSeason)?.name||"—"}</div><div class="stat-label">Mùa hiện tại</div></div>
+  const allRegs=state.registrations;
+  const hc=r=>1+(r.member2_name&&r.member2_name.trim()?1:0)+(r.member3_name&&r.member3_name.trim()?1:0);
+  const regs=getFilteredRegs();
+  const total=regs.length;
+  const totalHeadcount=regs.reduce((s,r)=>s+hc(r),0);
+
+  const teams=[...new Set(allRegs.map(r=>r.team).filter(Boolean))].sort();
+  const seasons=state.seasons||[];
+  const arrow=c=>regFilter.sort===c?(regFilter.sortDir==='asc'?'▲':'▼'):'⇅';
+  const fStyle='padding:6px 10px;border-radius:6px;border:1px solid var(--borderL);background:var(--bg3);color:var(--text);font-size:11px';
+
+  return `
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center">
+    <select style="${fStyle}" onchange="setRegFilter('season',this.value)">
+      <option value="current" ${regFilter.season==='current'?'selected':''}>Mùa hiện tại</option>
+      <option value="all" ${regFilter.season==='all'?'selected':''}>Tất cả mùa</option>
+      ${seasons.map(s=>`<option value="${s.id}" ${regFilter.season===s.id?'selected':''}>${s.name}</option>`).join('')}
+    </select>
+    <select style="${fStyle}" onchange="setRegFilter('city',this.value)">
+      <option value="all" ${regFilter.city==='all'?'selected':''}>Tất cả TP</option>
+      <option value="Hà Nội" ${regFilter.city==='Hà Nội'?'selected':''}>Hà Nội</option>
+      <option value="Hồ Chí Minh" ${regFilter.city==='Hồ Chí Minh'?'selected':''}>Hồ Chí Minh</option>
+    </select>
+    <select style="${fStyle}" onchange="setRegFilter('team',this.value)">
+      <option value="all" ${regFilter.team==='all'?'selected':''}>Tất cả team</option>
+      ${teams.map(t=>`<option value="${t}" ${regFilter.team===t?'selected':''}>${t}</option>`).join('')}
+    </select>
+    <input type="text" placeholder="🔍 Tìm tên, email, đề bài..." value="${regFilter.search}" oninput="setRegFilter('search',this.value)" style="${fStyle};flex:1;min-width:160px;margin-bottom:0"/>
   </div>
-  <div class="card"><div class="card-header"><div class="card-title">👥 Danh sách đăng ký</div><div class="card-sub">${total} bản ghi</div></div>
-  ${state.registrations.slice(0,40).map(r=>`<div class="list-row" style="font-size:11px">
-    <div style="font-weight:500;min-width:130px">${r.full_name||""}</div>
-    <div style="color:var(--textM);min-width:80px">${r.team||"—"}</div>
-    <span class="badge ${r.city==="Hà Nội"?"badge-hn":"badge-hcm"}">${r.city==="Hà Nội"?"HN":"HCM"}</span>
-    <span class="badge badge-muted">${r.registration_type||"—"}</span>
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+    <div style="font-size:12px;font-weight:600;color:var(--text)">👥 ${total} đăng ký · ${totalHeadcount} đầu người</div>
     <div style="flex:1"></div>
-    <div style="color:var(--textM)">${r.created_at?new Date(r.created_at).toLocaleDateString("vi-VN"):"—"}</div>
-  </div>`).join("")||'<div class="empty-state">Chưa có đăng ký</div>'}</div>`;
+    <button class="btn btn-success" onclick="exportRegCSV(false)" style="font-size:10px;padding:5px 10px">⬇ Export hiện tại (${total})</button>
+    <button class="btn" onclick="exportRegCSV(true)" style="font-size:10px;padding:5px 10px">⬇ Export tất cả (${allRegs.length})</button>
+  </div>
+  <div class="card" style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:11px">
+    <thead><tr style="background:var(--bg);border-bottom:2px solid var(--border)">
+      <th style="padding:8px 6px;text-align:center;white-space:nowrap;font-weight:600;width:36px">#</th>
+      <th style="padding:8px 6px;text-align:left;cursor:pointer;white-space:nowrap;font-weight:600" onclick="toggleRegSort('full_name')">Họ tên ${arrow('full_name')}</th>
+      <th style="padding:8px 6px;text-align:left;cursor:pointer;white-space:nowrap;font-weight:600" onclick="toggleRegSort('email')">Email ${arrow('email')}</th>
+      <th style="padding:8px 6px;text-align:left;cursor:pointer;white-space:nowrap;font-weight:600" onclick="toggleRegSort('team')">Team ${arrow('team')}</th>
+      <th style="padding:8px 6px;text-align:left;cursor:pointer;white-space:nowrap;font-weight:600" onclick="toggleRegSort('city')">TP ${arrow('city')}</th>
+      <th style="padding:8px 6px;text-align:left;white-space:nowrap;font-weight:600">TV2</th>
+      <th style="padding:8px 6px;text-align:left;white-space:nowrap;font-weight:600">TV3</th>
+      <th style="padding:8px 6px;text-align:left;white-space:nowrap;font-weight:600">Đề bài</th>
+      <th style="padding:8px 6px;text-align:left;cursor:pointer;white-space:nowrap;font-weight:600" onclick="toggleRegSort('created_at')">Ngày ${arrow('created_at')}</th>
+      <th style="padding:8px 6px;text-align:left;white-space:nowrap;font-weight:600">Mùa</th>
+      <th style="padding:8px 6px;text-align:center;white-space:nowrap;font-weight:600;width:40px"></th>
+    </tr></thead>
+    <tbody>
+    ${regs.map((r,i)=>`<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:7px 6px;text-align:center;color:var(--textM);font-size:10px">${i+1}</td>
+      <td style="padding:7px 6px;font-weight:500;white-space:nowrap">${r.full_name||''}</td>
+      <td style="padding:7px 6px;color:var(--textS);font-size:10px">${r.email||''}</td>
+      <td style="padding:7px 6px">${r.team||'—'}</td>
+      <td style="padding:7px 6px"><span class="badge ${r.city==='Hà Nội'?'badge-hn':'badge-hcm'}" style="font-size:9px">${r.city==='Hà Nội'?'HN':'HCM'}</span></td>
+      <td style="padding:7px 6px;font-size:10px">${r.member2_name&&r.member2_name.trim()?r.member2_name+(r.member2_team?' <span style="color:var(--textS)">('+r.member2_team+')</span>':''):''}</td>
+      <td style="padding:7px 6px;font-size:10px">${r.member3_name&&r.member3_name.trim()?r.member3_name+(r.member3_team?' <span style="color:var(--textS)">('+r.member3_team+')</span>':''):''}</td>
+      <td style="padding:7px 6px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--textM);font-size:10px" title="${(r.problem_to_solve||'').replace(/"/g,'&quot;')}">${r.problem_to_solve||''}</td>
+      <td style="padding:7px 6px;white-space:nowrap;color:var(--textM);font-size:10px">${r.created_at?new Date(r.created_at).toLocaleDateString('vi-VN'):''}</td>
+      <td style="padding:7px 6px"><span class="badge badge-muted" style="font-size:9px">${(seasons.find(s=>s.id===r.season_id)||{}).name||r.season_id||''}</span></td>
+      <td style="padding:7px 6px;text-align:center"><button onclick="deleteReg('${r.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:2px 4px;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" title="Xóa">🗑</button></td>
+    </tr>`).join('')||'<tr><td colspan="11" style="padding:20px;text-align:center;color:var(--textM)">Chưa có đăng ký</td></tr>'}
+    </tbody>
+  </table>
+  </div>`;
 }
 
 function renderMentors(){
@@ -650,12 +810,13 @@ function renderFAQ(){
 }
 
 function renderAnalytics(){
+  const regsA=state.registrations.filter(r=>r.season_id===state.currentSeason);
   const ss=state.seasonStats.find(x=>x.season_id===state.currentSeason)||{};
   const totalAll=state.seasonStats.reduce((a,b)=>a+(b.total_participants||0),0);
-  const headcount=state.registrations.length + state.registrations.filter(r=>r.member2_name&&r.member2_name.trim()).length + state.registrations.filter(r=>r.member3_name&&r.member3_name.trim()).length;
+  const headcount=regsA.length + regsA.filter(r=>r.member2_name&&r.member2_name.trim()).length + regsA.filter(r=>r.member3_name&&r.member3_name.trim()).length;
   const teamCounts={};
   // Đếm cả TV2, TV3
-  state.registrations.forEach(r=>{
+  regsA.forEach(r=>{
     const t=r.team||"Khác";teamCounts[t]=(teamCounts[t]||0)+1;
     if(r.member2_name&&r.member2_name.trim()){const t2=r.member2_team||t;teamCounts[t2]=(teamCounts[t2]||0)+1;}
     if(r.member3_name&&r.member3_name.trim()){const t3=r.member3_team||t;teamCounts[t3]=(teamCounts[t3]||0)+1;}
@@ -666,8 +827,13 @@ function renderAnalytics(){
   const bars=sorted.map(([t,c],i)=>{const p=Math.round(c/total*100);return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="font-weight:500">${t}</span><span style="color:var(--textM)">${c} người · <span style="color:${colors[i%colors.length]};font-weight:600;font-family:monospace">${p}%</span></span></div><div style="background:rgba(255,255,255,0.04);border-radius:99px;height:8px;overflow:hidden"><div style="height:100%;border-radius:99px;background:${colors[i%colors.length]};width:${p}%"></div></div></div>`;}).join("");
   const gid=seasonGids[state.currentSeason]?.feedback||"";
   return `
+  <div style="font-size:11px;font-weight:600;color:var(--textM);margin-bottom:6px;letter-spacing:.5px">📅 MÙA NÀY — ${(state.seasons.find(x=>x.id===state.currentSeason)?.name||"").toUpperCase()}</div>
+  <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
+    <div class="stat"><div class="stat-bar" style="background:var(--gold)"></div><div style="font-size:14px;margin-bottom:6px">📝</div><div class="stat-num">${headcount||"—"}</div><div class="stat-label">Đăng ký mùa này</div><div class="stat-sub">${regsA.length} đăng ký · ${headcount-regsA.length} thành viên</div></div>
+    <div class="stat"><div class="stat-bar" style="background:var(--teal)"></div><div style="font-size:14px;margin-bottom:6px">✅</div><div class="stat-num">${ss.total_participants||"—"}</div><div class="stat-label">Tham gia thực tế</div><div class="stat-sub">season_stats</div></div>
+    <div class="stat"><div class="stat-bar" style="background:var(--purple)"></div><div style="font-size:14px;margin-bottom:6px">🌟</div><div class="stat-num">${totalAll||"—"}</div><div class="stat-label">Tổng tất cả mùa</div><div class="stat-sub">Cộng dồn ${state.seasonStats.length} mùa</div></div>
+  </div>
   <div class="stat-grid">
-    <div class="stat"><div class="stat-bar" style="background:var(--gold)"></div><div style="font-size:14px;margin-bottom:6px">👥</div><div class="stat-num">${totalAll||headcount||"—"}</div><div class="stat-label">Tổng tất cả mùa</div><div class="stat-sub">${headcount} đầu người mùa này</div></div>
     <div class="stat"><div class="stat-bar" style="background:var(--pink)"></div><div style="font-size:14px;margin-bottom:6px">⭐</div><div class="stat-num">${ss.avg_experience?ss.avg_experience+"★":"—"}</div><div class="stat-label">Trải nghiệm</div></div>
     <div class="stat"><div class="stat-bar" style="background:var(--teal)"></div><div style="font-size:14px;margin-bottom:6px">👨‍🏫</div><div class="stat-num">${ss.avg_mentor?ss.avg_mentor+"★":"—"}</div><div class="stat-label">Mentor</div></div>
     <div class="stat"><div class="stat-bar" style="background:var(--purple)"></div><div style="font-size:14px;margin-bottom:6px">🔄</div><div class="stat-num">${ss.pct_want_continue?ss.pct_want_continue+"%":"—"}</div><div class="stat-label">Muốn tiếp tục</div></div>
@@ -821,6 +987,12 @@ function renderSettings(){
     <div><label>Sheet Kết quả (gid)</label><div style="display:flex;gap:6px"><input type="text" id="sg_results" value="${seasonGids[state.currentSeason]?.results||""}" placeholder="gid tab kết quả" style="margin-bottom:0;flex:1"/><button class="btn btn-success" onclick="saveGid('results','sg_results')">Lưu</button></div></div>
     <div><label>Sheet Submissions/Voting (gid)</label><div style="display:flex;gap:6px"><input type="text" id="sg_subs" value="${seasonGids[state.currentSeason]?.submissions||""}" placeholder="gid tab submissions" style="margin-bottom:0;flex:1"/><button class="btn btn-success" onclick="saveGid('submissions','sg_subs')">Lưu</button></div></div>
     <div><label>Sheet Đánh giá (gid)</label><div style="display:flex;gap:6px"><input type="text" id="sg_fb" value="${seasonGids[state.currentSeason]?.feedback||""}" placeholder="gid tab feedback" style="margin-bottom:0;flex:1"/><button class="btn btn-success" onclick="saveGid('feedback','sg_fb')">Lưu</button></div></div>
+  </div></div>
+  <div class="card"><div class="card-header"><div class="card-title">☁️ Backup Supabase → Google Sheet</div><div class="card-sub">Backup toàn bộ data sang Google Sheet để fallback khi Supabase lỗi</div></div>
+  <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
+    <div><label>Apps Script Web App URL</label><div style="display:flex;gap:6px"><input type="text" id="backupSheetUrl" value="${state.config.backup_sheet_url||""}" placeholder="https://script.google.com/macros/s/.../exec" style="margin-bottom:0;flex:1"/><button class="btn btn-success" onclick="saveConfig('backup_sheet_url',document.getElementById('backupSheetUrl').value)">Lưu</button></div></div>
+    <div id="backupStatus" style="font-size:11px;color:var(--textM)"></div>
+    <button class="btn btn-primary" onclick="runBackupToSheet()" style="align-self:flex-start">📤 Backup ngay</button>
   </div></div>`;
 }
 
