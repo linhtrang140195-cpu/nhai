@@ -114,9 +114,6 @@
       opt.textContent = label + (dateStr || ' · TBD');
       sel.appendChild(opt);
     });
-    // Pre-select current season
-    const cur = window.nhaiCurrentSeason;
-    if (cur) sel.value = cur;
   }
 
   // ===== 6b. HERO TOP TEAM RANK (compact pills dưới nút đăng ký) =====
