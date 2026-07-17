@@ -100,9 +100,9 @@
     if (!top2.length) return;
     const medals = ['🥇','🥈'];
     el.innerHTML =
-      '<span style="font-size:13px;color:rgba(255,255,255,0.38);white-space:nowrap">Top team có số người tham gia nhiều nhất:</span>' +
+      '<span style="font-size:14px;color:rgba(255,255,255,0.35)">·</span>' +
       top2.map(([t, c], i) =>
-        `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 12px;font-size:13px;color:rgba(255,255,255,0.82)">${medals[i]} <b style="font-weight:600">${t}</b></span>`
+        `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:3px 10px;font-size:13px;color:rgba(255,255,255,0.82)">${medals[i]} <b style="font-weight:600">${t}</b></span>`
       ).join('');
     el.style.display = 'flex';
   }
