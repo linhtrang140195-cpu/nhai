@@ -563,6 +563,9 @@ h2.title em{color:var(--gold);font-style:normal;}
 
 
 .inp:focus,.sel:focus,textarea.inp:focus{border-color:rgba(242,185,51,.5);}
+.inp.email-invalid{border-color:#ff4444 !important;box-shadow:0 0 0 2px rgba(255,68,68,.25);}
+.email-warn{color:#ff4444;font-size:12px;margin-top:4px;display:none;}
+.email-warn.show{display:block;}
 
 
 .sel option{background:var(--night);}
@@ -2342,7 +2345,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 
     <div class="fg"><label class="lbl">Họ và tên <span class="r">*</span></label><input class="inp" type="text" id="fName" placeholder="Nguyễn Văn A"></div>
 
-    <div class="fg"><label class="lbl">Email Garena <span class="r">*</span></label><input class="inp" type="email" id="fEmail" placeholder="ten.ban@garena.vn"></div>
+    <div class="fg"><label class="lbl">Email Garena <span class="r">*</span></label><input class="inp" type="email" id="fEmail" placeholder="ten.ban@garena.vn"><div class="email-warn" id="fEmailWarn">⚠️ Vui lòng sử dụng email @garena.vn</div></div>
 
     <div class="fg"><label class="lbl">Mùa tham gia <span class="r">*</span></label>
       <select class="sel" id="fSeason">
@@ -2427,7 +2430,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
       <div class="fg"><label class="lbl">Thành viên 2 — Họ tên</label><input class="inp" id="m2n" placeholder="Tên thành viên 2"></div>
 
 
-      <div class="fg"><label class="lbl">Thành viên 2 — Email</label><input class="inp" id="m2e" placeholder="email@garena.vn" type="email"></div>
+      <div class="fg"><label class="lbl">Thành viên 2 — Email</label><input class="inp" id="m2e" placeholder="email@garena.vn" type="email"><div class="email-warn" id="m2eWarn">⚠️ Vui lòng sử dụng email @garena.vn</div></div>
 
 
       <div class="fg"><label class="lbl">Thành viên 2 — Team</label>
@@ -2442,7 +2445,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
       <div class="fg"><label class="lbl">Thành viên 3 — Họ tên <span style="color:var(--mdim);font-weight:400;text-transform:none;letter-spacing:0;font-size:14px;">(nếu có)</span></label><input class="inp" id="m3n" placeholder="Tên thành viên 3"></div>
 
 
-      <div class="fg"><label class="lbl">Thành viên 3 — Email</label><input class="inp" id="m3e" placeholder="email@garena.vn" type="email"></div>
+      <div class="fg"><label class="lbl">Thành viên 3 — Email</label><input class="inp" id="m3e" placeholder="email@garena.vn" type="email"><div class="email-warn" id="m3eWarn">⚠️ Vui lòng sử dụng email @garena.vn</div></div>
 
 
       <div class="fg"><label class="lbl">Thành viên 3 — Team</label>
@@ -3187,6 +3190,28 @@ async function submitReg(){
 
 
 
+
+// ── EMAIL VALIDATION ──
+function checkGarenaEmail(inputId, warnId){
+  const inp=document.getElementById(inputId);
+  const warn=document.getElementById(warnId);
+  if(!inp||!warn)return;
+  inp.addEventListener('input',function(){
+    const v=this.value.trim().toLowerCase();
+    if(v&&!v.endsWith('@garena.vn')){
+      this.classList.add('email-invalid');
+      warn.classList.add('show');
+    }else{
+      this.classList.remove('email-invalid');
+      warn.classList.remove('show');
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded',function(){
+  checkGarenaEmail('fEmail','fEmailWarn');
+  checkGarenaEmail('m2e','m2eWarn');
+  checkGarenaEmail('m3e','m3eWarn');
+});
 
 // ── TOAST ──
 
