@@ -2336,6 +2336,15 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 
     <div class="fg"><label class="lbl">Họ và tên <span class="r">*</span></label><input class="inp" type="text" id="fName" placeholder="Nguyễn Văn A"></div>
 
+    <div class="fg"><label class="lbl">Mùa tham gia <span class="r">*</span></label>
+      <div class="opts" style="flex-wrap:wrap">
+        <div class="opt"><input type="radio" name="fseason" id="fs1" value="nhai-day-01"><label for="fs1">NHAI #1<small>Đã diễn ra</small></label></div>
+        <div class="opt"><input type="radio" name="fseason" id="fs2" value="nhai-day-02"><label for="fs2">NHAI #2<small>06/2026</small></label></div>
+        <div class="opt"><input type="radio" name="fseason" id="fs3" value="nhai-day-03"><label for="fs3">NHAI #3<small>TBD</small></label></div>
+        <div class="opt"><input type="radio" name="fseason" id="fs4" value="nhai-day-04"><label for="fs4">NHAI #4<small>TBD</small></label></div>
+      </div>
+    </div>
+
 
     <div class="fg"><label class="lbl">Địa điểm <span class="r">*</span></label>
 
@@ -2343,10 +2352,10 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
       <div class="opts">
 
 
-        <div class="opt"><input type="radio" name="city" id="cHN" value="Hà Nội"><label for="cHN">🏙️ Hà Nội<small>26/06/2026</small></label></div>
+        <div class="opt"><input type="radio" name="city" id="cHN" value="Hà Nội"><label for="cHN">🏙️ Hà Nội</label></div>
 
 
-        <div class="opt"><input type="radio" name="city" id="cHCM" value="Hồ Chí Minh"><label for="cHCM">🌆 HCM<small>03/07/2026</small></label></div>
+        <div class="opt"><input type="radio" name="city" id="cHCM" value="Hồ Chí Minh"><label for="cHCM">🌆 HCM</label></div>
 
 
       </div>
@@ -3131,10 +3140,11 @@ function onType(){
 
 async function submitReg(){
   const name=document.getElementById('fName').value.trim();
+  const seasonId=document.querySelector('input[name="fseason"]:checked')?.value;
   const city=document.querySelector('input[name="city"]:checked')?.value;
   const team=document.getElementById('fTeam').value;
   const type=document.querySelector('input[name="rtype"]:checked')?.value;
-  if(!name||!city||!team||!type){toast('⚠️ Vui lòng điền đủ thông tin bắt buộc');return;}
+  if(!name||!seasonId||!city||!team||!type){toast('⚠️ Vui lòng chọn mùa tham gia và điền đủ thông tin bắt buộc');return;}
 
   const btn=document.querySelector('#regForm .fsub');
   if(btn){btn.disabled=true;btn.textContent='Đang gửi...';}
@@ -3144,7 +3154,7 @@ async function submitReg(){
   const _webhook='https://script.google.com/a/macros/garena.vn/s/AKfycbxCy-zbv5IISskZZdT0IAKXNZkiGDFA8QsCRvxhzxGK0zDavEtDajfs-40H9bSTNKo/exec';
 
   const payload={
-    season_id: window.nhaiCurrentSeason||'nhai-day-02',
+    season_id: seasonId,
     full_name: name, city, team,
     registration_type: type,
     member2_name: document.getElementById('m2n').value.trim()||null,
