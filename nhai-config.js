@@ -71,8 +71,10 @@
       if (r.member3_name && r.member3_name.trim()) headcountBySeason[r.season_id]++;
     });
 
-    // Expose current season cho form đăng ký trong index.html
+    // Expose current season và events cho form đăng ký trong index.html
     window.nhaiCurrentSeason = siteConfig.current_season || 'nhai-day-02';
+    window.nhaiEvents = events;
+    buildSeasonDropdown();
 
     applyConfig();
     updateMentors();
@@ -82,6 +84,39 @@
     updateSeasonStats();
     updateEditionStats(headcountBySeason);
     updateHeroTeamRank(allRegs);
+  }
+
+  // ===== 6a. BUILD SEASON DROPDOWN with real dates from events =====
+  function buildSeasonDropdown() {
+    const sel = document.getElementById('fSeason');
+    if (!sel) return;
+    const seasonDefs = [
+      { id: 'nhai-day-01', label: 'NHAI #1' },
+      { id: 'nhai-day-02', label: 'NHAI #2' },
+      { id: 'nhai-day-03', label: 'NHAI #3' },
+      { id: 'nhai-day-04', label: 'NHAI #4' },
+    ];
+    sel.innerHTML = '<option value="">Chọn mùa...</option>';
+    seasonDefs.forEach(({ id, label }) => {
+      const evs = events.filter(e => e.season_id === id && e.date);
+      let dateStr = '';
+      if (evs.length) {
+        const hn  = evs.find(e => e.city === 'Hà Nội');
+        const hcm = evs.find(e => e.city === 'Hồ Chí Minh' || e.city === 'TP.HCM');
+        const fmt = d => new Date(d + 'T00:00:00').toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const parts = [];
+        if (hn)  parts.push('HN ' + fmt(hn.date));
+        if (hcm) parts.push('HCM ' + fmt(hcm.date));
+        if (parts.length) dateStr = ' · ' + parts.join(' · ');
+      }
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = label + (dateStr || ' · TBD');
+      sel.appendChild(opt);
+    });
+    // Pre-select current season
+    const cur = window.nhaiCurrentSeason;
+    if (cur) sel.value = cur;
   }
 
   // ===== 6b. HERO TOP TEAM RANK (compact pills dưới nút đăng ký) =====
