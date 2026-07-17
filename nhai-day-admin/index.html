@@ -717,6 +717,67 @@ async function deleteReg(id){
   }catch(e){toast('Lỗi xóa: '+e.message,'danger');}
 }
 
+function openRegModal(id){
+  const r=state.registrations.find(x=>x.id===id);
+  if(!r){toast('Không tìm thấy đăng ký','danger');return;}
+  const esc=s=>(s||'').replace(/"/g,'&quot;');
+  const seasons=state.seasons||[];
+  document.getElementById("modalArea").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Sửa đăng ký — ${esc(r.full_name)}</div>
+    <div class="two-col">
+      <div><label>Họ tên *</label><input type="text" id="f_full_name" value="${esc(r.full_name)}"/></div>
+      <div><label>Email</label><input type="text" id="f_email" value="${esc(r.email)}"/></div>
+    </div>
+    <div class="two-col">
+      <div><label>Team</label><input type="text" id="f_team" value="${esc(r.team)}"/></div>
+      <div><label>Thành phố</label><select id="f_city"><option value="">—</option><option ${r.city==='Hà Nội'?'selected':''}>Hà Nội</option><option ${r.city==='Hồ Chí Minh'?'selected':''}>Hồ Chí Minh</option></select></div>
+    </div>
+    <div class="two-col">
+      <div><label>Hình thức</label><input type="text" id="f_registration_type" value="${esc(r.registration_type)}" placeholder="Cá nhân / Ghép nhóm..."/></div>
+      <div><label>Mùa</label><select id="f_season_id">${seasons.map(s=>`<option value="${s.id}" ${r.season_id===s.id?'selected':''}>${s.name}</option>`).join('')}</select></div>
+    </div>
+    <label>📝 Đề bài / bài toán muốn giải</label><textarea id="f_problem_to_solve" rows="3" placeholder="Người dùng có thể điền sau...">${r.problem_to_solve||''}</textarea>
+    <label>Kết quả mong đợi</label><textarea id="f_expected_output" rows="2">${r.expected_output||''}</textarea>
+    <label>AI level</label><input type="text" id="f_ai_level" value="${esc(r.ai_level)}"/>
+    <div style="border-top:1px solid var(--border);margin:12px 0 8px;padding-top:8px;font-size:11px;font-weight:600;color:var(--textM)">THÀNH VIÊN 2</div>
+    <div class="two-col"><div><label>Tên</label><input type="text" id="f_member2_name" value="${esc(r.member2_name)}"/></div><div><label>Team</label><input type="text" id="f_member2_team" value="${esc(r.member2_team)}"/></div></div>
+    <label>Email TV2</label><input type="text" id="f_member2_email" value="${esc(r.member2_email)}"/>
+    <div style="border-top:1px solid var(--border);margin:12px 0 8px;padding-top:8px;font-size:11px;font-weight:600;color:var(--textM)">THÀNH VIÊN 3</div>
+    <div class="two-col"><div><label>Tên</label><input type="text" id="f_member3_name" value="${esc(r.member3_name)}"/></div><div><label>Team</label><input type="text" id="f_member3_team" value="${esc(r.member3_team)}"/></div></div>
+    <label>Email TV3</label><input type="text" id="f_member3_email" value="${esc(r.member3_email)}"/>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="closeModal();deleteReg('${id}')">Xóa</button>
+      <div style="flex:1"></div>
+      <button class="btn" onclick="closeModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveReg('${id}')">Lưu</button>
+    </div>
+  </div></div>`;
+}
+
+async function saveReg(id){
+  const nn=v=>{v=(v||'').trim();return v===''?null:v;};
+  const data={
+    full_name:getField('full_name').trim(),
+    email:nn(getField('email')),
+    team:nn(getField('team')),
+    city:nn(getField('city')),
+    registration_type:nn(getField('registration_type')),
+    season_id:nn(getField('season_id')),
+    problem_to_solve:nn(getField('problem_to_solve')),
+    expected_output:nn(getField('expected_output')),
+    ai_level:nn(getField('ai_level')),
+    member2_name:nn(getField('member2_name')),
+    member2_team:nn(getField('member2_team')),
+    member2_email:nn(getField('member2_email')),
+    member3_name:nn(getField('member3_name')),
+    member3_team:nn(getField('member3_team')),
+    member3_email:nn(getField('member3_email'))
+  };
+  if(!data.full_name){toast('Họ tên không được trống','danger');return;}
+  await upsert('registrations',data,id);
+}
+
 function renderRegistrations(){
   const allRegs=state.registrations;
   const hc=r=>1+(r.member2_name&&r.member2_name.trim()?1:0)+(r.member3_name&&r.member3_name.trim()?1:0);
@@ -766,7 +827,7 @@ function renderRegistrations(){
       <th style="padding:8px 6px;text-align:left;white-space:nowrap;font-weight:600">Đề bài</th>
       <th style="padding:8px 6px;text-align:left;cursor:pointer;white-space:nowrap;font-weight:600" onclick="toggleRegSort('created_at')">Ngày ${arrow('created_at')}</th>
       <th style="padding:8px 6px;text-align:left;white-space:nowrap;font-weight:600">Mùa</th>
-      <th style="padding:8px 6px;text-align:center;white-space:nowrap;font-weight:600;width:40px"></th>
+      <th style="padding:8px 6px;text-align:center;white-space:nowrap;font-weight:600;width:64px"></th>
     </tr></thead>
     <tbody>
     ${regs.map((r,i)=>`<tr style="border-bottom:1px solid var(--border)">
@@ -777,10 +838,10 @@ function renderRegistrations(){
       <td style="padding:7px 6px"><span class="badge ${r.city==='Hà Nội'?'badge-hn':'badge-hcm'}" style="font-size:9px">${r.city==='Hà Nội'?'HN':'HCM'}</span></td>
       <td style="padding:7px 6px;font-size:10px">${r.member2_name&&r.member2_name.trim()?r.member2_name+(r.member2_team?' <span style="color:var(--textS)">('+r.member2_team+')</span>':''):''}</td>
       <td style="padding:7px 6px;font-size:10px">${r.member3_name&&r.member3_name.trim()?r.member3_name+(r.member3_team?' <span style="color:var(--textS)">('+r.member3_team+')</span>':''):''}</td>
-      <td style="padding:7px 6px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--textM);font-size:10px" title="${(r.problem_to_solve||'').replace(/"/g,'&quot;')}">${r.problem_to_solve||''}</td>
+      <td onclick="openRegModal('${r.id}')" style="padding:7px 6px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;cursor:pointer;${r.problem_to_solve?'color:var(--textM)':'color:var(--textS);font-style:italic'}" title="${(r.problem_to_solve||'Bấm để thêm đề bài').replace(/"/g,'&quot;')}">${r.problem_to_solve||'+ thêm đề bài'}</td>
       <td style="padding:7px 6px;white-space:nowrap;color:var(--textM);font-size:10px">${r.created_at?new Date(r.created_at).toLocaleDateString('vi-VN'):''}</td>
       <td style="padding:7px 6px"><span class="badge badge-muted" style="font-size:9px">${(seasons.find(s=>s.id===r.season_id)||{}).name||r.season_id||''}</span></td>
-      <td style="padding:7px 6px;text-align:center"><button onclick="deleteReg('${r.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:2px 4px;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" title="Xóa">🗑</button></td>
+      <td style="padding:7px 6px;text-align:center;white-space:nowrap"><button onclick="openRegModal('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" title="Sửa">✏️</button><button onclick="deleteReg('${r.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:2px 4px;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.6" title="Xóa">🗑</button></td>
     </tr>`).join('')||'<tr><td colspan="11" style="padding:20px;text-align:center;color:var(--textM)">Chưa có đăng ký</td></tr>'}
     </tbody>
   </table>
