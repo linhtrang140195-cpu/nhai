@@ -3165,31 +3165,34 @@ async function submitReg(){
     problem_to_solve: document.getElementById('fProb').value.trim()||null
   };
 
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),12000);
   try{
     const res=await fetch(`${_sbUrl}/rest/v1/registrations`,{
-      method:'POST',
-      headers:{apikey:_sbKey,Authorization:`Bearer ${_sbKey}`,'Content-Type':'application/json',Prefer:'return=representation'},
+      method:'POST',signal:ctrl.signal,
+      headers:{apikey:_sbKey,Authorization:`Bearer ${_sbKey}`,'Content-Type':'application/json',Prefer:'return=minimal'},
       body:JSON.stringify(payload)
     });
-    if(!res.ok) throw new Error(await res.text());
+    clearTimeout(timer);
+    if(!res.ok){const errText=await res.text();throw new Error(errText);}
 
     // Notify Google Sheet (fire-and-forget)
-    fetch(_webhook,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(()=>{});
-
-    // Update local counts optimistically
-    if(city.includes('Hà Nội'))regCounts.hn++;else regCounts.hcm++;
-    const tk=team.split(' (')[0];teamCounts[tk]=(teamCounts[tk]||0)+1;
-    ss('nd_teams',teamCounts);
+    fetch(_webhook,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(()=>{});
 
     // Show success screen
-    document.getElementById('regOKMsg').textContent=`Cảm ơn ${name}! Đăng ký của bạn đã được ghi nhận cho ${city}. Hẹn gặp bạn tại NHAI DAY! 🎉`;
+    document.getElementById('regOKMsg').textContent=`Cảm ơn ${name}! Đăng ký ${seasonId} của bạn đã được ghi nhận cho ${city}. Hẹn gặp bạn tại NHAI DAY! 🎉`;
     document.getElementById('regForm').style.display='none';
     document.getElementById('regOK').style.display='block';
   }catch(e){
+    clearTimeout(timer);
     console.error('Reg error:',e);
-    toast('❌ Đăng ký thất bại, vui lòng thử lại!');
+    let errMsg='❌ Đăng ký thất bại, vui lòng thử lại!';
+    if(e.name==='AbortError')errMsg='❌ Timeout kết nối, vui lòng thử lại!';
+    else{try{const p=JSON.parse(e.message);errMsg='❌ Lỗi: '+(p.message||e.message);}catch{errMsg='❌ Lỗi: '+e.message;}}
+    toast(errMsg);
     if(btn){btn.disabled=false;btn.textContent='✦ Xác nhận đăng ký';}
   }
+}
 }
 
 
