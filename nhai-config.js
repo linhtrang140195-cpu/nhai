@@ -111,7 +111,13 @@
       }
       const opt = document.createElement('option');
       opt.value = id;
-      opt.textContent = label + (dateStr || ' · TBD');
+      const allPast = evs.length > 0 && evs.every(e => new Date(e.date + 'T23:59:59') < new Date());
+      if (allPast) {
+        opt.disabled = true;
+        opt.textContent = label + ' · Đã diễn ra';
+      } else {
+        opt.textContent = label + (dateStr || ' · TBD');
+      }
       sel.appendChild(opt);
     });
   }
