@@ -11,15 +11,30 @@
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdHhkZmVlbmdwYmFwZ3VkcHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MDg0MTAsImV4cCI6MjA5OTE4NDQxMH0.NNePCWoFDuRWmeDI01FK5XOF9IbQq4E3H6wJEju-tRY';
   const SHEET_WEBHOOK = 'https://script.google.com/a/macros/garena.vn/s/AKfycbxCy-zbv5IISskZZdT0IAKXNZkiGDFA8QsCRvxhzxGK0zDavEtDajfs-40H9bSTNKo/exec';
 
+  // URL của Google Apps Script backup (doGet trả JSON)
+  // Sau khi deploy Apps Script, paste URL vào đây
+  let BACKUP_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxEyqvYJ1-SiioEVZ3B5zGSPOPJYONZf1kB7P9sdiQEHctuOn1bDL8-MKbzIn9f1022/exec';
+
+  let dataSource = 'supabase'; // track nguồn data cho debug
+
   // ===== SUPABASE HELPERS =====
-  async function sb(path) {
+  async function sb(path, timeoutMs) {
+    const ms = timeoutMs || 8000;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
     try {
       const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
-        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
+        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+        signal: ctrl.signal
       });
+      clearTimeout(timer);
       if (!res.ok) return [];
       return await res.json();
-    } catch (e) { console.error('SB fetch error:', e); return []; }
+    } catch (e) {
+      clearTimeout(timer);
+      console.warn('SB fetch error (' + path + '):', e.name === 'AbortError' ? 'TIMEOUT' : e);
+      return null;
+    }
   }
 
   async function sbInsert(table, data) {
@@ -45,16 +60,55 @@
   let registrationCount = 0;
 
   async function loadConfig() {
-    const [cfg, ss, m, e, f, regs] = await Promise.all([
-      sb('site_config'),
+    let cfg, ss, m, e, f, regs;
+
+    // --- Step 1: Try site_config first to get backup URL ---
+    cfg = await sb('site_config', 5000);
+    if (Array.isArray(cfg)) {
+      cfg.forEach(row => { siteConfig[row.key] = row.value; });
+      if (siteConfig.backup_sheet_url) BACKUP_SHEET_URL = siteConfig.backup_sheet_url;
+    }
+
+    // --- Step 2: Fetch remaining data from Supabase ---
+    const rest = await Promise.all([
       sb('season_stats?order=season_id'),
       sb('mentors?is_active=eq.true&order=display_order'),
       sb('events?order=display_order'),
       sb('faqs?is_active=eq.true&order=display_order'),
       sb('registrations?select=season_id,team,member2_name,member2_team,member3_name,member3_team&limit=5000')
     ]);
+    ss = rest[0]; m = rest[1]; e = rest[2]; f = rest[3]; regs = rest[4];
 
-    cfg.forEach(row => { siteConfig[row.key] = row.value; });
+    const supabaseFailed = cfg === null || rest.some(r => r === null);
+
+    // --- Step 3: Fallback to Google Sheet backup if Supabase failed ---
+    if (supabaseFailed && BACKUP_SHEET_URL) {
+      console.warn('Supabase failed — loading from Google Sheet backup...');
+      dataSource = 'google-sheet';
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 10000);
+        const res = await fetch(BACKUP_SHEET_URL, { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (res.ok) {
+          const backup = await res.json();
+          if (cfg === null && backup.site_config) {
+            siteConfig = {};
+            backup.site_config.forEach(row => { if (row.key) siteConfig[row.key] = row.value; });
+          }
+          if (ss === null && backup.season_stats) ss = backup.season_stats;
+          if (m === null && backup.mentors) m = backup.mentors;
+          if (e === null && backup.events) e = backup.events;
+          if (f === null && backup.faqs) f = backup.faqs;
+          if (regs === null && backup.registrations) regs = backup.registrations;
+          if (backup._meta) console.info('Sheet backup from:', backup._meta.last_backup);
+        }
+      } catch (err) {
+        console.error('Google Sheet fallback also failed:', err);
+      }
+    } else if (!supabaseFailed) {
+      dataSource = 'supabase';
+    }
     seasonStats = ss || [];
     mentors = m || [];
     events = e || [];
@@ -76,6 +130,7 @@
     // Expose current season và events cho form đăng ký trong index.html
     window.nhaiCurrentSeason = siteConfig.current_season || 'nhai-day-02';
     window.nhaiEvents = events;
+    window.nhaiDataSource = dataSource;
     buildSeasonDropdown();
 
     applyConfig();
@@ -86,6 +141,10 @@
     updateSeasonStats();
     updateEditionStats(headcountBySeason);
     updateHeroTeamRank(allRegs);
+
+    if (dataSource !== 'supabase') {
+      console.warn('⚠️ NHAI DAY đang dùng data backup từ Google Sheet. Một số dữ liệu có thể chưa cập nhật mới nhất.');
+    }
   }
 
   // ===== 6a. BUILD SEASON DROPDOWN with real dates from events =====
@@ -140,7 +199,7 @@
     if (!top2.length) return;
     const medals = ['🥇','🥈'];
     el.innerHTML =
-      '<span style="font-size:13px;color:rgba(255,255,255,0.4);margin-right:2px">Top team đăng ký:</span>' +
+      '<span style="font-size:13px;color:rgba(255,255,255,0.4);margin-right:2px">Top team có thành viên tham gia:</span>' +
       top2.map(([t, c], i) =>
         `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:3px 10px;font-size:13px;color:rgba(255,255,255,0.82)">${medals[i]} <b style="font-weight:600">${t}</b></span>`
       ).join('');
@@ -539,21 +598,22 @@
       };
 
       // Song song: Supabase + Google Sheet
+      let sheetOk = false;
       const [sbOk] = await Promise.all([
         sbInsert('registrations', data),
         fetch(SHEET_WEBHOOK, {
           method: 'POST', mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...data, season: currentSeason })
-        }).catch(() => {})
+        }).then(() => { sheetOk = true; }).catch(() => {})
       ]);
 
-      if (sbOk) {
+      if (sbOk || sheetOk) {
         document.getElementById('step3').style.display = 'none';
         document.getElementById('regSuccess').style.display = 'block';
-        // Update count
         registrationCount++;
         updateRegistrationCount();
+        if (!sbOk) console.warn('Registration saved to Sheet only (Supabase down)');
       } else {
         alert('Có lỗi xảy ra. Vui lòng thử lại.');
         btn.textContent = 'Hoàn tất đăng ký ✓'; btn.disabled = false;
