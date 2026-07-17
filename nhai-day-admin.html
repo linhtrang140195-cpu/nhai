@@ -874,7 +874,11 @@ function renderAnalytics(){
   const regsA=state.registrations.filter(r=>r.season_id===state.currentSeason);
   const ss=state.seasonStats.find(x=>x.season_id===state.currentSeason)||{};
   const totalAll=state.seasonStats.reduce((a,b)=>a+(b.total_participants||0),0);
-  const headcount=regsA.length + regsA.filter(r=>r.member2_name&&r.member2_name.trim()).length + regsA.filter(r=>r.member3_name&&r.member3_name.trim()).length;
+  const hcOf=list=>list.length + list.filter(r=>r.member2_name&&r.member2_name.trim()).length + list.filter(r=>r.member3_name&&r.member3_name.trim()).length;
+  const headcount=hcOf(regsA);
+  const allRegsCount=state.registrations.length;
+  const allHeadcount=hcOf(state.registrations);
+  const seasonCount=new Set(state.registrations.map(r=>r.season_id).filter(Boolean)).size||1;
   const teamCounts={};
   // Đếm cả TV2, TV3
   regsA.forEach(r=>{
@@ -888,11 +892,11 @@ function renderAnalytics(){
   const bars=sorted.map(([t,c],i)=>{const p=Math.round(c/total*100);return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="font-weight:500">${t}</span><span style="color:var(--textM)">${c} người · <span style="color:${colors[i%colors.length]};font-weight:600;font-family:monospace">${p}%</span></span></div><div style="background:rgba(255,255,255,0.04);border-radius:99px;height:8px;overflow:hidden"><div style="height:100%;border-radius:99px;background:${colors[i%colors.length]};width:${p}%"></div></div></div>`;}).join("");
   const gid=seasonGids[state.currentSeason]?.feedback||"";
   return `
-  <div style="font-size:11px;font-weight:600;color:var(--textM);margin-bottom:6px;letter-spacing:.5px">📅 MÙA NÀY — ${(state.seasons.find(x=>x.id===state.currentSeason)?.name||"").toUpperCase()}</div>
+  <div style="font-size:11px;font-weight:600;color:var(--textM);margin-bottom:6px;letter-spacing:.5px">📊 SỐ LIỆU — MÙA HIỆN TẠI: ${(state.seasons.find(x=>x.id===state.currentSeason)?.name||"").toUpperCase()}</div>
   <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
-    <div class="stat"><div class="stat-bar" style="background:var(--gold)"></div><div style="font-size:14px;margin-bottom:6px">📝</div><div class="stat-num">${headcount||"—"}</div><div class="stat-label">Đăng ký mùa này</div><div class="stat-sub">${regsA.length} đăng ký · ${headcount-regsA.length} thành viên</div></div>
-    <div class="stat"><div class="stat-bar" style="background:var(--teal)"></div><div style="font-size:14px;margin-bottom:6px">✅</div><div class="stat-num">${ss.total_participants||"—"}</div><div class="stat-label">Tham gia thực tế</div><div class="stat-sub">season_stats</div></div>
-    <div class="stat"><div class="stat-bar" style="background:var(--purple)"></div><div style="font-size:14px;margin-bottom:6px">🌟</div><div class="stat-num">${totalAll||"—"}</div><div class="stat-label">Tổng tất cả mùa</div><div class="stat-sub">Cộng dồn ${state.seasonStats.length} mùa</div></div>
+    <div class="stat"><div class="stat-bar" style="background:var(--gold)"></div><div style="font-size:14px;margin-bottom:6px">📝</div><div class="stat-num">${regsA.length||"—"}</div><div class="stat-label">Đơn đăng ký (mùa này)</div><div class="stat-sub">${headcount} người · gồm +${headcount-regsA.length} thành viên</div></div>
+    <div class="stat"><div class="stat-bar" style="background:var(--teal)"></div><div style="font-size:14px;margin-bottom:6px">✅</div><div class="stat-num">${ss.total_participants||"—"}</div><div class="stat-label">Tham gia thực tế</div><div class="stat-sub">số thực đến (nhập tay)</div></div>
+    <div class="stat"><div class="stat-bar" style="background:var(--purple)"></div><div style="font-size:14px;margin-bottom:6px">🗂️</div><div class="stat-num">${allRegsCount||"—"}</div><div class="stat-label">Tổng đơn đăng ký (tất cả mùa)</div><div class="stat-sub">${allHeadcount} người · ${seasonCount} mùa</div></div>
   </div>
   <div class="stat-grid">
     <div class="stat"><div class="stat-bar" style="background:var(--pink)"></div><div style="font-size:14px;margin-bottom:6px">⭐</div><div class="stat-num">${ss.avg_experience?ss.avg_experience+"★":"—"}</div><div class="stat-label">Trải nghiệm</div></div>
