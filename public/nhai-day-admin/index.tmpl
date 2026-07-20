@@ -263,7 +263,7 @@ function renderDashboard(){
     <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,200,66,0.15);border:1px solid var(--goldBd);display:flex;align-items:center;justify-content:center;font-size:20px">🍜</div>
     <div style="flex:1"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);font-weight:600;margin-bottom:4px">Đang quản lý</div>
     <div style="font-size:17px;font-weight:600">${s?s.name:"NHAI DAY"} · Admin Panel</div></div>
-    <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--teal)"><span style="width:6px;height:6px;background:var(--teal);border-radius:50%;display:inline-block"></span>Supabase live</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--teal)"><span style="width:6px;height:6px;background:var(--teal);border-radius:50%;display:inline-block"></span>MySQL live</div>
   </div>
   <div class="stat-grid" style="grid-template-columns:repeat(5,1fr)">
     <div class="stat"><div class="stat-bar" style="background:var(--gold)"></div><div style="font-size:14px;margin-bottom:6px">📝</div><div class="stat-num">${headcount||"—"}</div><div class="stat-label">Đăng ký mùa này</div><div class="stat-sub">${seasonRegs.length} đăng ký</div></div>
@@ -1017,7 +1017,7 @@ async function calcFeedbackStats(){
 }
 
 function renderMedia(){
-  return `<div class="card"><div class="card-header"><div class="card-title">🖼️ Ảnh và Media</div><div class="card-sub">Upload lên Supabase Storage</div></div>
+  return `<div class="card"><div class="card-header"><div class="card-title">🖼️ Ảnh và Media</div><div class="card-sub">Upload trực tiếp (base64) khi thêm/sửa mentor</div></div>
   <div style="padding:30px;text-align:center"><div style="border:2px dashed var(--borderL);border-radius:12px;padding:30px;color:var(--textM)">
   <div style="font-size:28px;margin-bottom:8px">☁️</div><div style="font-weight:500;color:var(--textS)">Kéo thả ảnh vào đây</div><div>PNG, JPG, WebP tối đa 5MB</div></div></div></div>`;
 }
@@ -1053,7 +1053,7 @@ function renderSettings(){
     <div><label>Sheet Submissions/Voting (gid)</label><div style="display:flex;gap:6px"><input type="text" id="sg_subs" value="${seasonGids[state.currentSeason]?.submissions||""}" placeholder="gid tab submissions" style="margin-bottom:0;flex:1"/><button class="btn btn-success" onclick="saveGid('submissions','sg_subs')">Lưu</button></div></div>
     <div><label>Sheet Đánh giá (gid)</label><div style="display:flex;gap:6px"><input type="text" id="sg_fb" value="${seasonGids[state.currentSeason]?.feedback||""}" placeholder="gid tab feedback" style="margin-bottom:0;flex:1"/><button class="btn btn-success" onclick="saveGid('feedback','sg_fb')">Lưu</button></div></div>
   </div></div>
-  <div class="card"><div class="card-header"><div class="card-title">☁️ Backup Supabase → Google Sheet</div><div class="card-sub">Backup toàn bộ data sang Google Sheet để fallback khi Supabase lỗi</div></div>
+  <div class="card"><div class="card-header"><div class="card-title">☁️ Backup dữ liệu → Google Sheet</div><div class="card-sub">Backup toàn bộ data sang Google Sheet để fallback khi hệ thống chính lỗi</div></div>
   <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
     <div><label>Apps Script Web App URL</label><div style="display:flex;gap:6px"><input type="text" id="backupSheetUrl" value="${state.config.backup_sheet_url||""}" placeholder="https://script.google.com/macros/s/.../exec" style="margin-bottom:0;flex:1"/><button class="btn btn-success" onclick="saveConfig('backup_sheet_url',document.getElementById('backupSheetUrl').value)">Lưu</button></div></div>
     <div id="backupStatus" style="font-size:11px;color:var(--textM)"></div>

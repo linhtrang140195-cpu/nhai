@@ -34,7 +34,7 @@ if (!SERVICE_KEY) {
 }
 
 async function main() {
-  const pool = mysql.createPool(DATABASE_URL);
+  const pool = mysql.createPool({ uri: DATABASE_URL, dateStrings: true });
   const summary = await runSeed({
     supabaseUrl: SUPABASE_URL,
     anonKey: ANON_KEY,
