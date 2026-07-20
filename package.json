@@ -1,0 +1,18 @@
+{
+  "name": "nhai-day",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NHAI DAY public site + admin tool, static frontend served by a small Express API backed by MySQL",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "migrate": "node migrations/seed-from-supabase.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mysql2": "^3.11.0"
+  }
+}

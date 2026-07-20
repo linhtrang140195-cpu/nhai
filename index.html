@@ -2516,9 +2516,9 @@ window.NHAI_VOTE_CONFIG = {
   enabled: true,
   supabaseUrl: "https://xmtxdfeengpbapgudprx.supabase.co",
   anonKey: "sb_publishable_0uqGPTS2u3F_afGtgn8DRQ_yjxqjdHR",
-  edgeFunctionUrl: "",
+  edgeFunctionUrl: "/api/top-pick-vote",
   analyticsEnabled: true,
-  analyticsFunctionUrl: "",
+  analyticsFunctionUrl: "/api/site-analytics",
   campaignId: "top-pick-day01-2026",
   maxVotes: 3
 };
@@ -3140,7 +3140,7 @@ async function submitReg(){
   const btn=document.querySelector('#regForm .fsub');
   if(btn){btn.disabled=true;btn.textContent='Đang gửi...';}
 
-  const _sbUrl='https://xmtxdfeengpbapgudprx.supabase.co';
+  const _sbUrl=''; // same-origin — served by our own Express API now (was Supabase)
   const _sbKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdHhkZmVlbmdwYmFwZ3VkcHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MDg0MTAsImV4cCI6MjA5OTE4NDQxMH0.NNePCWoFDuRWmeDI01FK5XOF9IbQq4E3H6wJEju-tRY';
   const _webhook='https://script.google.com/a/macros/garena.vn/s/AKfycbxCy-zbv5IISskZZdT0IAKXNZkiGDFA8QsCRvxhzxGK0zDavEtDajfs-40H9bSTNKo/exec';
 

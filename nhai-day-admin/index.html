@@ -121,7 +121,7 @@ label{font-size:11px;color:var(--textM);display:block;margin-bottom:4px}
 <div id="modalArea"></div>
 
 <script>
-const SB_URL = "https://xmtxdfeengpbapgudprx.supabase.co";
+const SB_URL = ""; // same-origin — served by our own Express API now (was Supabase)
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdHhkZmVlbmdwYmFwZ3VkcHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MDg0MTAsImV4cCI6MjA5OTE4NDQxMH0.NNePCWoFDuRWmeDI01FK5XOF9IbQq4E3H6wJEju-tRY";
 
 const SHEETS = {
@@ -160,7 +160,7 @@ async function loadAll(){
     sb("registrations?order=created_at.desc&limit=5000"),sb("awards?order=created_at"),
     sb("award_categories?order=display_order"),sb("cases?order=display_order"),
     sb("site_config"),sb("top_pick_campaigns?order=created_at"),
-    sb("top_pick_votes?order=voted_at.desc&limit=100"),
+    sb("top_pick_votes?order=created_at.desc&limit=100"),
     sb("season_stats?order=season_id").catch(()=>[])
   ]);
   state.seasons=s;state.events=e;state.mentors=m;state.faqs=f;
@@ -659,7 +659,7 @@ function renderAudit(){
   ${state.votes.slice(0,30).map(v=>`<div class="list-row" style="font-size:11px">
     <div style="font-family:monospace;min-width:120px;color:var(--textS)">${v.device_id?.slice(0,12)||"—"}</div>
     <div style="flex:1;color:var(--textM);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.case_id||""}</div>
-    <div style="color:var(--textM)">${v.voted_at?new Date(v.voted_at).toLocaleString("vi-VN"):"—"}</div>
+    <div style="color:var(--textM)">${v.created_at?new Date(v.created_at).toLocaleString("vi-VN"):"—"}</div>
   </div>`).join("")||'<div class="empty-state">Chưa có vote</div>'}</div>`;
 }
 
@@ -1168,15 +1168,16 @@ async function saveMentor(existingId){
 async function uploadAvatar(){
   const file=document.getElementById("avFile")?.files?.[0];
   if(!file)return;
-  const name="mentor-"+Date.now()+"-"+file.name.replace(/[^a-zA-Z0-9.]/g,"_");
   try{
-    const res=await fetch(`${SB_URL}/storage/v1/object/media/${name}`,{method:"POST",headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,"Content-Type":file.type},body:file});
-    if(res.ok){
-      const url=`${SB_URL}/storage/v1/object/public/media/${name}`;
-      document.getElementById("f_avatar_url").value=url;
-      document.getElementById("avPrev").innerHTML=`<img src="${url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover"/>`;
-      toast("Ảnh đã upload!");
-    }else toast("Lỗi upload","danger");
+    const url=await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>resolve(reader.result);
+      reader.onerror=()=>reject(new Error("Không đọc được file"));
+      reader.readAsDataURL(file);
+    });
+    document.getElementById("f_avatar_url").value=url;
+    document.getElementById("avPrev").innerHTML=`<img src="${url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover"/>`;
+    toast("Ảnh đã sẵn sàng — bấm Lưu để cập nhật");
   }catch(e){toast("Lỗi: "+e.message,"danger");}
 }
 

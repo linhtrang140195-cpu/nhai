@@ -7,7 +7,7 @@
 (function() {
   'use strict';
 
-  const SB_URL = 'https://xmtxdfeengpbapgudprx.supabase.co';
+  const SB_URL = ''; // same-origin — served by our own Express API now (was Supabase)
   const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtdHhkZmVlbmdwYmFwZ3VkcHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MDg0MTAsImV4cCI6MjA5OTE4NDQxMH0.NNePCWoFDuRWmeDI01FK5XOF9IbQq4E3H6wJEju-tRY';
   const SHEET_WEBHOOK = 'https://script.google.com/a/macros/garena.vn/s/AKfycbxCy-zbv5IISskZZdT0IAKXNZkiGDFA8QsCRvxhzxGK0zDavEtDajfs-40H9bSTNKo/exec';
 

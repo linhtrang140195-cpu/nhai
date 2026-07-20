@@ -1,3 +1,5 @@
+node_modules/
+
 assets/**
 
 # Keep public images that the static site renders directly.
