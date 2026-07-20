@@ -1,21 +1,21 @@
 node_modules/
 
-assets/**
+public/assets/**
 
 # Keep public images that the static site renders directly.
 # Large/internal media such as videos, spreadsheets, docs, and raw uploads stay ignored.
-!assets/
-!assets/demos/
-assets/demos/**
-!assets/demos/**/
-!assets/demos/**/*.jpg
-!assets/demos/**/*.jpeg
-!assets/demos/**/*.png
-!assets/demos/**/*.webp
-!assets/recap/
-assets/recap/**
-!assets/recap/**/
-!assets/recap/**/*.jpg
-!assets/recap/**/*.jpeg
-!assets/recap/**/*.png
-!assets/recap/**/*.webp
+!public/assets/
+!public/assets/demos/
+public/assets/demos/**
+!public/assets/demos/**/
+!public/assets/demos/**/*.jpg
+!public/assets/demos/**/*.jpeg
+!public/assets/demos/**/*.png
+!public/assets/demos/**/*.webp
+!public/assets/recap/
+public/assets/recap/**
+!public/assets/recap/**/
+!public/assets/recap/**/*.jpg
+!public/assets/recap/**/*.jpeg
+!public/assets/recap/**/*.png
+!public/assets/recap/**/*.webp

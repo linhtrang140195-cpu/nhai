@@ -34,7 +34,7 @@ app.post('/internal/seed', async (req, res) => {
   }
 });
 
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 
 async function runSchemaMigration() {
   const sqlFile = path.join(__dirname, 'migrations', '001_schema.sql');
