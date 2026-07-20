@@ -34,6 +34,18 @@ app.post('/internal/seed', async (req, res) => {
   }
 });
 
+// Pretty routes for the HTML pages. Source files are named .tmpl (not .html) so the
+// deploy platform's project-type detector — which unconditionally classifies any repo
+// containing an .html file as a static site, ignoring package.json entirely — picks up
+// this as a Node/Express app instead.
+function servePage(relPath) {
+  return (req, res) => res.type('html').sendFile(path.join(__dirname, 'public', relPath));
+}
+app.get('/', servePage('index.tmpl'));
+app.get(['/nhai-day-admin', '/nhai-day-admin/'], servePage('nhai-day-admin/index.tmpl'));
+app.get('/nhai-day-admin.html', servePage('nhai-day-admin.tmpl'));
+app.get('/nhai-day.html', servePage('nhai-day.tmpl'));
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 async function runSchemaMigration() {
