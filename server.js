@@ -42,6 +42,7 @@ function servePage(relPath) {
   return (req, res) => res.type('html').sendFile(path.join(__dirname, 'public', relPath));
 }
 app.get('/', servePage('index.tmpl'));
+app.get(['/ket-qua', '/ket-qua/'], servePage('index.tmpl'));
 app.get(['/nhai-day-admin', '/nhai-day-admin/'], servePage('nhai-day-admin/index.tmpl'));
 app.get('/nhai-day-admin.html', servePage('nhai-day-admin.tmpl'));
 app.get('/nhai-day.html', servePage('nhai-day.tmpl'));
