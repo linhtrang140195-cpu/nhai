@@ -3111,8 +3111,10 @@ function closeReg(){
 document.getElementById('regModal').addEventListener('click',function(ev){if(ev.target===this)closeReg();});
 if(location.hash==='#register') openReg();
 if(location.pathname.replace(/\/$/,'')==='/ket-qua' || location.hash==='#ketqua' || location.hash==='#results'){
-  switchTab('results', document.querySelectorAll('.ptab')[2]);
-  if(location.hash==='#vote') switchResTab('vote', document.querySelectorAll('.rtab')[1]);
+  setTimeout(function(){
+    switchTab('results', document.querySelectorAll('.ptab')[2]);
+    if(location.hash==='#vote') switchResTab('vote', document.querySelectorAll('.rtab')[1]);
+  },0);
 }
 
 
