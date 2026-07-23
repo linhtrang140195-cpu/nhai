@@ -3110,7 +3110,7 @@ function closeReg(){
 
 document.getElementById('regModal').addEventListener('click',function(ev){if(ev.target===this)closeReg();});
 if(location.hash==='#register') openReg();
-if(location.pathname.replace(/\/$/,'')==='/ket-qua' || location.hash==='#ketqua' || location.hash==='#results'){
+if(location.pathname.replace(/\/$/,'')==='/ket-qua' || location.hash==='#ketqua' || location.hash==='#results' || location.hash==='#ketquabinhchon'){
   setTimeout(function(){
     switchTab('results', document.querySelectorAll('.ptab')[2]);
     if(location.hash==='#vote') switchResTab('vote', document.querySelectorAll('.rtab')[1]);
@@ -4303,7 +4303,7 @@ async function loadVoteSnapshot(){
   voteState.loading=true;
   voteState.error='';
   try{
-    const url=new URL(getVoteFunctionUrl());
+    const url=new URL(getVoteFunctionUrl(), location.origin);
     url.searchParams.set('campaign_id',voteState.campaignId);
     url.searchParams.set('device_id',voteState.deviceId);
     const res=await fetch(url.toString(),{
