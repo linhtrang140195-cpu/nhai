@@ -4147,8 +4147,9 @@ const analyticsState={
 
 TOP_PICK.forEach(c=>{voteState.counts[c.id]=0;});
 
+const VOTE_DISPLAY_OFFSET=10;
 function getDisplayVoteCount(caseId){
-  return (voteState.counts[caseId]||0);
+  return (voteState.counts[caseId]||0)+VOTE_DISPLAY_OFFSET;
 }
 
 function createLocalDeviceId(){
