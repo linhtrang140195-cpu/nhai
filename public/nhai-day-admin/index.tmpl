@@ -101,9 +101,37 @@ label{font-size:11px;color:var(--textM);display:block;margin-bottom:4px}
 .toast{position:fixed;top:16px;right:16px;z-index:9999;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:500;color:white;box-shadow:0 8px 24px rgba(0,0,0,0.4);animation:fadeIn .3s}
 .empty-state{padding:30px;text-align:center;color:var(--textM);font-size:12px}
 @keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+#gate.hidden{display:none}
+.gate-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:36px 32px;width:340px;text-align:center}
+.gate-box h2{font-size:18px;font-weight:700;margin-bottom:4px}
+.gate-box p{font-size:12px;color:var(--textM);margin-bottom:20px}
+.gate-inp{width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:14px;outline:none;margin-bottom:10px}
+.gate-inp:focus{border-color:var(--gold)}
+.gate-btn{width:100%;padding:10px;border-radius:8px;border:none;background:var(--gold);color:#0A0E1A;font-weight:700;font-size:14px;cursor:pointer}
+.gate-err{color:var(--danger);font-size:12px;margin-top:8px;display:none}
 </style>
 </head>
 <body>
+<div id="gate">
+  <div class="gate-box">
+    <h2>🔐 NHAI DAY Admin</h2>
+    <p>Nhập mật khẩu để tiếp tục</p>
+    <input class="gate-inp" id="gatePwd" type="password" placeholder="Mật khẩu" onkeydown="if(event.key==='Enter')checkGate()">
+    <button class="gate-btn" onclick="checkGate()">Đăng nhập</button>
+    <div class="gate-err" id="gateErr">Mật khẩu không đúng</div>
+  </div>
+</div>
+<script>
+(function(){
+  if(sessionStorage.getItem('nhai_admin_ok')==='1') document.getElementById('gate').classList.add('hidden');
+})();
+function checkGate(){
+  const v=document.getElementById('gatePwd').value;
+  if(v==='nhainhai2026'){sessionStorage.setItem('nhai_admin_ok','1');document.getElementById('gate').classList.add('hidden');}
+  else{const e=document.getElementById('gateErr');e.style.display='block';setTimeout(()=>e.style.display='none',2000);}
+}
+</script>
 <div class="shell">
   <div class="sidebar" id="sidebar"></div>
   <div class="main">
