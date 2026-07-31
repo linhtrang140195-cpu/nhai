@@ -111,8 +111,10 @@ CREATE TABLE IF NOT EXISTS award_categories (
   description TEXT,
   prize_amount VARCHAR(64),
   icon VARCHAR(16),
-  display_order INT DEFAULT 0
+  display_order INT DEFAULT 0,
+  section VARCHAR(64) DEFAULT 'per-event'
 );
+ALTER TABLE award_categories ADD COLUMN IF NOT EXISTS section VARCHAR(64) DEFAULT 'per-event';
 
 CREATE TABLE IF NOT EXISTS `cases` (
   id VARCHAR(64) PRIMARY KEY,

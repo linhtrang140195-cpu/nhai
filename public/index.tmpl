@@ -1810,61 +1810,11 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
     </div>
 
 
-    <div class="criteria-wrap">
+    <div class="criteria-wrap" id="criteriaWrap">
 
 
       <div class="criteria-head" data-e>🏅 Tiêu chí đánh giá</div>
-
-
-      <div class="prize-section-label">GIẢI MỖI EVENT</div>
-
-
-      <table class="criteria-table">
-
-
-        <thead><tr><th>Giải</th><th>Giá trị</th><th>Tiêu chí</th></tr></thead>
-
-
-        <tbody>
-
-
-          <tr><td>🏆 Master Chef</td><td>2.000.000đ</td><td data-e contenteditable="false">Demo nổi bật, hiểu biết sâu về kỹ thuật, chưa từng được sử dụng, có thể scale là điểm cộng. Check với quản lý team đó chưa sử dụng từ trước. Mentor đánh giá.</td></tr>
-
-
-          <tr><td>🚀 Demo Ready (Early Bird)</td><td>1.000.000đ × 8</td><td data-e contenteditable="false">Sản phẩm chạy được, có demo, giải quyết một pain point cụ thể và chưa từng được sử dụng trong sub-team (BTC xác nhận cùng quản lý).<br><br>8 team đầu tiên đạt đủ tiêu chí nhận 1.000.000đ. Nếu chưa đủ 8 suất, BTC tiếp tục xét theo FCFS đến 17:30 hoặc đến khi đủ 8 suất.<br>Không thuộc Early Bird nhưng hoàn thiện trước 17:30: 500.000đ.</td></tr>
-
-
-          <tr><td>✅ Hoàn thiện output trước 17:30</td><td>500.000đ</td><td data-e contenteditable="false">Tất cả các team có demo trước 17:30 đều nhận được 500.000đ</td></tr>
-
-
-          <tr><td>💡 Top Pick Dish</td><td>1.000.000đ</td><td data-e contenteditable="false">Voting sau event</td></tr>
-
-
-        </tbody>
-
-
-      </table>
-
-
-      <div class="prize-section-label">GIẢI TỔNG KẾT CAMPAIGN</div>
-
-
-      <table class="criteria-table">
-
-
-        <tbody>
-
-
-          <tr><td>🎁 AI Gift (Robot AI assistant)</td><td>2.000.000đ × 2</td><td data-e contenteditable="false">1 HN + 1 HCM. Tích điểm: số event tham gia + số lần trong team có demo. Cao nhất thắng, hòa thì lucky draw.</td></tr>
-
-
-          <tr><td>🤝 Persistent NHAI Crew</td><td>1.000.000đ × 2</td><td data-e contenteditable="false">1 HN + 1 HCM. Team có nhiều thành viên tham gia event nhất xuyên suốt campaign.</td></tr>
-
-
-        </tbody>
-
-
-      </table>
+      <div id="criteriaDynamic"></div>
 
 
     </div>
@@ -3217,7 +3167,31 @@ document.addEventListener('DOMContentLoaded',function(){
   checkGarenaEmail('fEmail','fEmailWarn');
   checkGarenaEmail('m2e','m2eWarn');
   checkGarenaEmail('m3e','m3eWarn');
+  loadAwardCriteria();
 });
+
+function loadAwardCriteria(){
+  const el=document.getElementById('criteriaDynamic');
+  if(!el) return;
+  fetch('/rest/v1/award_categories?order=display_order.asc')
+    .then(r=>r.json()).then(rows=>{
+      if(!Array.isArray(rows)||!rows.length) return;
+      const sections={};
+      rows.forEach(r=>{(sections[r.section]=sections[r.section]||[]).push(r);});
+      const sectionLabel={'per-event':'GIẢI MỖI EVENT','campaign':'GIẢI TỔNG KẾT CAMPAIGN'};
+      const order=['per-event','campaign'];
+      el.innerHTML=order.filter(s=>sections[s]).map(s=>`
+        <div class="prize-section-label">${sectionLabel[s]||s.toUpperCase()}</div>
+        <table class="criteria-table">
+          <thead><tr><th>Giải</th><th>Giá trị</th><th>Tiêu chí</th></tr></thead>
+          <tbody>${sections[s].map(r=>`<tr>
+            <td>${r.icon||''} ${r.name}</td>
+            <td>${r.prize_amount||''}</td>
+            <td>${(r.description||'').replace(/\n/g,'<br>')}</td>
+          </tr>`).join('')}</tbody>
+        </table>`).join('');
+    }).catch(()=>{});
+}
 
 // ── TOAST ──
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
 const pool = require('./src/db');
 const restShim = require('./src/restShim');
@@ -16,6 +17,19 @@ app.use(express.json({ limit: '15mb' }));
 app.use('/rest/v1', restShim);
 app.all('/api/top-pick-vote', topPickVote);
 app.post('/api/site-analytics', siteAnalytics);
+
+// Proxy Google Sheets CSV export to bypass browser CORS restriction.
+// Only allows docs.google.com URLs.
+app.get('/api/proxy-sheet', (req, res) => {
+  const target = String(req.query.url || '');
+  if (!target.startsWith('https://docs.google.com/')) {
+    return res.status(400).json({ error: 'Only docs.google.com URLs are allowed.' });
+  }
+  https.get(target, (upstream) => {
+    res.setHeader('Content-Type', upstream.headers['content-type'] || 'text/csv');
+    upstream.pipe(res);
+  }).on('error', (e) => res.status(502).json({ error: e.message }));
+});
 
 // One-time, manually-triggered data import from Supabase. Not linked from anywhere in the
 // UI. Keys are supplied per-request in the body (never stored/committed). Safe to leave in
@@ -62,7 +76,30 @@ async function runSchemaMigration() {
   console.log(`Schema migration: ${statements.length} statements applied (idempotent).`);
 }
 
+const AWARD_CATEGORIES_SEED = [
+  { id: 'master-chef',       section: 'per-event', display_order: 1, icon: '🏆', name: 'Master Chef',                    prize_amount: '2.000.000đ',     description: 'Demo nổi bật, hiểu biết sâu về kỹ thuật, chưa từng được sử dụng, có thể scale là điểm cộng. Check với quản lý team đó chưa sử dụng từ trước. Mentor đánh giá.' },
+  { id: 'early-bird',        section: 'per-event', display_order: 2, icon: '🚀', name: 'Demo Ready (Early Bird)',         prize_amount: '1.000.000đ × 8', description: 'Sản phẩm chạy được, có demo, giải quyết một pain point cụ thể và chưa từng được sử dụng trong sub-team (BTC xác nhận cùng quản lý).\n\n8 team đầu tiên đạt đủ tiêu chí nhận 1.000.000đ. Nếu chưa đủ 8 suất, BTC tiếp tục xét theo FCFS đến 17:30 hoặc đến khi đủ 8 suất.\nKhông thuộc Early Bird nhưng hoàn thiện trước 17:30: 500.000đ.' },
+  { id: 'complete-1730',     section: 'per-event', display_order: 3, icon: '✅', name: 'Hoàn thiện output trước 17:30',   prize_amount: '500.000đ',       description: 'Tất cả các team có demo trước 17:30 đều nhận được 500.000đ' },
+  { id: 'top-pick-dish',     section: 'per-event', display_order: 4, icon: '💡', name: 'Top Pick Dish',                  prize_amount: '1.000.000đ',     description: 'Voting sau event' },
+  { id: 'ai-gift',           section: 'campaign',  display_order: 5, icon: '🎁', name: 'AI Gift (Robot AI assistant)',   prize_amount: '2.000.000đ × 2', description: '1 HN + 1 HCM. Tích điểm: số event tham gia + số lần trong team có demo. Cao nhất thắng, hòa thì lucky draw.' },
+  { id: 'persistent-crew',   section: 'campaign',  display_order: 6, icon: '🤝', name: 'Persistent NHAI Crew',           prize_amount: '1.000.000đ × 2', description: '1 HN + 1 HCM. Team có nhiều thành viên tham gia event nhất xuyên suốt campaign.' },
+];
+
+async function seedAwardCategories() {
+  for (const r of AWARD_CATEGORIES_SEED) {
+    await pool.query(
+      `INSERT INTO award_categories (id, section, display_order, icon, name, prize_amount, description)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE section=VALUES(section), display_order=VALUES(display_order),
+         icon=VALUES(icon), name=VALUES(name), prize_amount=VALUES(prize_amount), description=VALUES(description)`,
+      [r.id, r.section, r.display_order, r.icon, r.name, r.prize_amount, r.description]
+    );
+  }
+  console.log('Award categories seeded/updated.');
+}
+
 runSchemaMigration()
+  .then(() => seedAwardCategories())
   .catch(e => console.error('Schema migration failed:', e.message))
   .finally(() => {
     app.listen(PORT, '0.0.0.0', () => {

@@ -165,7 +165,7 @@ let seasonGids = JSON.parse(localStorage.getItem("nhai_gids") || JSON.stringify(
   "nhai-day-04": {results:"", submissions:"", feedback:""}
 }));
 function saveGids(){localStorage.setItem("nhai_gids",JSON.stringify(seasonGids));}
-function getUrl(type){const g=seasonGids[state.currentSeason]?.[type];return g?`${SHEETS[type]}&gid=${g}`:null;}
+function getUrl(type){const g=seasonGids[state.currentSeason]?.[type];return g?`/api/proxy-sheet?url=${encodeURIComponent(SHEETS[type]+'&gid='+g)}`:null;}
 
 let state={tab:"dashboard",seasons:[],events:[],mentors:[],faqs:[],registrations:[],awards:[],awardCats:[],cases:[],config:{},campaigns:[],votes:[],seasonStats:[],currentSeason:"nhai-day-01",loading:true,cityFilter:"all"};
 
@@ -255,13 +255,14 @@ function parseCSV(text){
 // ===== RENDER =====
 function render(){
   renderSidebar();
-  const labels={dashboard:"Dashboard",analytics:"Analytics",schedule:"Lịch trình",results:"Kết quả",voting:"Voting",audit:"Vote audit",registrations:"Đăng ký tham gia",mentors:"Mentors",faq:"FAQ",media:"Ảnh và Media",settings:"Cài đặt site"};
+  const labels={dashboard:"Dashboard",analytics:"Analytics",schedule:"Lịch trình",results:"Kết quả",voting:"Voting",audit:"Vote audit",registrations:"Đăng ký tham gia",mentors:"Mentors",faq:"FAQ",media:"Ảnh và Media",settings:"Cài đặt site",criteria:"Tiêu chí & Giải thưởng"};
   document.getElementById("topTitle").textContent=labels[state.tab]||"Dashboard";
   const s=state.seasons.find(x=>x.id===state.currentSeason);
   document.getElementById("seasonPick").textContent=`📅 ${s?s.name:"—"} ▾`;
   if(state.loading){document.getElementById("content").innerHTML=`<div class="empty-state"><div style="font-size:28px;margin-bottom:12px">🍜</div>Đang load...</div>`;return;}
-  const fn={dashboard:renderDashboard,analytics:renderAnalytics,schedule:renderSchedule,results:renderResults,voting:renderVoting,audit:renderAudit,registrations:renderRegistrations,mentors:renderMentors,faq:renderFAQ,media:renderMedia,settings:renderSettings};
+  const fn={dashboard:renderDashboard,analytics:renderAnalytics,schedule:renderSchedule,results:renderResults,voting:renderVoting,audit:renderAudit,registrations:renderRegistrations,mentors:renderMentors,faq:renderFAQ,media:renderMedia,settings:renderSettings,criteria:renderCriteria};
   document.getElementById("content").innerHTML=(fn[state.tab]||renderDashboard)();
+  if(state.tab==='criteria') setTimeout(loadCriteriaPanel,0);
 }
 
 function renderSidebar(){
@@ -270,7 +271,7 @@ function renderSidebar(){
     {sec:"Nội dung mùa"},{id:"schedule",icon:"📅",label:"Lịch trình"},{id:"results",icon:"🏆",label:"Kết quả"},
     {id:"voting",icon:"❤️",label:"Voting"},{id:"audit",icon:"🛡️",label:"Vote audit"},
     {sec:"Danh sách"},{id:"registrations",icon:"👥",label:"Đăng ký tham gia"},{id:"mentors",icon:"⭐",label:"Mentors"},{id:"faq",icon:"❓",label:"FAQ"},
-    {sec:"Cấu hình"},{id:"media",icon:"🖼️",label:"Ảnh và Media"},{id:"settings",icon:"⚙️",label:"Cài đặt site"}
+    {sec:"Cấu hình"},{id:"criteria",icon:"🏅",label:"Tiêu chí & Giải"},{id:"media",icon:"🖼️",label:"Ảnh và Media"},{id:"settings",icon:"⚙️",label:"Cài đặt site"}
   ];
   let h=`<div class="logo"><div class="logo-icon">🍜</div><div><div class="logo-text">NHAI DAY <span>Admin</span></div><div class="logo-sub">NÊM AI VÀO CÔNG VIỆC</div></div></div>`;
   nav.forEach(n=>{
@@ -1048,6 +1049,43 @@ function renderMedia(){
   return `<div class="card"><div class="card-header"><div class="card-title">🖼️ Ảnh và Media</div><div class="card-sub">Upload trực tiếp (base64) khi thêm/sửa mentor</div></div>
   <div style="padding:30px;text-align:center"><div style="border:2px dashed var(--borderL);border-radius:12px;padding:30px;color:var(--textM)">
   <div style="font-size:28px;margin-bottom:8px">☁️</div><div style="font-weight:500;color:var(--textS)">Kéo thả ảnh vào đây</div><div>PNG, JPG, WebP tối đa 5MB</div></div></div></div>`;
+}
+
+function renderCriteria(){
+  return `<div class="section-wrap">
+    <div class="section-header"><div class="section-title">🏅 Tiêu chí & Giải thưởng</div>
+      <button class="btn-sm btn-primary" onclick="loadCriteriaPanel()">↺ Tải lại</button>
+    </div>
+    <div id="criteriaPanel"><div class="empty-state">Đang tải...</div></div>
+  </div>`;
+}
+function loadCriteriaPanel(){
+  const el=document.getElementById('criteriaPanel');
+  if(!el) return;
+  sb('/rest/v1/award_categories?order=display_order.asc').then(rows=>{
+    if(!Array.isArray(rows)||!rows.length){el.innerHTML='<div class="empty-state">Không có dữ liệu</div>';return;}
+    el.innerHTML=`<div style="display:flex;flex-direction:column;gap:14px;margin-top:4px">
+      ${rows.map(r=>`<div class="card" style="padding:16px;display:grid;grid-template-columns:48px 1fr 140px 80px;gap:12px;align-items:start">
+        <input value="${r.icon||''}" style="font-size:22px;text-align:center;background:var(--bg3);border:1px solid var(--borderL);border-radius:8px;padding:6px;color:var(--text);width:48px" id="ci_icon_${r.id}">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <input value="${r.name||''}" placeholder="Tên giải" style="background:var(--bg3);border:1px solid var(--borderL);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;font-weight:600;width:100%" id="ci_name_${r.id}">
+          <textarea placeholder="Tiêu chí / mô tả" rows="3" style="background:var(--bg3);border:1px solid var(--borderL);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;resize:vertical;width:100%;line-height:1.5" id="ci_desc_${r.id}">${r.description||''}</textarea>
+          <select style="background:var(--bg3);border:1px solid var(--borderL);border-radius:6px;padding:5px 10px;color:var(--textS);font-size:12px;width:fit-content" id="ci_sec_${r.id}">
+            <option value="per-event" ${r.section==='per-event'?'selected':''}>Giải mỗi event</option>
+            <option value="campaign" ${r.section==='campaign'?'selected':''}>Giải campaign</option>
+          </select>
+        </div>
+        <input value="${r.prize_amount||''}" placeholder="Giá trị" style="background:var(--bg3);border:1px solid var(--borderL);border-radius:6px;padding:6px 10px;color:var(--gold);font-size:13px;font-weight:700;width:100%" id="ci_prize_${r.id}">
+        <button class="btn-sm btn-primary" onclick="saveCriteriaRow('${r.id}')" style="align-self:center">Lưu</button>
+      </div>`).join('')}
+    </div>`;
+  }).catch(()=>{el.innerHTML='<div class="empty-state">Lỗi tải dữ liệu</div>';});
+}
+async function saveCriteriaRow(id){
+  const get=k=>document.getElementById(k+'_'+id)?.value||'';
+  const body={icon:get('ci_icon'),name:get('ci_name'),description:get('ci_desc'),prize_amount:get('ci_prize'),section:get('ci_sec')};
+  await sb(`/rest/v1/award_categories?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(body)});
+  showToast('Đã lưu ✓');
 }
 
 function renderSettings(){
