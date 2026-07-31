@@ -5016,6 +5016,20 @@ renderRoadmap=function(){
 
 try{ renderRoadmap(); }catch(e){}
 
+(async function(){
+  try{
+    const res=await fetch('/rest/v1/site_config?key=eq.roadmap_config');
+    if(!res.ok) return;
+    const rows=await res.json();
+    if(!rows||!rows.length) return;
+    let cfg=rows[0].value;
+    if(typeof cfg==='string') try{cfg=JSON.parse(cfg);}catch{return;}
+    if(!Array.isArray(cfg)||!cfg.length) return;
+    ROADMAP_DISPLAY.splice(0,ROADMAP_DISPLAY.length,...cfg);
+    renderRoadmap();
+  }catch(e){}
+})();
+
 window.addEventListener('pagehide',endAnalyticsSession);
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') endAnalyticsSession(); });
 

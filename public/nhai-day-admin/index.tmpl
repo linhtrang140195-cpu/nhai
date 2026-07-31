@@ -255,12 +255,12 @@ function parseCSV(text){
 // ===== RENDER =====
 function render(){
   renderSidebar();
-  const labels={dashboard:"Dashboard",analytics:"Analytics",schedule:"Lịch trình",results:"Kết quả",voting:"Voting",audit:"Vote audit",registrations:"Đăng ký tham gia",mentors:"Mentors",faq:"FAQ",media:"Ảnh và Media",settings:"Cài đặt site",criteria:"Tiêu chí & Giải thưởng"};
+  const labels={dashboard:"Dashboard",analytics:"Analytics",schedule:"Lịch trình",results:"Kết quả",voting:"Voting",audit:"Vote audit",registrations:"Đăng ký tham gia",mentors:"Mentors",faq:"FAQ",media:"Ảnh và Media",settings:"Cài đặt site",criteria:"Tiêu chí & Giải thưởng",roadmap:"Roadmap"};
   document.getElementById("topTitle").textContent=labels[state.tab]||"Dashboard";
   const s=state.seasons.find(x=>x.id===state.currentSeason);
   document.getElementById("seasonPick").textContent=`📅 ${s?s.name:"—"} ▾`;
   if(state.loading){document.getElementById("content").innerHTML=`<div class="empty-state"><div style="font-size:28px;margin-bottom:12px">🍜</div>Đang load...</div>`;return;}
-  const fn={dashboard:renderDashboard,analytics:renderAnalytics,schedule:renderSchedule,results:renderResults,voting:renderVoting,audit:renderAudit,registrations:renderRegistrations,mentors:renderMentors,faq:renderFAQ,media:renderMedia,settings:renderSettings,criteria:renderCriteria};
+  const fn={dashboard:renderDashboard,analytics:renderAnalytics,schedule:renderSchedule,results:renderResults,voting:renderVoting,audit:renderAudit,registrations:renderRegistrations,mentors:renderMentors,faq:renderFAQ,media:renderMedia,settings:renderSettings,criteria:renderCriteria,roadmap:renderRoadmapAdmin};
   document.getElementById("content").innerHTML=(fn[state.tab]||renderDashboard)();
   if(state.tab==='criteria') setTimeout(loadCriteriaPanel,0);
 }
@@ -271,7 +271,7 @@ function renderSidebar(){
     {sec:"Nội dung mùa"},{id:"schedule",icon:"📅",label:"Lịch trình"},{id:"results",icon:"🏆",label:"Kết quả"},
     {id:"voting",icon:"❤️",label:"Voting"},{id:"audit",icon:"🛡️",label:"Vote audit"},
     {sec:"Danh sách"},{id:"registrations",icon:"👥",label:"Đăng ký tham gia"},{id:"mentors",icon:"⭐",label:"Mentors"},{id:"faq",icon:"❓",label:"FAQ"},
-    {sec:"Cấu hình"},{id:"criteria",icon:"🏅",label:"Tiêu chí & Giải"},{id:"media",icon:"🖼️",label:"Ảnh và Media"},{id:"settings",icon:"⚙️",label:"Cài đặt site"}
+    {sec:"Cấu hình"},{id:"criteria",icon:"🏅",label:"Tiêu chí & Giải"},{id:"roadmap",icon:"🗺️",label:"Roadmap"},{id:"media",icon:"🖼️",label:"Ảnh và Media"},{id:"settings",icon:"⚙️",label:"Cài đặt site"}
   ];
   let h=`<div class="logo"><div class="logo-icon">🍜</div><div><div class="logo-text">NHAI DAY <span>Admin</span></div><div class="logo-sub">NÊM AI VÀO CÔNG VIỆC</div></div></div>`;
   nav.forEach(n=>{
@@ -1174,6 +1174,73 @@ async function saveCriteriaRow(id){
   const body={icon:get('ci_icon'),name:get('ci_name'),description:get('ci_desc'),prize_amount:get('ci_prize'),section:get('ci_sec')};
   await sb(`/rest/v1/award_categories?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(body)});
   showToast('Đã lưu ✓');
+}
+
+const _ROADMAP_DEFAULT=[
+  {status:'register',name:'NHAI DAY 02 — Hà Nội',date:'31/07/2026',register:true},
+  {status:'register',name:'NHAI DAY 02 — HCM',date:'07/08/2026',register:true},
+  {status:'result',name:'Top Pick Dish — Đã có kết quả',date:'Kết quả Top Pick Dish từ NHAI DAY 01 đã được công bố.',voteCity:'HN'},
+  {status:'done',name:'NHAI DAY 01 — Hà Nội',date:'26/06/2026',recapId:'hn01'},
+  {status:'done',name:'NHAI DAY 01 — HCM',date:'03/07/2026',recapId:'hcm01'},
+  {status:'tbd',name:'NHAI DAY 03 — Hà Nội',date:'28/08/2026 (dự kiến)'},
+  {status:'tbd',name:'NHAI DAY 03 — HCM',date:'11/09/2026 (dự kiến)'},
+  {status:'tbd',name:'NHAI DAY 04 — Hà Nội',date:'02/10/2026 (dự kiến)'},
+  {status:'tbd',name:'NHAI DAY 04 — HCM',date:'02/10/2026 (dự kiến)'},
+];
+
+function _getRoadmapItems(){
+  let cfg=state.config.roadmap_config;
+  if(typeof cfg==='string') try{cfg=JSON.parse(cfg);}catch{cfg=null;}
+  return (Array.isArray(cfg)&&cfg.length)?cfg:_ROADMAP_DEFAULT;
+}
+
+function renderRoadmapAdmin(){
+  const items=_getRoadmapItems();
+  const seeded=Array.isArray(state.config.roadmap_config)&&state.config.roadmap_config.length;
+  const statusOpts=['done','register','result','active','soon','tbd'];
+  const statusLabels={done:'✅ Đã xong',register:'📝 Đang mở ĐK',result:'🏆 Đã có KQ',active:'🟢 Đang diễn ra',soon:'🔜 Sắp tới',tbd:'⏳ TBD'};
+  return `
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header">
+      <div><div class="card-title">🗺️ Roadmap — Trạng thái sự kiện</div>
+      <div class="card-sub">${seeded?'Đang dùng config từ DB':'Chưa lưu — dùng default'}</div></div>
+      <button class="btn btn-primary" onclick="saveRoadmapConfig()">💾 Lưu roadmap</button>
+    </div>
+    ${items.map((r,i)=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)">
+      <div style="flex:1"><div style="font-size:12px;font-weight:500">${r.name}</div></div>
+      <input type="text" id="rm_date_${i}" value="${(r.date||'').replace(/"/g,'&quot;')}" placeholder="Ngày / ghi chú" style="width:190px;margin-bottom:0;font-size:11px"/>
+      <select id="rm_status_${i}" style="width:165px;margin-bottom:0;font-size:11px">
+        ${statusOpts.map(s=>`<option value="${s}"${r.status===s?' selected':''}>${statusLabels[s]||s}</option>`).join('')}
+      </select>
+    </div>`).join('')}
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">ℹ️ Ghi chú status</div></div>
+  <div style="padding:14px;font-size:11px;color:var(--textM);line-height:1.7">
+    <b>done</b> — Đã hoàn thành (hiện "Xem recap" nếu có recapId)<br>
+    <b>register</b> — Đang mở đăng ký (hiện "Đăng ký ngay")<br>
+    <b>result</b> — Đã có kết quả voting (hiện "Xem kết quả")<br>
+    <b>active</b> — Đang diễn ra<br>
+    <b>soon</b> — Sắp tới<br>
+    <b>tbd</b> — TBD, chưa xác định ngày<br><br>
+    Sau khi lưu, public site sẽ tự load config mới (không cần deploy lại).
+  </div></div>`;
+}
+
+async function saveRoadmapConfig(){
+  const items=_getRoadmapItems();
+  const updated=items.map((r,i)=>({
+    ...r,
+    status:document.getElementById(`rm_status_${i}`)?.value||r.status,
+    date:document.getElementById(`rm_date_${i}`)?.value||r.date,
+  }));
+  const patchRes=await sb(`site_config?key=eq.roadmap_config`,{method:"PATCH",body:{value:JSON.stringify(updated),updated_at:new Date().toISOString()}});
+  if(!patchRes||!patchRes.length){
+    await sb(`site_config`,{method:"POST",body:{key:"roadmap_config",value:JSON.stringify(updated),updated_at:new Date().toISOString()}});
+  }
+  state.config.roadmap_config=updated;
+  toast("Đã lưu roadmap!");
+  render();
 }
 
 function renderSettings(){
