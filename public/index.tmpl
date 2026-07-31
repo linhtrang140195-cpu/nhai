@@ -3396,7 +3396,7 @@ for(const ev of EVENTS){
 function renderEvents(){
   const EDITIONS=[
     {label:'NHAI DAY #1',ids:['hn01','hcm01'],done:true},
-    {label:'NHAI DAY #2',ids:['hn02','hcm02'],done:false},
+    {label:'NHAI DAY #2',ids:['hn02','hcm02'],done:true,season_id:'nhai-day-02'},
   ];
   document.getElementById('edTabs').innerHTML=EDITIONS.map((ed,i)=>
     `<button class="ed-tab ${i===0?'on':''}" onclick="switchEdition(${i})">${ed.label}</button>`
@@ -3407,6 +3407,17 @@ function renderEvents(){
       <div class="ed-cs-title">${ed.label} — Sắp diễn ra</div>
       <div class="ed-cs-sub">Tháng 7/2026 · Hà Nội & TP.HCM</div>
       <button class="btn-soon" onclick="openReg()">🔔 Đăng ký giữ chỗ</button></div></div>`;
+    if(ed.season_id) return `<div class="ed-panel ${i===0?'on':''}" id="ed-${i}">
+      <div class="ed-stats-bar">
+        <div class="ed-kpi"><span class="ek-n" id="ek-p-${i}">—</span><div class="ek-l">Người tham gia</div></div>
+        <div class="ed-kpi"><span class="ek-n" id="ek-t-${i}">—</span><div class="ek-l">Team tham gia</div></div>
+        <div class="ed-kpi"><span class="ek-n" id="ek-xp-${i}">—</span><div class="ek-l">Trải nghiệm chung</div></div>
+        <div class="ed-kpi"><span class="ek-n" id="ek-mn-${i}">—</span><div class="ek-l">Đánh giá mức độ hữu ích</div></div>
+        <div class="ed-kpi"><span class="ek-n" id="ek-ct-${i}">—</span><div class="ek-l">Muốn tiếp tục</div></div>
+        <div class="ed-kpi"><span class="ek-n" id="ek-dm-${i}">—</span><div class="ek-l">Có output/demo phát triển tiếp</div></div>
+      </div>
+      <div id="ed-awards-${i}" style="text-align:center;padding:48px 16px;color:var(--textM)">Đang tải kết quả…</div>
+    </div>`;
 
     const mkAwardList=(list,region)=>list.map(a=>`
       <div class="atl-item">
@@ -3540,6 +3551,73 @@ function renderEvents(){
       </div>
     </div>`;
   }).join('');
+}
+
+async function loadEditionFromDB(idx,seasonId){
+  try{
+    const [awards,statsArr]=await Promise.all([
+      fetch('/rest/v1/awards?season_id=eq.'+seasonId+'&status=eq.announced&order=category_id.asc,city.asc').then(r=>r.json()),
+      fetch('/rest/v1/season_stats?season_id=eq.'+seasonId).then(r=>r.json())
+    ]);
+    const st=statsArr[0]||{};
+    const si=k=>{const el=document.getElementById(k);if(el)el.textContent=k;};
+    if(st.total_participants){document.getElementById('ek-p-'+idx).textContent=st.total_participants;}
+    if(st.total_teams){document.getElementById('ek-t-'+idx).textContent=st.total_teams;}
+    if(st.avg_experience){document.getElementById('ek-xp-'+idx).textContent=st.avg_experience.toFixed(2)+'★';}
+    if(st.avg_mentor){document.getElementById('ek-mn-'+idx).textContent=st.avg_mentor.toFixed(2)+'★';}
+    if(st.pct_will_participate){document.getElementById('ek-ct-'+idx).textContent=(st.pct_will_participate*1).toFixed(2)+'%';}
+    if(st.pct_has_demo){document.getElementById('ek-dm-'+idx).textContent=(st.pct_has_demo*1).toFixed(2)+'%';}
+    const masterHN=awards.find(a=>a.category_id==='master-chef'&&a.city==='Hà Nội');
+    const masterHCM=awards.find(a=>a.category_id==='master-chef'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
+    const earlyHN=awards.filter(a=>a.category_id==='early-bird'&&a.city==='Hà Nội');
+    const earlyHCM=awards.filter(a=>a.category_id==='early-bird'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
+    const demoHN=awards.filter(a=>a.category_id==='complete-1730'&&a.city==='Hà Nội');
+    const demoHCM=awards.filter(a=>a.category_id==='complete-1730'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
+    const mkMc=a=>a?`<div class="winner-card" onclick="toggleWinnerDetail(this)">
+      <div class="wc-front">
+        <div class="wc-bg" style="background:${a.city==='Hà Nội'?'linear-gradient(135deg,#7c2d12,#c2410c,#ea580c,#f97316)':'linear-gradient(135deg,#1e3a5f,#1d4ed8,#3b82f6,#60a5fa)'}"></div>
+        <div class="wc-overlay"></div>
+        <div class="wc-city-badge">${a.city==='Hà Nội'?'🏙️ Hà Nội':'🌆 TP.HCM'}</div>
+        <div class="wc-avatar">🏆</div>
+        <div class="wc-body">
+          <div class="wc-category">🏆 Master Chef · ${a.city==='Hà Nội'?'Hà Nội':'TP.HCM'}</div>
+          <div class="wc-person">👤 <strong>${e(a.winner_team||'')}</strong></div>
+          <div class="wc-case">${e(a.winner_name||'')}</div>
+        </div>
+      </div></div>`
+      :'<div style="flex:1;min-height:180px;border:1px dashed rgba(255,255,255,.15);border-radius:16px;display:grid;place-items:center;color:var(--textM);font-size:12px">Chưa có</div>';
+    const mkRow=(a,badge,bdgCls)=>`<div class="atl-item">
+      <div class="atl-emo">🚀</div>
+      <div class="atl-info">
+        <div class="atl-case">${e(a.winner_name||'')}</div>
+        <div class="atl-name">${e(a.winner_team||'')}</div>
+      </div><span class="atl-badge ${bdgCls}">${badge}</span></div>`;
+    const el=document.getElementById('ed-awards-'+idx);
+    if(!el)return;
+    const hasMc=masterHN||masterHCM;
+    const hasEarly=earlyHN.length||earlyHCM.length;
+    const hasDemo=demoHN.length||demoHCM.length;
+    if(!hasMc&&!hasEarly&&!hasDemo){el.innerHTML='<div style="text-align:center;padding:48px;color:var(--textM)">Chưa có kết quả</div>';return;}
+    el.innerHTML=`
+      ${hasMc?`<div class="award-section">
+        <div class="award-sec-label"><h3>🏆 Master Chef</h3><span class="award-badge">2.000.000đ</span></div>
+        <div class="winner-row">${mkMc(masterHN)}${mkMc(masterHCM)}</div>
+      </div>`:''}
+      ${hasEarly?`<div class="award-section">
+        <div class="award-sec-label"><h3>🚀 Early Bird & Demo Ready</h3><span class="award-badge" style="color:var(--green);background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.2)">1.000.000đ / team</span></div>
+        <div class="atl-grid">
+          <div><div class="atl-col-head"><div class="atl-dot hn"></div>Hà Nội</div>${earlyHN.map(a=>mkRow(a,'Early Bird','eb')).join('')}</div>
+          <div><div class="atl-col-head"><div class="atl-dot hcm"></div>TP.HCM</div>${earlyHCM.map(a=>mkRow(a,'Early Bird','eb')).join('')||'<div style="color:var(--textM);font-size:12px;padding:8px">Chưa có</div>'}</div>
+        </div>
+      </div>`:''}
+      ${hasDemo?`<div class="award-section">
+        <div class="award-sec-label"><h3>✅ Hoàn thiện trước 17:30</h3><span class="award-badge" style="color:var(--gold);background:rgba(242,185,51,.08);border-color:rgba(242,185,51,.2)">500.000đ / team</span></div>
+        <div class="atl-grid">
+          <div><div class="atl-col-head"><div class="atl-dot hn"></div>Hà Nội</div>${demoHN.map(a=>mkRow(a,'500k','demo')).join('')}</div>
+          <div><div class="atl-col-head"><div class="atl-dot hcm"></div>TP.HCM</div>${demoHCM.map(a=>mkRow(a,'500k','demo')).join('')||'<div style="color:var(--textM);font-size:12px;padding:8px">Chưa có</div>'}</div>
+        </div>
+      </div>`:''}`;
+  }catch(err){const el=document.getElementById('ed-awards-'+idx);if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--textM)">Không tải được kết quả</div>';}
 }
 
 function toggleWinnerDetail(card){
@@ -4892,7 +4970,7 @@ try{ renderFaq(); }catch(e){}
 // trackCare() removed — real data from nhai-config.js
 
 
-try{ renderEvents(); renderResultsTopPickWinners(); }catch(e){}
+try{ renderEvents(); renderResultsTopPickWinners(); loadEditionFromDB(1,'nhai-day-02'); }catch(e){}
 
 
 try{ initVoteState(); }catch(e){}
