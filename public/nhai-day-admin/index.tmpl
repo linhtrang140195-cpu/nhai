@@ -401,7 +401,11 @@ function renderResults(){
   <div class="card" style="border-top:2px solid var(--gold)">
     <div class="card-header">
       <div><div class="card-title">📥 Import từ Sheet kết quả</div><div class="card-sub">Tự parse Master Chef · Early Bird · Hoàn thiện 17h30</div></div>
-      ${gid?`<button class="btn btn-primary" onclick="importResultsFromSheet()">Import ngay</button>`:""}
+      <div style="display:flex;gap:8px">
+        ${gid?`<button class="btn btn-primary" onclick="importResultsFromSheet()">Import ngay</button>`:""}
+        <button class="btn" onclick="document.getElementById('csvFileInput').click()">📂 Upload CSV</button>
+        <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importResultsFromCSVFile(this)">
+      </div>
     </div>
     <div style="padding:12px 14px;display:flex;gap:8px;align-items:flex-end">
       <div style="flex:1"><label>Sheet Tab ID (gid) · <a href="https://docs.google.com/spreadsheets/d/1bi225gwc4xVayNXquit7U7GiSXBloBEt" target="_blank" style="color:var(--gold);text-decoration:none">Mở sheet →</a></label>
@@ -517,6 +521,43 @@ async function importResultsFromSheet(){
     if(!parsed.length){toast("Không tìm thấy winner — check format sheet","danger");return;}
     showImportResultsModal(parsed);
   }catch(e){toast("Lỗi: "+e.message,"danger");}
+}
+
+function importResultsFromCSVFile(input){
+  const file=input.files[0];
+  if(!file){return;}
+  input.value='';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const rows=parseCSV(e.target.result);
+      if(rows.length<2){toast("File trống hoặc sai format","danger");return;}
+      const headers=rows[0];
+      const findCol=(kws)=>headers.findIndex(h=>kws.some(k=>h.toLowerCase().includes(k.toLowerCase())));
+      const nameCol=findCol(["team","người","tên","nguoi"]);
+      const caseCol=findCol(["case","sản phẩm","tóm tắt","tom tat"]);
+      const awardCol=findCol(["giải","giai","award","prize"]);
+      const parsed=[];let currentCity="";
+      for(const row of rows.slice(1)){
+        const rt=row.join(" ");
+        if(/hà nội|Ha Noi/i.test(rt)&&row.filter(c=>c.trim()).length<4){currentCity="Hà Nội";continue;}
+        if(/hồ chí minh|HCM|Ho Chi Minh/i.test(rt)&&row.filter(c=>c.trim()).length<4){currentCity="Hồ Chí Minh";continue;}
+        const name=(nameCol>=0?row[nameCol]:row[1])||"";
+        const caseName=(caseCol>=0?row[caseCol]:row[4])||"";
+        const award=(awardCol>=0?row[awardCol]:row[5])||"";
+        if(!name.trim()||!award.trim())continue;
+        let cat="";let city=currentCity;
+        if(/master chef|2[.,]000[.,]000/i.test(award)){cat="master-chef";if(/hn|hà nội/i.test(award))city="Hà Nội";if(/hcm|hồ chí minh/i.test(award))city="Hồ Chí Minh";}
+        else if(/early bird|1[.,]000[.,]000/i.test(award))cat="early-bird";
+        else if(/500/i.test(award))cat="demo-ready";
+        if(!cat)continue;
+        parsed.push({name:name.trim(),caseName:caseName.trim(),cat,city,award:award.trim()});
+      }
+      if(!parsed.length){toast("Không tìm thấy winner — check cột Giải thưởng","danger");return;}
+      showImportResultsModal(parsed);
+    }catch(err){toast("Lỗi đọc file: "+err.message,"danger");}
+  };
+  reader.readAsText(file,'UTF-8');
 }
 
 function showImportResultsModal(parsed){
