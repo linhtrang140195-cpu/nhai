@@ -344,7 +344,7 @@ async function moveEvent(id,dir){
 
 function renderResults(){
   const gid=seasonGids[state.currentSeason]?.results||"";
-  const catLabels={"master-chef":"👨‍🍳 Master Chef","early-bird":"🚀 Early Bird","demo-ready":"⏰ Hoàn thiện 17h30"};
+  const catLabels={"master-chef":"👨‍🍳 Master Chef","early-bird":"🚀 Early Bird","demo-ready":"⏰ Hoàn thiện 17h30","complete-1730":"✅ Hoàn thiện 17h30"};
 
   // Group awards by category & city
   const awardsByCat={};
@@ -497,7 +497,8 @@ async function importResultsFromSheet(){
     const findCol=(kws)=>headers.findIndex(h=>kws.some(k=>h.toLowerCase().includes(k.toLowerCase())));
     const nameCol=findCol(["team","người","tên","nguoi"]);
     const caseCol=findCol(["case","sản phẩm","tóm tắt","tom tat"]);
-    const awardCol=findCol(["giải","giai","award","prize"]);
+    const awardCol=findCol(["giải","giai","award","prize","thưởng","thuong"]);
+    const cityCol=findCol(["địa điểm","dia diem","city","location","địa"]);
     const parsed=[];let currentCity="";
     for(const row of rows.slice(1)){
       const rt=row.join(" ");
@@ -509,12 +510,13 @@ async function importResultsFromSheet(){
       if(!name.trim()||!award.trim())continue;
       let cat="";
       let city=currentCity;
+      if(cityCol>=0&&row[cityCol]){const c=row[cityCol].trim();if(/^HN$|hà nội/i.test(c))city="Hà Nội";else if(/^HCM$|hồ chí minh/i.test(c))city="Hồ Chí Minh";}
       if(/master chef|2[.,]000[.,]000/i.test(award)){
         cat="master-chef";
-        if(/hn|hà nội/i.test(award))city="Hà Nội";
-        if(/hcm|hồ chí minh/i.test(award))city="Hồ Chí Minh";
+        if(/\bhn\b|hà nội/i.test(award))city="Hà Nội";
+        if(/\bhcm\b|hồ chí minh/i.test(award))city="Hồ Chí Minh";
       } else if(/early bird|1[.,]000[.,]000/i.test(award))cat="early-bird";
-      else if(/500/i.test(award))cat="demo-ready";
+      else if(/500|hoàn thiện|hoan thien/i.test(award))cat="complete-1730";
       if(!cat)continue;
       parsed.push({name:name.trim(),caseName:caseName.trim(),cat,city,award:award.trim()});
     }
@@ -536,7 +538,8 @@ function importResultsFromCSVFile(input){
       const findCol=(kws)=>headers.findIndex(h=>kws.some(k=>h.toLowerCase().includes(k.toLowerCase())));
       const nameCol=findCol(["team","người","tên","nguoi"]);
       const caseCol=findCol(["case","sản phẩm","tóm tắt","tom tat"]);
-      const awardCol=findCol(["giải","giai","award","prize"]);
+      const awardCol=findCol(["giải","giai","award","prize","thưởng","thuong"]);
+      const cityCol=findCol(["địa điểm","dia diem","city","location","địa"]);
       const parsed=[];let currentCity="";
       for(const row of rows.slice(1)){
         const rt=row.join(" ");
@@ -547,9 +550,10 @@ function importResultsFromCSVFile(input){
         const award=(awardCol>=0?row[awardCol]:row[5])||"";
         if(!name.trim()||!award.trim())continue;
         let cat="";let city=currentCity;
-        if(/master chef|2[.,]000[.,]000/i.test(award)){cat="master-chef";if(/hn|hà nội/i.test(award))city="Hà Nội";if(/hcm|hồ chí minh/i.test(award))city="Hồ Chí Minh";}
+        if(cityCol>=0&&row[cityCol]){const c=row[cityCol].trim();if(/^HN$|hà nội/i.test(c))city="Hà Nội";else if(/^HCM$|hồ chí minh/i.test(c))city="Hồ Chí Minh";}
+        if(/master chef|2[.,]000[.,]000/i.test(award)){cat="master-chef";if(/\bhn\b|hà nội/i.test(award))city="Hà Nội";if(/\bhcm\b|hồ chí minh/i.test(award))city="Hồ Chí Minh";}
         else if(/early bird|1[.,]000[.,]000/i.test(award))cat="early-bird";
-        else if(/500/i.test(award))cat="demo-ready";
+        else if(/500|hoàn thiện|hoan thien/i.test(award))cat="complete-1730";
         if(!cat)continue;
         parsed.push({name:name.trim(),caseName:caseName.trim(),cat,city,award:award.trim()});
       }
@@ -561,7 +565,7 @@ function importResultsFromCSVFile(input){
 }
 
 function showImportResultsModal(parsed){
-  const catLabels={"master-chef":"👨‍🍳 Master Chef","early-bird":"🚀 Early Bird","demo-ready":"⏰ Hoàn thiện 17h30"};
+  const catLabels={"master-chef":"👨‍🍳 Master Chef","early-bird":"🚀 Early Bird","demo-ready":"⏰ Hoàn thiện 17h30","complete-1730":"✅ Hoàn thiện 17h30"};
   const rows=parsed.map((p,i)=>`<tr style="border-bottom:1px solid var(--border)">
     <td style="padding:6px 8px"><input type="checkbox" id="ir_${i}" checked/></td>
     <td style="padding:6px 8px;font-size:11px">${catLabels[p.cat]||p.cat}</td>
