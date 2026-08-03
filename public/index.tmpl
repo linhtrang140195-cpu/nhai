@@ -3586,14 +3586,30 @@ async function loadEditionFromDB(idx,seasonId){
         </div>
       </div></div>`
       :'<div style="flex:1;min-height:180px;border:1px dashed rgba(255,255,255,.15);border-radius:16px;display:grid;place-items:center;color:var(--textM);font-size:12px">Chưa có</div>';
-    const mkRow=(a,badge,bdgCls)=>`<div class="atl-item">
-      <div class="atl-emo">🚀</div>
-      <div class="atl-info">
-        <div class="atl-case">${e(a.winner_name||'')}</div>
-        <div class="atl-name">${e(a.winner_team||'')}</div>
-      </div><span class="atl-badge ${bdgCls}">${badge}</span></div>`;
+    const mkRow=(a,badge,bdgCls)=>{
+      let tags=[];
+      try{const raw=a.category_tags;if(raw)tags=typeof raw==='string'?JSON.parse(raw):raw;}catch{}
+      return `<div class="atl-item">
+        <div class="atl-emo">🚀</div>
+        <div class="atl-info">
+          ${tags.length?`<div class="atl-meta">${tags.map(t=>`<span class="case-topic-tag">${t}</span>`).join('')}</div>`:''}
+          <div class="atl-case">${e(a.winner_name||'')}</div>
+          <div class="atl-name">${e(a.winner_team||'')}</div>
+        </div><span class="atl-badge ${bdgCls}">${badge}</span></div>`;
+    };
+    const mkCitySection=(hnList,hcmList,badge,bdgCls)=>{
+      const bothHave=hnList.length&&hcmList.length;
+      if(bothHave) return `<div class="atl-grid">
+        <div><div class="atl-col-head"><div class="atl-dot hn"></div>Hà Nội</div>${hnList.map(a=>mkRow(a,badge,bdgCls)).join('')}</div>
+        <div><div class="atl-col-head"><div class="atl-dot hcm"></div>TP.HCM</div>${hcmList.map(a=>mkRow(a,badge,bdgCls)).join('')}</div>
+      </div>`;
+      if(hnList.length) return `<div class="atl-col-head"><div class="atl-dot hn"></div>Hà Nội</div>${hnList.map(a=>mkRow(a,badge,bdgCls)).join('')}`;
+      if(hcmList.length) return `<div class="atl-col-head"><div class="atl-dot hcm"></div>TP.HCM</div>${hcmList.map(a=>mkRow(a,badge,bdgCls)).join('')}`;
+      return '';
+    };
     const el=document.getElementById('ed-awards-'+idx);
     if(!el)return;
+    el.removeAttribute('style');
     const hasMc=masterHN||masterHCM;
     const hasEarly=earlyHN.length||earlyHCM.length;
     const hasDemo=demoHN.length||demoHCM.length;
@@ -3605,17 +3621,11 @@ async function loadEditionFromDB(idx,seasonId){
       </div>`:''}
       ${hasEarly?`<div class="award-section">
         <div class="award-sec-label"><h3>🚀 Early Bird & Demo Ready</h3><span class="award-badge" style="color:var(--green);background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.2)">1.000.000đ / team</span></div>
-        <div class="atl-grid">
-          <div><div class="atl-col-head"><div class="atl-dot hn"></div>Hà Nội</div>${earlyHN.map(a=>mkRow(a,'Early Bird','eb')).join('')}</div>
-          <div><div class="atl-col-head"><div class="atl-dot hcm"></div>TP.HCM</div>${earlyHCM.map(a=>mkRow(a,'Early Bird','eb')).join('')||'<div style="color:var(--textM);font-size:12px;padding:8px">Chưa có</div>'}</div>
-        </div>
+        ${mkCitySection(earlyHN,earlyHCM,'Early Bird','eb')}
       </div>`:''}
       ${hasDemo?`<div class="award-section">
         <div class="award-sec-label"><h3>✅ Hoàn thiện trước 17:30</h3><span class="award-badge" style="color:var(--gold);background:rgba(242,185,51,.08);border-color:rgba(242,185,51,.2)">500.000đ / team</span></div>
-        <div class="atl-grid">
-          <div><div class="atl-col-head"><div class="atl-dot hn"></div>Hà Nội</div>${demoHN.map(a=>mkRow(a,'500k','demo')).join('')}</div>
-          <div><div class="atl-col-head"><div class="atl-dot hcm"></div>TP.HCM</div>${demoHCM.map(a=>mkRow(a,'500k','demo')).join('')||'<div style="color:var(--textM);font-size:12px;padding:8px">Chưa có</div>'}</div>
-        </div>
+        ${mkCitySection(demoHN,demoHCM,'500k','demo')}
       </div>`:''}`;
   }catch(err){const el=document.getElementById('ed-awards-'+idx);if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--textM)">Không tải được kết quả</div>';}
 }
