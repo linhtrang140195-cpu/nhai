@@ -70,10 +70,20 @@ async function runSchemaMigration() {
     .split(/;\s*\n/)
     .map(s => s.trim())
     .filter(Boolean);
+  let applied = 0;
   for (const stmt of statements) {
-    await pool.query(stmt);
+    try {
+      await pool.query(stmt);
+      applied++;
+    } catch (e) {
+      if (e.errno === 1060) { // Duplicate column name — already exists, skip
+        applied++;
+      } else {
+        throw e;
+      }
+    }
   }
-  console.log(`Schema migration: ${statements.length} statements applied (idempotent).`);
+  console.log(`Schema migration: ${applied} statements applied (idempotent).`);
 }
 
 const AWARD_CATEGORIES_SEED = [
@@ -117,9 +127,11 @@ async function fixAwardsData() {
 }
 
 runSchemaMigration()
+  .catch(e => console.error('Schema migration error:', e.message))
   .then(() => seedAwardCategories())
+  .catch(e => console.error('Seed error:', e.message))
   .then(() => fixAwardsData())
-  .catch(e => console.error('Schema migration failed:', e.message))
+  .catch(e => console.error('Data fix error:', e.message))
   .finally(() => {
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`NHAI DAY server listening on port ${PORT}`);

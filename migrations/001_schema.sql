@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS award_categories (
   display_order INT DEFAULT 0,
   section VARCHAR(64) DEFAULT 'per-event'
 );
-ALTER TABLE award_categories ADD COLUMN IF NOT EXISTS section VARCHAR(64) DEFAULT 'per-event';
+ALTER TABLE award_categories ADD COLUMN section VARCHAR(64) DEFAULT 'per-event';
 
 CREATE TABLE IF NOT EXISTS `cases` (
   id VARCHAR(64) PRIMARY KEY,
