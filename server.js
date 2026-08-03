@@ -98,8 +98,27 @@ async function seedAwardCategories() {
   console.log('Award categories seeded/updated.');
 }
 
+async function fixAwardsData() {
+  // complete-1730 imported before city-detection fix → set city to Hà Nội (only HN CSV imported)
+  const [r1] = await pool.query(
+    `UPDATE awards SET city='Hà Nội'
+     WHERE season_id='nhai-day-02' AND category_id='complete-1730'
+     AND (city IS NULL OR city='')`
+  );
+  // early-bird null-city rows are duplicates from the old import run → remove them
+  const [r2] = await pool.query(
+    `DELETE FROM awards
+     WHERE season_id='nhai-day-02' AND category_id='early-bird'
+     AND (city IS NULL OR city='')`
+  );
+  if (r1.affectedRows || r2.affectedRows) {
+    console.log(`Data fix: complete-1730 city set=${r1.affectedRows}, early-bird dupes removed=${r2.affectedRows}`);
+  }
+}
+
 runSchemaMigration()
   .then(() => seedAwardCategories())
+  .then(() => fixAwardsData())
   .catch(e => console.error('Schema migration failed:', e.message))
   .finally(() => {
     app.listen(PORT, '0.0.0.0', () => {
