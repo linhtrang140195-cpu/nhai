@@ -4919,6 +4919,25 @@ async function initVoteState(){
     }
   }catch(e){}
   await loadVoteSnapshot();
+  // Augment TOP_PICK with any cases that exist in the active campaign but not in the static array
+  try{
+    const topPickIds=new Set(TOP_PICK.map(c=>c.id));
+    const missing=Object.keys(voteState.counts).filter(id=>!topPickIds.has(id));
+    if(missing.length){
+      const cases=await fetch('/rest/v1/cases?id=in.('+missing.join(',')+')'+'&is_active=eq.1&order=display_order').then(r=>r.json());
+      cases.forEach(c=>{
+        const city=c.city==='Hồ Chí Minh'?'HCM':'HN';
+        const sn=(c.season_id||'').match(/(\d+)$/);
+        const num=sn?String(parseInt(sn[1])).padStart(2,'0'):'02';
+        TOP_PICK.push({id:c.id,city,event:(city==='HCM'?'hcm':'hn')+num,
+          title:c.title||'',person:c.owner_name||'',team:'',topic:'',
+          desc:c.short_description||'',goal:c.full_description||'',
+          tools:Array.isArray(c.tools_used)?c.tools_used:[],
+          demo:c.demo_url||'',gallery:[],
+          grad:'linear-gradient(135deg,#1a1a2e,#16213e)'});
+      });
+    }
+  }catch(e){}
   renderVote('HN');
 }
 
