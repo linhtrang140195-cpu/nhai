@@ -2203,7 +2203,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
       </div>
 
 
-      <div class="vote-open-banner">
+      <div class="vote-open-banner" id="voteOpenBanner">
         <span class="vob-badge">ĐÃ ĐÓNG</span>
         <span class="vob-text"><b>Top Pick Dish</b> — Đã đóng bình chọn · Cảm ơn mọi người đã tham gia</span>
         <span class="vob-date">📅 10/07 – 15/07/2026</span>
@@ -4916,6 +4916,8 @@ async function initVoteState(){
     if(d.ok&&d.campaign&&d.campaign.id){
       voteState.campaignId=d.campaign.id;
       VOTE_CONFIG.campaignId=d.campaign.id;
+      voteState.campaignOpens=d.campaign.opens_at||'';
+      voteState.campaignCloses=d.campaign.closes_at||'';
     }
   }catch(e){}
   await loadVoteSnapshot();
@@ -4956,6 +4958,18 @@ async function initVoteState(){
       }
     }
   }catch(e){}
+  // Update the vote-open banner to reflect the current campaign status.
+  (function(){
+    const banner=document.getElementById('voteOpenBanner');
+    if(!banner)return;
+    const fmt=s=>{if(!s)return'';const d=new Date(s);return d.getDate().toString().padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');};
+    const dateSpan=voteState.campaignOpens&&voteState.campaignCloses?`<span class="vob-date">📅 ${fmt(voteState.campaignOpens)} – ${fmt(voteState.campaignCloses)}/2026</span>`:'';
+    if(voteState.votingClosed){
+      banner.innerHTML=`<span class="vob-badge">ĐÃ ĐÓNG</span><span class="vob-text"><b>Top Pick Dish</b> — Đã đóng bình chọn · Cảm ơn mọi người đã tham gia</span>${dateSpan}`;
+    }else{
+      banner.innerHTML=`<span class="vob-badge" style="background:#22c55e;color:#000;border-color:#16a34a">ĐANG MỞ</span><span class="vob-text"><b>Top Pick Dish</b> — Bình chọn 3 vấn đề bạn quan tâm / ấn tượng nhất</span>${dateSpan}`;
+    }
+  })();
   renderVote('HN');
 }
 
@@ -4969,9 +4983,10 @@ async function initVoteState(){
 const ROADMAP=[
   {status:'done',name:'NHAI DAY 01 — Hà Nội',date:'26/06/2026',recapId:'hn01'},
   {status:'done',name:'NHAI DAY 01 — HCM',date:'03/07/2026',recapId:'hcm01'},
-  {status:'done',name:'Top Pick Dish — Đã đóng vote',date:'Đang tổng hợp kết quả Top Pick Dish từ Day 01',voteCity:'HN'},
-  {status:'soon',name:'NHAI DAY 02 — Hà Nội',date:'31/07/2026',register:true},
-  {status:'soon',name:'NHAI DAY 02 — HCM',date:'07/08/2026',register:true},
+  {status:'done',name:'Top Pick Dish Day 01 — Đã đóng vote',date:'Kết quả đã được tổng hợp'},
+  {status:'done',name:'NHAI DAY 02 — Hà Nội',date:'31/07/2026'},
+  {status:'done',name:'NHAI DAY 02 — HCM',date:'07/08/2026'},
+  {status:'active',name:'Top Pick Dish Day 02 — Đang mở vote',date:'12/08 – 19/08/2026',voteCity:'HN'},
   {status:'tbd',name:'NHAI DAY 03 — Hà Nội',date:'28/08/2026 (dự kiến)'},
   {status:'tbd',name:'NHAI DAY 03 — HCM',date:'11/09/2026 (dự kiến)'},
   {status:'tbd',name:'NHAI DAY 04 — Hà Nội',date:'02/10/2026 (dự kiến)'},
