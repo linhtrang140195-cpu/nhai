@@ -4208,9 +4208,19 @@ const analyticsState={
 
 TOP_PICK.forEach(c=>{voteState.counts[c.id]=0;});
 
-const VOTE_DISPLAY_OFFSET=10;
 function getDisplayVoteCount(caseId){
-  return (voteState.counts[caseId]||0)+VOTE_DISPLAY_OFFSET;
+  return voteState.counts[caseId]||0;
+}
+function vcSummary(raw){
+  if(!raw)return'';
+  const lines=raw.split('\n');
+  let found='';
+  for(const l of lines){
+    const t=l.trim().replace(/^[\d]+[.)]\s*/,'').replace(/^-\s*/,'').trim();
+    if(t.length>30){found=t;break;}
+  }
+  if(!found)found=(lines.find(l=>l.trim().length>10)||'').trim().replace(/^[\d]+[.)]\s*/,'').replace(/^-\s*/,'').trim();
+  return found.length>130?found.slice(0,128).trimEnd()+'…':found;
 }
 
 function createLocalDeviceId(){
@@ -4612,7 +4622,7 @@ function renderVote(city){
       <div class="vc2-body">
         <div class="vc2-eyebrow">${e(eyebrow)}</div>
         <div class="vc2-title">${e(c.title)}</div>
-        <div class="vc2-summary">${e(c.goal||c.desc||'')}</div>
+        <div class="vc2-summary">${e(vcSummary(c.goal||c.desc))}</div>
         <div class="vc2-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
       </div>
       <div class="vc2-footer">
@@ -4774,7 +4784,7 @@ function renderVote(city){
         <div class="vc2-eyebrow">${e(eyebrow)}</div>
         <div class="vc2-state-row"><span class="vc2-state ${stateClass}">${e(stateLabel)}</span></div>
         <div class="vc2-title">${e(c.title)}</div>
-        <div class="vc2-summary">${e(c.goal||c.desc||'')}</div>
+        <div class="vc2-summary">${e(vcSummary(c.goal||c.desc))}</div>
         <div class="vc2-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
       </div>
       <div class="vc2-footer">
