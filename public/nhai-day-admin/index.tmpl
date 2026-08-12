@@ -242,6 +242,15 @@ async function toggleCaseActive(id,cur){
   toast(!cur?"Case published!":"Case ẩn");loadAll();
 }
 
+async function toggleMasterChef(caseId,cur){
+  const next=!cur;
+  const r=await fetch('/api/toggle-master-chef',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({case_id:caseId,is_master_chef:next})});
+  const d=await r.json();
+  if(!d.ok){toast('Lỗi: '+(d.message||''),'danger');return;}
+  toast(next?'🏆 Đã đánh dấu Master Chef — ẩn khỏi voting':'Đã bỏ flag Master Chef');
+  loadAll();
+}
+
 // CSV parser
 function parseCSV(text){
   const rows=[];let row=[];let cell="";let inQ=false;
@@ -634,7 +643,7 @@ function renderVoting(){
       <div class="rank ${i===0?"rank-1":i===1?"rank-2":i===2?"rank-3":"rank-n"}">${String(i+1).padStart(2,"0")}</div>
       <div class="sticker">${cs.sticker||"🤖"}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cs.title}</div>
+        <div style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cs.title}${cs.is_master_chef?` <span class="badge badge-gold" title="Đã đạt Master Chef — bị ẩn khỏi voting">🏆 MC</span>`:""}</div>
         <div style="font-size:10px;color:var(--textM);display:flex;gap:5px;align-items:center;margin-top:3px">
           <span class="badge ${cs.city==="Hà Nội"?"badge-hn":"badge-hcm"}">${cs.city==="Hà Nội"?"HN":"HCM"}</span>
           ${cs.owner_name||""}
@@ -642,9 +651,10 @@ function renderVoting(){
         </div>
       </div>
       <div style="text-align:right;padding-left:8px;min-width:50px">
-        <div class="votes-num">${voteCounts[cs.id]||"—"}</div>
-        <div class="votes-lbl">votes</div>
+        <div class="votes-num">${cs.is_master_chef?"🏆":voteCounts[cs.id]||"—"}</div>
+        <div class="votes-lbl">${cs.is_master_chef?"Master Chef":"votes"}</div>
       </div>
+      <button class="btn" style="font-size:9px;padding:2px 6px;${cs.is_master_chef?"background:var(--gold);color:#1a1226":"opacity:.7"}" onclick="toggleMasterChef('${cs.id}',${!!cs.is_master_chef})" title="${cs.is_master_chef?"Bỏ flag Master Chef":"Đánh dấu Master Chef — ẩn khỏi voting"}">${cs.is_master_chef?"🏆 Bỏ MC":"🏆 Master Chef"}</button>
       <span class="badge ${cs.is_active?"badge-success":"badge-muted"}" style="cursor:pointer" onclick="event.stopPropagation();toggleCaseActive('${cs.id}',${cs.is_active})">${cs.is_active?"Active":"Draft"}</span>
       <button class="btn btn-danger" style="font-size:9px;padding:2px 6px" onclick="deleteItem('cases','${cs.id}')">Xóa</button>
     </div>`;

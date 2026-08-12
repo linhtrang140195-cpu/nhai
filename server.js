@@ -78,7 +78,7 @@ app.get('/api/campaign-cases', async (req, res) => {
               c.demo_url, c.tools_used, c.owner_name, c.sticker
        FROM top_pick_cases tc
        JOIN cases c ON c.id = tc.case_id
-       WHERE tc.campaign_id = ? AND tc.is_active = 1 AND c.is_active = 1
+       WHERE tc.campaign_id = ? AND tc.is_active = 1 AND c.is_active = 1 AND (c.is_master_chef IS NULL OR c.is_master_chef = 0)
        ORDER BY c.display_order`,
       [campaignId]
     );
@@ -183,6 +183,15 @@ app.post('/api/reject-submission', async (req, res) => {
   } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
 });
 
+app.post('/api/toggle-master-chef', async (req, res) => {
+  try {
+    const { case_id, is_master_chef } = req.body || {};
+    if (!case_id) return res.status(400).json({ ok: false, message: 'case_id required' });
+    await pool.query('UPDATE `cases` SET is_master_chef = ? WHERE id = ?', [is_master_chef ? 1 : 0, case_id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
+});
+
 app.post('/api/submit-feedback', async (req, res) => {
   try {
     const { season_id, city, participation_type, output_status, no_output_reason, mentor_rating, mentor_comment, continue_dev, recommend, overall_rating, suggestions } = req.body || {};
@@ -267,12 +276,47 @@ async function fixAwardsData() {
   }
 }
 
+async function computeFeedbackStats() {
+  try {
+    const [rows] = await pool.query(`
+      SELECT season_id,
+        ROUND(AVG(overall_rating), 2) as avg_experience,
+        ROUND(AVG(mentor_rating), 2) as avg_mentor,
+        ROUND(SUM(CASE WHEN output_status LIKE '%demo%' OR output_status LIKE '%hoàn thiện%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as pct_has_demo,
+        ROUND(SUM(CASE WHEN continue_dev LIKE '%chắc chắn%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as pct_want_continue,
+        ROUND(SUM(CASE WHEN recommend = 'Có' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as pct_will_participate,
+        SUM(city = 'HN') as hn_participants,
+        SUM(city = 'HCM') as hcm_participants,
+        COUNT(*) as feedback_count
+      FROM event_feedback
+      GROUP BY season_id
+    `);
+    for (const r of rows) {
+      await pool.query(
+        `INSERT INTO season_stats (season_id, avg_experience, avg_mentor, pct_has_demo, pct_want_continue, pct_will_participate, hn_participants, hcm_participants, feedback_count, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+         ON DUPLICATE KEY UPDATE
+           avg_experience = VALUES(avg_experience), avg_mentor = VALUES(avg_mentor),
+           pct_has_demo = VALUES(pct_has_demo), pct_want_continue = VALUES(pct_want_continue),
+           pct_will_participate = VALUES(pct_will_participate),
+           hn_participants = VALUES(hn_participants), hcm_participants = VALUES(hcm_participants),
+           feedback_count = VALUES(feedback_count), updated_at = NOW()`,
+        [r.season_id, r.avg_experience, r.avg_mentor, r.pct_has_demo, r.pct_want_continue,
+         r.pct_will_participate, r.hn_participants || 0, r.hcm_participants || 0, r.feedback_count]
+      );
+    }
+    if (rows.length) console.log(`Feedback stats computed: ${rows.map(r => `${r.season_id} (${r.feedback_count} responses)`).join(', ')}`);
+  } catch(e) { console.error('Feedback stats compute error:', e.message); }
+}
+
 runSchemaMigration()
   .catch(e => console.error('Schema migration error:', e.message))
   .then(() => seedAwardCategories())
   .catch(e => console.error('Seed error:', e.message))
   .then(() => fixAwardsData())
   .catch(e => console.error('Data fix error:', e.message))
+  .then(() => computeFeedbackStats())
+  .catch(e => console.error('Feedback stats error:', e.message))
   .finally(() => {
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`NHAI DAY server listening on port ${PORT}`);

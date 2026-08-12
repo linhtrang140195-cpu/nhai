@@ -134,9 +134,11 @@ CREATE TABLE IF NOT EXISTS `cases` (
   team_members JSON,
   category_tags JSON,
   is_active TINYINT(1) DEFAULT 1,
+  is_master_chef TINYINT(1) DEFAULT 0,
   display_order INT DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE `cases` ADD COLUMN is_master_chef TINYINT(1) DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS top_pick_campaigns (
   id VARCHAR(64) PRIMARY KEY,
