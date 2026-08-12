@@ -4928,13 +4928,17 @@ function parseCaseDesc(raw){
     lines.slice(toolIdx+1,toolEnd).forEach(l=>{
       const s=l.replace(/^[-•*\s]+/,'').trim();
       if(!s)return;
+      // "Dùng X build/cài/..." → X
       const dM=s.match(/^dùng\s+([\w][\w\s\/\-]+?)(?:\s+(?:build|cài|để|cho|via)\b|\s*$)/i);
       if(dM){tools.push(dM[1].trim());return;}
-      const htM=s.match(/hỗ trợ(?:\s+của)?\s+([\w\/\-][\w\/\-\s]+?)(?:\s*[,.);\n]|$)/i);
-      if(htM){tools.push(htM[1].trim());return;}
-      if(s.length<=35){tools.push(s);return;}
+      // "hỗ trợ của X" → X (stop before Vietnamese non-ASCII chars)
+      const htM=s.match(/hỗ trợ(?:\s+của)?\s+([\w\/\-][\w\/\-\s]*?)(?=\s+[^\x00-\x7F]|\s*[,.);\n]|$)/i);
+      if(htM){const ht=htM[1].trim();if(ht){tools.push(ht);return;}}
+      // "X models/thông qua/..." → X  (run before length check)
       const pM=s.match(/^([\w\/\-][\w\/\s\-]{1,20}?)(?:\s+(?:model|thông qua|module|được tạo|cài|để|cho|build|via)\b)/i);
       if(pM){tools.push(pM[1].trim());return;}
+      // Short text = likely a tool name
+      if(s.length<=20){tools.push(s);}
     });
   }
   return{goal,desc:'',tools:[...new Set(tools)].filter(s=>s&&s.length>1&&s.length<50)};
