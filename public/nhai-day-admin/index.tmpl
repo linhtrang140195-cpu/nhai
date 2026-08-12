@@ -737,43 +737,42 @@ function importSubmissionsFromCSVFile(input){
     try{
       const rows=parseCSV(e.target.result);
       if(rows.length<2){toast("File trống","danger");return;}
-      const headers=rows[0];
-      const findCol=(kws)=>headers.findIndex(h=>kws.some(k=>h.toLowerCase().includes(k.toLowerCase())));
-      let emailCol=findCol(["email"]);
-      let titleCol=findCol(["tên case","case","title"]);
-      let cityCol=findCol(["đâu","city","thành phố","nhai day tại"]);
-      let descCol=findCol(["mô tả","description","ngắn gọn"]);
-      let demoCol=findCol(["demo","file","link","sản phẩm"]);
-      // Nếu không tìm thấy header → CSV không có header row, dùng vị trí cố định
-      // Format Google Form: Timestamp | Email | Tên case | City | Mô tả | Demo URL
-      const hasHeader=emailCol>=0||titleCol>=0;
-      const dataRows=hasHeader?rows.slice(1):rows;
-      if(!hasHeader){
-        // Auto-detect bằng cách tìm cột có "@" nhiều nhất → email
-        const colScores=Array(rows[0].length).fill(0).map((_,ci)=>({ci,atSign:dataRows.filter(r=>r[ci]&&r[ci].includes("@")).length,city:dataRows.filter(r=>r[ci]&&(r[ci].includes("Hà Nội")||r[ci].includes("Hồ Chí"))).length}));
-        emailCol=colScores.sort((a,b)=>b.atSign-a.atSign)[0]?.ci??1;
-        cityCol=colScores.sort((a,b)=>b.city-a.city)[0]?.ci??3;
-        // Title: cột text dài, không phải email/city/timestamp
-        const skip=new Set([0,emailCol,cityCol]);
-        const textCols=colScores.filter(c=>!skip.has(c.ci)).map(c=>c.ci);
-        titleCol=textCols[0]??2;
-        descCol=textCols[1]??4;
-        demoCol=textCols[2]??5;
+      // Detect email column: scan all rows, find which col most often has "@"
+      const ncols=rows[0].length;
+      const atCount=Array(ncols).fill(0);
+      const cityCount=Array(ncols).fill(0);
+      for(const row of rows){
+        for(let ci=0;ci<ncols;ci++){
+          const v=row[ci]||"";
+          if(v.includes("@")&&v.includes("."))atCount[ci]++;
+          if(v.includes("Hà Nội")||v.includes("Hồ Chí"))cityCount[ci]++;
+        }
       }
+      const emailCol=atCount.indexOf(Math.max(...atCount));
+      const cityCol=cityCount.indexOf(Math.max(...cityCount));
+      // First row: header if it has no "@" in email col, data otherwise
+      const firstIsData=rows[0][emailCol]&&rows[0][emailCol].includes("@");
+      const dataRows=firstIsData?rows:rows.slice(1);
+      // Title: first col that's not timestamp(0), email, city — pick by col index
+      const usedCols=new Set([emailCol,cityCol]);
+      const textCols=[...Array(ncols).keys()].filter(ci=>!usedCols.has(ci)&&ci!==0);
+      const titleCol=textCols[0]??2;
+      const descCol=textCols[1]??4;
+      const demoCol=textCols[2]??5;
       const existingEmails=new Set(state.cases.filter(c=>c.season_id===state.currentSeason).map(c=>c.owner_email).filter(Boolean));
       const parsed=[];
       for(const row of dataRows){
-        const email=(emailCol>=0?row[emailCol]:"")||"";
+        const email=(row[emailCol]||"").trim();
         if(!email||!email.includes("@")||existingEmails.has(email))continue;
-        const title=(titleCol>=0?row[titleCol]:"")||"";
-        const cityRaw=(cityCol>=0?row[cityCol]:"")||"";
-        const desc=(descCol>=0?row[descCol]:"")||"";
-        const demo=(demoCol>=0?row[demoCol]:"")||"";
-        if(!title.trim())continue;
+        const title=(row[titleCol]||"").trim();
+        if(!title)continue;
+        const cityRaw=row[cityCol]||"";
+        const desc=row[descCol]||"";
+        const demo=row[demoCol]||"";
         const city=cityRaw.includes("Hồ Chí Minh")||cityRaw.includes("HCM")?"Hồ Chí Minh":"Hà Nội";
         parsed.push({email,title:title.slice(0,120),city,desc,demo});
       }
-      if(!parsed.length){toast("Không có case mới để import","danger");return;}
+      if(!parsed.length){toast(`Không có case mới — email col=${emailCol} city col=${cityCol} rows=${dataRows.length} existing=${existingEmails.size}`,"danger");return;}
       let n=0;
       for(const p of parsed){
         const id=(p.city==="Hà Nội"?"hn":"hcm")+"-auto-"+Date.now()+"-"+(n++);
