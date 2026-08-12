@@ -222,3 +222,21 @@ CREATE TABLE IF NOT EXISTS case_submissions (
   INDEX idx_sub_season (season_id, status),
   INDEX idx_sub_email (owner_email)
 );
+
+CREATE TABLE IF NOT EXISTS event_feedback (
+  id VARCHAR(64) PRIMARY KEY,
+  season_id VARCHAR(64) NOT NULL,
+  city VARCHAR(32) NOT NULL,
+  participation_type VARCHAR(32) NOT NULL,
+  output_status VARCHAR(64) NOT NULL,
+  no_output_reason VARCHAR(500),
+  mentor_rating TINYINT,
+  mentor_comment TEXT,
+  continue_dev VARCHAR(64),
+  recommend VARCHAR(64),
+  overall_rating TINYINT,
+  suggestions TEXT,
+  submitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_fb_season (season_id),
+  INDEX idx_fb_city (city)
+);

@@ -1597,6 +1597,8 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
   <div class="nav-right">
     <button class="btn-submit-case" id="btnSubmitCase" onclick="openSubmitModal()" style="display:none">Submit Usecase</button>
 
+    <button class="btn-feedback" id="btnFeedback" onclick="openFeedbackModal()" style="display:none">Feedback</button>
+
     <button class="btn-reg" onclick="openReg()">Đăng ký ngay</button>
 
 
@@ -2294,6 +2296,14 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
       </div>
     </div>
 
+    <div class="fg"><label class="lbl">Bạn tham gia NHAI DAY mùa mấy? <span class="r">*</span></label>
+      <select class="sel" id="sfSeason">
+        <option value="nhai-day-01">NHAI DAY #1</option>
+        <option value="nhai-day-02" selected>NHAI DAY #2</option>
+        <option value="nhai-day-03">NHAI DAY #3</option>
+      </select>
+    </div>
+
     <div id="sfError" style="color:#ef4444;font-size:12px;margin-bottom:10px;display:none"></div>
     <button class="btn-primary" id="sfSubmitBtn" onclick="submitCase()" style="width:100%;padding:14px;font-size:15px;border-radius:10px;border:none;background:var(--gold);color:#1a1226;font-weight:700;cursor:pointer">Gửi dự án →</button>
   </div>
@@ -2302,6 +2312,110 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
     <div style="font-size:20px;font-weight:700;margin-bottom:8px">Đã nhận dự án!</div>
     <div style="font-size:14px;color:var(--muted);line-height:1.7">BTC sẽ review và liên hệ qua email của bạn.<br>Cảm ơn bạn đã tham gia NHAI DAY! 🍜</div>
     <button onclick="closeSubmitModal()" style="margin-top:24px;padding:10px 28px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer;font-size:14px">Đóng</button>
+  </div>
+</div>
+</div>
+
+<!-- ===== FEEDBACK MODAL ===== -->
+<div class="overlay" id="feedbackModal">
+<div class="modal" style="max-width:520px">
+  <button class="xbtn" onclick="closeFeedbackModal()">✕</button>
+  <div id="fbFormWrap">
+    <div class="m-title">Feedback NHAI DAY</div>
+    <div class="m-sub" style="font-size:13px;margin-bottom:18px;line-height:1.6">Giúp BTC cải thiện NHAI DAY lần sau! Không cần điền tên hay email.</div>
+
+    <div class="fg"><label class="lbl">Bạn tham gia NHAI DAY ở đâu? <span class="r">*</span></label>
+      <div class="opts">
+        <div class="opt"><input type="radio" name="fbCity" id="fbHN" value="Hà Nội"><label for="fbHN">🏙️ Hà Nội</label></div>
+        <div class="opt"><input type="radio" name="fbCity" id="fbHCM" value="Hồ Chí Minh"><label for="fbHCM">🌆 Hồ Chí Minh</label></div>
+      </div>
+    </div>
+
+    <div class="fg"><label class="lbl">Hình thức tham gia của bạn? <span class="r">*</span></label>
+      <div class="opts">
+        <div class="opt"><input type="radio" name="fbPart" id="fbSolo" value="Solo"><label for="fbSolo">Solo</label></div>
+        <div class="opt"><input type="radio" name="fbPart" id="fbTeam" value="Theo team"><label for="fbTeam">Theo team</label></div>
+      </div>
+    </div>
+
+    <div class="fg"><label class="lbl">Team/bạn có hoàn thiện được output/demo trong event không? <span class="r">*</span></label>
+      <div class="opts" style="flex-direction:column;gap:6px">
+        <div class="opt"><input type="radio" name="fbOutput" id="fbOut1" value="Có, demo được" onchange="fbToggleReason()"><label for="fbOut1">✅ Có, demo được</label></div>
+        <div class="opt"><input type="radio" name="fbOutput" id="fbOut2" value="Có bản nháp nhưng chưa demo được" onchange="fbToggleReason()"><label for="fbOut2">📝 Có bản nháp nhưng chưa demo được</label></div>
+        <div class="opt"><input type="radio" name="fbOutput" id="fbOut3" value="Không làm được" onchange="fbToggleReason()"><label for="fbOut3">❌ Không làm được</label></div>
+      </div>
+    </div>
+
+    <div class="fg" id="fbReasonWrap" style="display:none"><label class="lbl">Nếu chưa hoàn thiện, lý do chính là gì?</label>
+      <div class="opts" style="flex-direction:column;gap:6px;margin-top:6px">
+        <div class="opt"><input type="checkbox" name="fbReason" id="fbR_1" value="Chưa rõ case/pain point từ đầu"><label for="fbR_1">Chưa rõ case/pain point từ đầu</label></div>
+        <div class="opt"><input type="checkbox" name="fbReason" id="fbR_2" value="Thiếu thời gian"><label for="fbR_2">Thiếu thời gian</label></div>
+        <div class="opt"><input type="checkbox" name="fbReason" id="fbR_3" value="Thiếu mentor/technical support"><label for="fbR_3">Thiếu mentor/technical support</label></div>
+        <div class="opt"><input type="checkbox" name="fbReason" id="fbR_4" value="Chưa quen dùng AI tool"><label for="fbR_4">Chưa quen dùng AI tool</label></div>
+        <div class="opt"><input type="checkbox" name="fbReason" id="fbR_5" value="Scope quá lớn"><label for="fbR_5">Scope quá lớn</label></div>
+        <div class="opt"><input type="checkbox" name="fbReason" id="fbR_6" value="other"><label for="fbR_6">Other: <input type="text" id="fbReasonOther" class="inp" style="display:inline-block;width:150px;padding:4px 8px;margin-left:4px;vertical-align:middle" placeholder="Lý do khác..."></label></div>
+      </div>
+    </div>
+
+    <div class="fg"><label class="lbl">Phần mentor support và format event có giúp bạn tiến gần hơn tới output thực tế không? <span class="r">*</span></label>
+      <div style="display:flex;gap:8px;margin-top:6px" id="fbMentorRating">
+        <button type="button" onclick="fbSetRating('mentor',1)" data-val="1" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:16px;cursor:pointer">1</button>
+        <button type="button" onclick="fbSetRating('mentor',2)" data-val="2" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:16px;cursor:pointer">2</button>
+        <button type="button" onclick="fbSetRating('mentor',3)" data-val="3" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:16px;cursor:pointer">3</button>
+        <button type="button" onclick="fbSetRating('mentor',4)" data-val="4" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:16px;cursor:pointer">4</button>
+        <button type="button" onclick="fbSetRating('mentor',5)" data-val="5" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:16px;cursor:pointer">5</button>
+      </div>
+      <input type="hidden" id="fbMentorRatingVal">
+    </div>
+
+    <div class="fg"><label class="lbl">Lý do nếu có:</label><textarea class="inp" id="fbMentorComment" rows="2" placeholder="Chia sẻ thêm về trải nghiệm với mentor..." style="resize:vertical"></textarea></div>
+
+    <div class="fg"><label class="lbl">Sau event, bạn có muốn tiếp tục phát triển hoặc ứng dụng output này vào công việc không? <span class="r">*</span></label>
+      <div class="opts" style="flex-direction:column;gap:6px">
+        <div class="opt"><input type="radio" name="fbContDev" id="fbCD1" value="Có, chắc chắn"><label for="fbCD1">Có, chắc chắn</label></div>
+        <div class="opt"><input type="radio" name="fbContDev" id="fbCD2" value="Có thể"><label for="fbCD2">Có thể</label></div>
+        <div class="opt"><input type="radio" name="fbContDev" id="fbCD3" value="Không"><label for="fbCD3">Không</label></div>
+        <div class="opt"><input type="radio" name="fbContDev" id="fbCD4" value="Chưa rõ"><label for="fbCD4">Chưa rõ</label></div>
+      </div>
+    </div>
+
+    <div class="fg"><label class="lbl">Bạn có sẵn sàng tiếp tục tham gia và rủ rê đồng nghiệp tham gia NHAI DAY trong các tháng sau không? <span class="r">*</span></label>
+      <div class="opts" style="flex-direction:column;gap:6px">
+        <div class="opt"><input type="radio" name="fbRecommend" id="fbR1" value="Có"><label for="fbR1">Có</label></div>
+        <div class="opt"><input type="radio" name="fbRecommend" id="fbR2" value="Chưa chắc"><label for="fbR2">Chưa chắc</label></div>
+        <div class="opt"><input type="radio" name="fbRecommend" id="fbR3" value="Không"><label for="fbR3">Không</label></div>
+      </div>
+    </div>
+
+    <div class="fg"><label class="lbl">Bạn đánh giá tổng thể trải nghiệm NHAI DAY lần này như thế nào? <span class="r">*</span></label>
+      <div style="display:flex;gap:8px;margin-top:6px" id="fbOverallRating">
+        <button type="button" onclick="fbSetRating('overall',1)" data-val="1" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:16px;cursor:pointer">1</button>
+        <button type="button" onclick="fbSetRating('overall',2)" data-val="2" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:16px;cursor:pointer">2</button>
+        <button type="button" onclick="fbSetRating('overall',3)" data-val="3" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:16px;cursor:pointer">3</button>
+        <button type="button" onclick="fbSetRating('overall',4)" data-val="4" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:16px;cursor:pointer">4</button>
+        <button type="button" onclick="fbSetRating('overall',5)" data-val="5" style="width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);font-size:16px;cursor:pointer">5</button>
+      </div>
+      <input type="hidden" id="fbOverallRatingVal">
+    </div>
+
+    <div class="fg"><label class="lbl">Góp ý thêm để NHAI DAY lần sau tốt hơn:</label><textarea class="inp" id="fbSuggestions" rows="3" placeholder="Góp ý về format, thời gian, mentor, giải thưởng..." style="resize:vertical"></textarea></div>
+
+    <div class="fg"><label class="lbl">Bạn tham gia NHAI DAY mùa mấy? <span class="r">*</span></label>
+      <select class="sel" id="fbSeason">
+        <option value="nhai-day-01">NHAI DAY #1</option>
+        <option value="nhai-day-02" selected>NHAI DAY #2</option>
+        <option value="nhai-day-03">NHAI DAY #3</option>
+      </select>
+    </div>
+
+    <div id="fbError" style="color:#ef4444;font-size:12px;margin-bottom:10px;display:none"></div>
+    <button class="btn-primary" id="fbSubmitBtn" onclick="submitFeedback()" style="width:100%;padding:14px;font-size:15px;border-radius:10px;border:none;background:var(--gold);color:#1a1226;font-weight:700;cursor:pointer">Gửi feedback →</button>
+  </div>
+  <div id="fbSuccessWrap" style="display:none;text-align:center;padding:40px 20px">
+    <div style="font-size:48px;margin-bottom:16px">🙏</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:8px">Cảm ơn bạn!</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.7">Feedback của bạn sẽ giúp NHAI DAY ngày càng tốt hơn.</div>
+    <button onclick="closeFeedbackModal()" style="margin-top:24px;padding:10px 28px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer;font-size:14px">Đóng</button>
   </div>
 </div>
 </div>
@@ -3118,6 +3232,100 @@ let _submitConfig = null;
   } catch(e) {}
 })();
 
+// ── FEEDBACK ──
+let _fbConfig = null;
+(async function(){
+  try {
+    const r = await fetch('/rest/v1/site_config?key=eq.feedback_config');
+    const rows = await r.json();
+    if (rows && rows[0]) {
+      let cfg = rows[0].value;
+      if (typeof cfg === 'string') cfg = JSON.parse(cfg);
+      _fbConfig = cfg;
+      const now = new Date();
+      const opens = cfg.opens_at ? new Date(cfg.opens_at) : null;
+      const closes = cfg.closes_at ? new Date(cfg.closes_at) : null;
+      if (cfg.is_open !== false && (!opens || now >= opens) && (!closes || now < closes)) {
+        const btn = document.getElementById('btnFeedback');
+        if (btn) btn.style.display = '';
+        if (cfg.season_id) {
+          const sel = document.getElementById('fbSeason');
+          if (sel) sel.value = cfg.season_id;
+        }
+      }
+    }
+  } catch(e) {}
+})();
+
+function openFeedbackModal(){
+  document.getElementById('feedbackModal').classList.add('open');
+  document.getElementById('fbFormWrap').style.display = '';
+  document.getElementById('fbSuccessWrap').style.display = 'none';
+  document.body.style.overflow = 'hidden';
+}
+function closeFeedbackModal(){
+  document.getElementById('feedbackModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function fbToggleReason(){
+  const v = document.querySelector('input[name="fbOutput"]:checked');
+  const wrap = document.getElementById('fbReasonWrap');
+  if (wrap) wrap.style.display = (v && v.value !== 'Có, demo được') ? '' : 'none';
+}
+function fbSetRating(type, val){
+  const containerId = type === 'mentor' ? 'fbMentorRating' : 'fbOverallRating';
+  const hiddenId = type === 'mentor' ? 'fbMentorRatingVal' : 'fbOverallRatingVal';
+  document.getElementById(hiddenId).value = val;
+  const btns = document.querySelectorAll('#' + containerId + ' button');
+  btns.forEach(b => {
+    const bv = parseInt(b.dataset.val);
+    b.style.background = bv <= val ? 'var(--gold)' : 'transparent';
+    b.style.color = bv <= val ? '#1a1226' : 'var(--text)';
+    b.style.borderColor = bv <= val ? 'var(--gold)' : 'var(--line)';
+  });
+}
+async function submitFeedback(){
+  const btn = document.getElementById('fbSubmitBtn');
+  const errEl = document.getElementById('fbError');
+  errEl.style.display = 'none';
+
+  const city = (document.querySelector('input[name="fbCity"]:checked')||{}).value || '';
+  const participation_type = (document.querySelector('input[name="fbPart"]:checked')||{}).value || '';
+  const output_status = (document.querySelector('input[name="fbOutput"]:checked')||{}).value || '';
+  const reasonChecked = [...document.querySelectorAll('input[name="fbReason"]:checked')].map(cb => cb.value==='other' ? (document.getElementById('fbReasonOther').value.trim()||'Other') : cb.value);
+  const no_output_reason = reasonChecked.join(', ');
+  const mentor_rating = parseInt(document.getElementById('fbMentorRatingVal').value) || null;
+  const mentor_comment = document.getElementById('fbMentorComment').value.trim();
+  const continue_dev = (document.querySelector('input[name="fbContDev"]:checked')||{}).value || '';
+  const recommend = (document.querySelector('input[name="fbRecommend"]:checked')||{}).value || '';
+  const overall_rating = parseInt(document.getElementById('fbOverallRatingVal').value) || null;
+  const suggestions = document.getElementById('fbSuggestions').value.trim();
+  const season_id = document.getElementById('fbSeason').value;
+
+  if (!city || !participation_type || !output_status || !continue_dev || !recommend || !overall_rating) {
+    errEl.textContent = 'Vui lòng điền đầy đủ các câu hỏi bắt buộc.';
+    errEl.style.display = '';
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Đang gửi...';
+  try {
+    const res = await fetch('/api/submit-feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ season_id, city, participation_type, output_status, no_output_reason, mentor_rating, mentor_comment, continue_dev, recommend, overall_rating, suggestions })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.message);
+    document.getElementById('fbFormWrap').style.display = 'none';
+    document.getElementById('fbSuccessWrap').style.display = '';
+  } catch(e) {
+    errEl.textContent = e.message || 'Gửi thất bại, thử lại sau.';
+    errEl.style.display = '';
+    btn.disabled = false; btn.textContent = 'Gửi feedback →';
+  }
+}
+
 function openSubmitModal(){
   document.getElementById('submitModal').classList.add('open');
   document.getElementById('submitFormWrap').style.display = '';
@@ -3154,7 +3362,7 @@ async function submitCase(){
 
   btn.disabled = true; btn.textContent = 'Đang gửi...';
   try {
-    const season_id = (_submitConfig && _submitConfig.season_id) || 'nhai-day-02';
+    const season_id = document.getElementById('sfSeason').value || (_submitConfig && _submitConfig.season_id) || 'nhai-day-02';
     const res = await fetch('/api/submit-case', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3215,6 +3423,7 @@ document.getElementById('regModal').addEventListener('click',function(ev){if(ev.
 })();
 if(location.hash==='#register'||location.pathname.replace(/\/$/,'')==='/dang-ky') openReg();
 if(location.hash==='#submit'||location.pathname.replace(/\/$/,'')==='/submit-usecase') openSubmitModal();
+if(location.pathname.replace(/\/$/,'')==='/feedback') openFeedbackModal();
 
 
 function onType(){

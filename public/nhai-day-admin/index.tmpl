@@ -167,7 +167,7 @@ let seasonGids = JSON.parse(localStorage.getItem("nhai_gids") || JSON.stringify(
 function saveGids(){localStorage.setItem("nhai_gids",JSON.stringify(seasonGids));}
 function getUrl(type){const g=seasonGids[state.currentSeason]?.[type];return g?`/api/proxy-sheet?url=${encodeURIComponent(SHEETS[type]+'&gid='+g)}`:null;}
 
-let state={tab:"dashboard",seasons:[],events:[],mentors:[],faqs:[],registrations:[],awards:[],awardCats:[],cases:[],config:{},campaigns:[],votes:[],seasonStats:[],submissions:[],currentSeason:"nhai-day-01",loading:true,cityFilter:"all"};
+let state={tab:"dashboard",seasons:[],events:[],mentors:[],faqs:[],registrations:[],awards:[],awardCats:[],cases:[],config:{},campaigns:[],votes:[],seasonStats:[],submissions:[],feedbacks:[],currentSeason:"nhai-day-01",loading:true,cityFilter:"all"};
 
 async function sb(path,opts={}){
   try{
@@ -182,7 +182,7 @@ async function sb(path,opts={}){
 
 async function loadAll(){
   state.loading=true;render();
-  const[s,e,m,f,r,a,ac,c,cfg,camp,v,ss,subs]=await Promise.all([
+  const[s,e,m,f,r,a,ac,c,cfg,camp,v,ss,subs,fbs]=await Promise.all([
     sb("seasons?order=display_order"),sb("events?order=display_order"),
     sb("mentors?order=display_order"),sb("faqs?order=display_order"),
     sb("registrations?order=created_at.desc&limit=5000"),sb("awards?order=created_at"),
@@ -190,11 +190,12 @@ async function loadAll(){
     sb("site_config"),sb("top_pick_campaigns?order=created_at.desc"),
     sb("top_pick_votes?order=created_at.desc&limit=100"),
     sb("season_stats?order=season_id").catch(()=>[]),
-    sb("case_submissions?order=submitted_at.desc").catch(()=>[])
+    sb("case_submissions?order=submitted_at.desc").catch(()=>[]),
+    sb("event_feedback?order=submitted_at.desc").catch(()=>[])
   ]);
   state.seasons=s;state.events=e;state.mentors=m;state.faqs=f;
   state.registrations=r;state.awards=a;state.awardCats=ac;state.cases=c;
-  state.campaigns=camp;state.votes=v;state.seasonStats=ss||[];state.submissions=subs||[];
+  state.campaigns=camp;state.votes=v;state.seasonStats=ss||[];state.submissions=subs||[];state.feedbacks=fbs||[];
   const cfg2={};(cfg||[]).forEach(row=>{try{cfg2[row.key]=row.value}catch{}});state.config=cfg2;
   if(s.length&&!s.find(x=>x.id===state.currentSeason))state.currentSeason=s[0].id;
   state.loading=false;render();
@@ -258,12 +259,12 @@ function parseCSV(text){
 // ===== RENDER =====
 function render(){
   renderSidebar();
-  const labels={dashboard:"Dashboard",analytics:"Analytics",schedule:"Lịch trình",results:"Kết quả",voting:"Voting",audit:"Vote audit",registrations:"Đăng ký tham gia",mentors:"Mentors",faq:"FAQ",media:"Ảnh và Media",settings:"Cài đặt site",criteria:"Tiêu chí & Giải thưởng",roadmap:"Roadmap",submissions:"Case Submissions"};
+  const labels={dashboard:"Dashboard",analytics:"Analytics",schedule:"Lịch trình",results:"Kết quả",voting:"Voting",audit:"Vote audit",registrations:"Đăng ký tham gia",mentors:"Mentors",faq:"FAQ",media:"Ảnh và Media",settings:"Cài đặt site",criteria:"Tiêu chí & Giải thưởng",roadmap:"Roadmap",submissions:"Case Submissions",feedback:"Event Feedback"};
   document.getElementById("topTitle").textContent=labels[state.tab]||"Dashboard";
   const s=state.seasons.find(x=>x.id===state.currentSeason);
   document.getElementById("seasonPick").textContent=`📅 ${s?s.name:"—"} ▾`;
   if(state.loading){document.getElementById("content").innerHTML=`<div class="empty-state"><div style="font-size:28px;margin-bottom:12px">🍜</div>Đang load...</div>`;return;}
-  const fn={dashboard:renderDashboard,analytics:renderAnalytics,schedule:renderSchedule,results:renderResults,voting:renderVoting,audit:renderAudit,registrations:renderRegistrations,mentors:renderMentors,faq:renderFAQ,media:renderMedia,settings:renderSettings,criteria:renderCriteria,roadmap:renderRoadmapAdmin,submissions:renderSubmissions};
+  const fn={dashboard:renderDashboard,analytics:renderAnalytics,schedule:renderSchedule,results:renderResults,voting:renderVoting,audit:renderAudit,registrations:renderRegistrations,mentors:renderMentors,faq:renderFAQ,media:renderMedia,settings:renderSettings,criteria:renderCriteria,roadmap:renderRoadmapAdmin,submissions:renderSubmissions,feedback:renderFeedback};
   document.getElementById("content").innerHTML=(fn[state.tab]||renderDashboard)();
   if(state.tab==='criteria') setTimeout(loadCriteriaPanel,0);
 }
@@ -275,7 +276,7 @@ function renderSidebar(){
     {id:"voting",icon:"❤️",label:"Voting"},{id:"audit",icon:"🛡️",label:"Vote audit"},
     {sec:"Danh sách"},{id:"registrations",icon:"👥",label:"Đăng ký tham gia"},{id:"mentors",icon:"⭐",label:"Mentors"},{id:"faq",icon:"❓",label:"FAQ"},
     {sec:"Cấu hình"},{id:"criteria",icon:"🏅",label:"Tiêu chí & Giải"},{id:"roadmap",icon:"🗺️",label:"Roadmap"},{id:"media",icon:"🖼️",label:"Ảnh và Media"},{id:"settings",icon:"⚙️",label:"Cài đặt site"},
-    {sec:"Submissions"},{id:"submissions",icon:"📥",label:"Case Submissions"}
+    {sec:"Submissions"},{id:"submissions",icon:"📥",label:"Case Submissions"},{id:"feedback",icon:"💬",label:"Event Feedback"}
   ];
   let h=`<div class="logo"><div class="logo-icon">🍜</div><div><div class="logo-text">NHAI DAY <span>Admin</span></div><div class="logo-sub">NÊM AI VÀO CÔNG VIỆC</div></div></div>`;
   nav.forEach(n=>{
@@ -1263,15 +1264,27 @@ async function calcFeedbackStats(){
     if(!filtered.length){toast("Không có response nào trong khoảng thời gian mùa này","danger");return;}
     const expScores=filtered.map(r=>parseFloat(expCol>=0?r[expCol]:0)).filter(n=>!isNaN(n)&&n>0);
     const mentorScores=filtered.map(r=>parseFloat(mentorCol>=0?r[mentorCol]:0)).filter(n=>!isNaN(n)&&n>0);
-    const hasDemo=filtered.filter(r=>demoCol>=0&&/demo|được|có/i.test(r[demoCol]||"")).length;
-    const wantContinue=filtered.filter(r=>continueCol>=0&&/chắc|có/i.test(r[continueCol]||"")).length;
-    const avgExp=expScores.length?+(expScores.reduce((a,b)=>a+b,0)/expScores.length).toFixed(2):0;
-    const avgMentor=mentorScores.length?+(mentorScores.reduce((a,b)=>a+b,0)/mentorScores.length).toFixed(2):0;
-    const pctDemo=+(hasDemo/filtered.length*100).toFixed(1);
-    const pctContinue=+(wantContinue/filtered.length*100).toFixed(1);
+    const hasDemo=filtered.filter(r=>demoCol>=0&&/hoàn thiện|demo|Có,\s*demo/i.test(r[demoCol]||"")).length;
+    const wantContinue=filtered.filter(r=>continueCol>=0&&/chắc chắn|Có, chắc/i.test(r[continueCol]||"")).length;
+
+    // Also merge data from web event_feedback table
+    let webRows=[];
+    try{ webRows=await sb(`event_feedback?season_id=eq.${state.currentSeason}`)||[]; }catch(e){}
+    const webExpScores=webRows.map(r=>r.overall_rating).filter(n=>n&&n>0);
+    const webMentorScores=webRows.map(r=>r.mentor_rating).filter(n=>n&&n>0);
+    const webHasDemo=webRows.filter(r=>/Có, demo|hoàn thiện/i.test(r.output_status||"")).length;
+    const webWantContinue=webRows.filter(r=>/chắc chắn/i.test(r.continue_dev||"")).length;
+
+    const allExpScores=[...expScores,...webExpScores];
+    const allMentorScores=[...mentorScores,...webMentorScores];
+    const totalCount=filtered.length+webRows.length;
+    const avgExp=allExpScores.length?+(allExpScores.reduce((a,b)=>a+b,0)/allExpScores.length).toFixed(2):0;
+    const avgMentor=allMentorScores.length?+(allMentorScores.reduce((a,b)=>a+b,0)/allMentorScores.length).toFixed(2):0;
+    const pctDemo=totalCount?+((hasDemo+webHasDemo)/totalCount*100).toFixed(1):0;
+    const pctContinue=totalCount?+((wantContinue+webWantContinue)/totalCount*100).toFixed(1):0;
     // Save to season_stats
-    await sb(`season_stats?season_id=eq.${state.currentSeason}`,{method:"PATCH",body:{avg_experience:avgExp,avg_mentor:avgMentor,pct_has_demo:pctDemo,pct_want_continue:pctContinue,feedback_count:filtered.length,updated_at:new Date().toISOString()}});
-    toast(`Đã tính: exp ${avgExp}★, mentor ${avgMentor}★, ${pctContinue}% tiếp tục`);
+    await sb(`season_stats?season_id=eq.${state.currentSeason}`,{method:"PATCH",body:{avg_experience:avgExp,avg_mentor:avgMentor,pct_has_demo:pctDemo,pct_want_continue:pctContinue,feedback_count:totalCount,updated_at:new Date().toISOString()}});
+    toast(`Đã tính (Sheet ${filtered.length} + Web ${webRows.length}): exp ${avgExp}★, mentor ${avgMentor}★, ${pctContinue}% tiếp tục`);
     loadAll();
   }catch(e){toast("Lỗi: "+e.message,"danger");}
 }
@@ -1456,6 +1469,15 @@ function renderSettings(){
     <button class="btn btn-primary" onclick="runBackupToSheet()" style="align-self:flex-start">📤 Backup ngay</button>
   </div></div>
   <div class="card" style="margin-top:14px">
+  <div class="card-header"><div class="card-title">💬 Cấu hình form Feedback</div><button class="btn btn-primary" onclick="saveFeedbackConfig()">💾 Lưu</button></div>
+  <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div><label style="font-size:11px;color:var(--textM);display:block;margin-bottom:4px">Mùa (season_id)</label><input id="fbcSeasonId" class="inp" style="margin:0" value="${(()=>{let c=state.config.feedback_config;if(typeof c==='string')try{c=JSON.parse(c);}catch{};return(c&&c.season_id)||'nhai-day-02';})()}"></div>
+    <div><label style="font-size:11px;color:var(--textM);display:block;margin-bottom:4px">Mở (opens_at)</label><input id="fbcOpensAt" class="inp" type="datetime-local" style="margin:0" value="${(()=>{let c=state.config.feedback_config;if(typeof c==='string')try{c=JSON.parse(c);}catch{};return(c&&c.opens_at)?c.opens_at.slice(0,16):'';})()}"></div>
+    <div><label style="font-size:11px;color:var(--textM);display:block;margin-bottom:4px">Đóng (closes_at)</label><input id="fbcClosesAt" class="inp" type="datetime-local" style="margin:0" value="${(()=>{let c=state.config.feedback_config;if(typeof c==='string')try{c=JSON.parse(c);}catch{};return(c&&c.closes_at)?c.closes_at.slice(0,16):'';})()}"></div>
+    <div style="display:flex;align-items:flex-end;gap:8px;padding-bottom:2px"><input type="checkbox" id="fbcIsOpen" ${(()=>{let c=state.config.feedback_config;if(typeof c==='string')try{c=JSON.parse(c);}catch{};return(c&&c.is_open)?'checked':'';})()}><label for="fbcIsOpen" style="font-size:12px">Bật form (is_open)</label></div>
+  </div>
+  </div>
+  <div class="card" style="margin-top:14px">
   <div class="card-header"><div class="card-title">📝 Cấu hình form "Nộp dự án"</div><button class="btn btn-primary" onclick="saveSubmitConfig()">💾 Lưu</button></div>
   <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div><label style="font-size:11px;color:var(--textM);display:block;margin-bottom:4px">Mùa (season_id)</label><input type="text" id="scSeasonId" style="margin:0" value="${(()=>{let c=state.config.submit_config;if(typeof c==='string')try{c=JSON.parse(c);}catch{}; return (c&&c.season_id)||'nhai-day-02';})()}"></div>
@@ -1598,6 +1620,75 @@ async function uploadAvatar(){
     document.getElementById("avPrev").innerHTML=`<img src="${url}" style="width:60px;height:60px;border-radius:50%;object-fit:cover"/>`;
     toast("Ảnh đã sẵn sàng — bấm Lưu để cập nhật");
   }catch(e){toast("Lỗi: "+e.message,"danger");}
+}
+
+async function saveFeedbackConfig(){
+  const cfg={
+    season_id:document.getElementById('fbcSeasonId').value.trim()||'nhai-day-02',
+    is_open:document.getElementById('fbcIsOpen').checked,
+    opens_at:document.getElementById('fbcOpensAt').value||null,
+    closes_at:document.getElementById('fbcClosesAt').value||null,
+  };
+  const patchRes=await sb('site_config?key=eq.feedback_config',{method:'PATCH',body:{value:JSON.stringify(cfg),updated_at:new Date().toISOString()}});
+  if(!patchRes||!patchRes.length) await sb('site_config',{method:'POST',body:{key:'feedback_config',value:JSON.stringify(cfg),updated_at:new Date().toISOString()}});
+  state.config.feedback_config=cfg;
+  toast('Đã lưu cấu hình feedback!');
+  render();
+}
+
+// ===== FEEDBACK =====
+function renderFeedback(){
+  const fbs = state.feedbacks || [];
+  const bySeason = {};
+  fbs.forEach(f => { if(!bySeason[f.season_id]) bySeason[f.season_id] = []; bySeason[f.season_id].push(f); });
+  const seasons = Object.keys(bySeason).sort().reverse();
+
+  const avgRating = (arr, key) => {
+    const vals = arr.map(f=>f[key]).filter(v=>v!=null&&v>0);
+    return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '—';
+  };
+
+  const selectedSeason = window._fbSeasonFilter || (seasons[0] || 'nhai-day-02');
+  const shown = bySeason[selectedSeason] || [];
+
+  const mentorAvg = avgRating(shown, 'mentor_rating');
+  const overallAvg = avgRating(shown, 'overall_rating');
+  const demoCount = shown.filter(f=>f.output_status==='Có, demo được').length;
+
+  return `
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+    ${seasons.map(s=>`<button class="btn ${s===selectedSeason?'btn-primary':''}" onclick="window._fbSeasonFilter='${s}';render()">${s}</button>`).join('')}
+    <button class="btn" onclick="loadAll()" style="margin-left:auto">🔄 Refresh</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700">${shown.length}</div><div style="font-size:11px;color:var(--textM)">Responses</div></div>
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700">${overallAvg}★</div><div style="font-size:11px;color:var(--textM)">Overall avg</div></div>
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700">${mentorAvg}★</div><div style="font-size:11px;color:var(--textM)">Mentor avg</div></div>
+    <div class="card" style="padding:14px;text-align:center"><div style="font-size:22px;font-weight:700">${demoCount}/${shown.length}</div><div style="font-size:11px;color:var(--textM)">Có demo</div></div>
+  </div>
+
+  <div class="card">
+    ${shown.length===0?`<div class="empty-state">Chưa có feedback cho mùa này</div>`:
+      shown.map(f=>`
+      <div style="border-bottom:1px solid var(--border);padding:12px 16px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+          <span class="badge ${f.city==='Hà Nội'?'badge-hn':'badge-hcm'}">${f.city}</span>
+          <span style="font-size:11px;color:var(--textM)">${f.participation_type}</span>
+          <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${f.output_status==='Có, demo được'?'#22c55e22':'#f9731622'};color:${f.output_status==='Có, demo được'?'#22c55e':'#f97316'}">${f.output_status}</span>
+          <span style="margin-left:auto;font-size:11px;color:var(--textM)">${new Date(f.submitted_at).toLocaleDateString('vi-VN')}</span>
+        </div>
+        ${f.no_output_reason?`<div style="font-size:11px;color:var(--textM);margin-bottom:4px">Lý do: ${e(f.no_output_reason)}</div>`:''}
+        <div style="display:flex;gap:16px;margin-bottom:6px">
+          ${f.mentor_rating?`<div style="font-size:12px">Mentor: <strong>${f.mentor_rating}/5</strong></div>`:''}
+          ${f.overall_rating?`<div style="font-size:12px">Overall: <strong>${f.overall_rating}/5</strong></div>`:''}
+          ${f.continue_dev?`<div style="font-size:12px">Tiếp tục: <strong>${f.continue_dev}</strong></div>`:''}
+          ${f.recommend?`<div style="font-size:12px">Recommend: <strong>${f.recommend}</strong></div>`:''}
+        </div>
+        ${f.mentor_comment?`<div style="font-size:12px;color:var(--text);margin-bottom:4px;font-style:italic">"${e(f.mentor_comment)}"</div>`:''}
+        ${f.suggestions?`<div style="font-size:12px;color:var(--text);padding:8px 10px;background:var(--surfaceAlt,var(--bg3));border-radius:6px;margin-top:4px">${e(f.suggestions)}</div>`:''}
+      </div>`).join('')}
+  </div>`;
 }
 
 // ===== SUBMISSIONS =====

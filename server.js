@@ -120,6 +120,7 @@ app.get(['/de-bai', '/de-bai/'], servePage('index.tmpl'));
 app.get(['/faq', '/faq/'], servePage('index.tmpl'));
 app.get(['/submit-usecase', '/submit-usecase/'], servePage('index.tmpl'));
 app.get(['/dang-ky', '/dang-ky/'], servePage('index.tmpl'));
+app.get(['/feedback', '/feedback/'], servePage('index.tmpl'));
 app.get(['/nhai-day-admin', '/nhai-day-admin/'], servePage('nhai-day-admin/index.tmpl'));
 app.get('/nhai-day-admin/:tab', servePage('nhai-day-admin/index.tmpl'));
 app.get('/nhai-day-admin.html', servePage('nhai-day-admin.tmpl'));
@@ -177,6 +178,21 @@ app.post('/api/reject-submission', async (req, res) => {
     if (!submission_id) return res.status(400).json({ ok: false, message: 'submission_id required' });
     await pool.query(`UPDATE case_submissions SET status='rejected', reviewed_at=NOW(), review_notes=? WHERE id=?`, [notes||'', submission_id]);
     res.json({ ok: true });
+  } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
+});
+
+app.post('/api/submit-feedback', async (req, res) => {
+  try {
+    const { season_id, city, participation_type, output_status, no_output_reason, mentor_rating, mentor_comment, continue_dev, recommend, overall_rating, suggestions } = req.body || {};
+    if (!city || !participation_type || !output_status)
+      return res.status(400).json({ ok: false, message: 'Vui lòng điền đầy đủ các trường bắt buộc.' });
+    const id = `fb-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+    await pool.query(
+      `INSERT INTO event_feedback (id, season_id, city, participation_type, output_status, no_output_reason, mentor_rating, mentor_comment, continue_dev, recommend, overall_rating, suggestions)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, season_id||'nhai-day-02', city, participation_type, output_status, no_output_reason||null, mentor_rating||null, mentor_comment||null, continue_dev||null, recommend||null, overall_rating||null, suggestions||null]
+    );
+    res.json({ ok: true, id });
   } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
 });
 
