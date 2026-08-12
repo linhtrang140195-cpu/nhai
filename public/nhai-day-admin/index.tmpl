@@ -1332,6 +1332,35 @@ function _getRoadmapItems(){
   return (Array.isArray(cfg)&&cfg.length)?cfg:_ROADMAP_DEFAULT;
 }
 
+function _snapshotRoadmap(){
+  const items=_getRoadmapItems();
+  return items.map((r,i)=>({
+    ...r,
+    status:document.getElementById(`rm_status_${i}`)?.value||r.status,
+    date:document.getElementById(`rm_date_${i}`)?.value||r.date,
+    name:document.getElementById(`rm_name_${i}`)?.value||r.name,
+  }));
+}
+function moveRoadmapItem(i,dir){
+  const items=_snapshotRoadmap();
+  const j=i+dir;
+  if(j<0||j>=items.length) return;
+  [items[i],items[j]]=[items[j],items[i]];
+  state.config.roadmap_config=items;
+  render();
+}
+function addRoadmapItem(){
+  const items=_snapshotRoadmap();
+  items.push({status:'tbd',name:'Sự kiện mới',date:''});
+  state.config.roadmap_config=items;
+  render();
+}
+function removeRoadmapItem(i){
+  const items=_snapshotRoadmap();
+  items.splice(i,1);
+  state.config.roadmap_config=items;
+  render();
+}
 function renderRoadmapAdmin(){
   const items=_getRoadmapItems();
   const seeded=Array.isArray(state.config.roadmap_config)&&state.config.roadmap_config.length;
@@ -1342,15 +1371,23 @@ function renderRoadmapAdmin(){
     <div class="card-header">
       <div><div class="card-title">🗺️ Roadmap — Trạng thái sự kiện</div>
       <div class="card-sub">${seeded?'Đang dùng config từ DB':'Chưa lưu — dùng default'}</div></div>
-      <button class="btn btn-primary" onclick="saveRoadmapConfig()">💾 Lưu roadmap</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="addRoadmapItem()" style="font-size:12px">+ Thêm dòng</button>
+        <button class="btn btn-primary" onclick="saveRoadmapConfig()">💾 Lưu roadmap</button>
+      </div>
     </div>
     ${items.map((r,i)=>`
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border)">
-      <div style="flex:1"><div style="font-size:12px;font-weight:500">${r.name}</div></div>
-      <input type="text" id="rm_date_${i}" value="${(r.date||'').replace(/"/g,'&quot;')}" placeholder="Ngày / ghi chú" style="width:190px;margin-bottom:0;font-size:11px"/>
-      <select id="rm_status_${i}" style="width:165px;margin-bottom:0;font-size:11px">
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button onclick="moveRoadmapItem(${i},-1)" ${i===0?'disabled':''} style="width:24px;height:22px;padding:0;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">↑</button>
+        <button onclick="moveRoadmapItem(${i},1)" ${i===items.length-1?'disabled':''} style="width:24px;height:22px;padding:0;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">↓</button>
+      </div>
+      <input type="text" id="rm_name_${i}" value="${(r.name||'').replace(/"/g,'&quot;')}" placeholder="Tên sự kiện" style="flex:1;margin-bottom:0;font-size:11px"/>
+      <input type="text" id="rm_date_${i}" value="${(r.date||'').replace(/"/g,'&quot;')}" placeholder="Ngày / ghi chú" style="width:175px;margin-bottom:0;font-size:11px"/>
+      <select id="rm_status_${i}" style="width:155px;margin-bottom:0;font-size:11px">
         ${statusOpts.map(s=>`<option value="${s}"${r.status===s?' selected':''}>${statusLabels[s]||s}</option>`).join('')}
       </select>
+      <button onclick="removeRoadmapItem(${i})" title="Xóa dòng này" style="width:26px;height:26px;padding:0;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);border-radius:6px;cursor:pointer;color:#ef4444;font-size:13px">✕</button>
     </div>`).join('')}
   </div>
   <div class="card"><div class="card-header"><div class="card-title">ℹ️ Ghi chú status</div></div>
@@ -1366,12 +1403,7 @@ function renderRoadmapAdmin(){
 }
 
 async function saveRoadmapConfig(){
-  const items=_getRoadmapItems();
-  const updated=items.map((r,i)=>({
-    ...r,
-    status:document.getElementById(`rm_status_${i}`)?.value||r.status,
-    date:document.getElementById(`rm_date_${i}`)?.value||r.date,
-  }));
+  const updated=_snapshotRoadmap();
   const patchRes=await sb(`site_config?key=eq.roadmap_config`,{method:"PATCH",body:{value:JSON.stringify(updated),updated_at:new Date().toISOString()}});
   if(!patchRes||!patchRes.length){
     await sb(`site_config`,{method:"POST",body:{key:"roadmap_config",value:JSON.stringify(updated),updated_at:new Date().toISOString()}});
