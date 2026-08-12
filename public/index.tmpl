@@ -1519,7 +1519,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 .vc2-det-person{font-size:12.5px;color:var(--muted);margin-bottom:8px;}
 .vc2-det-block{margin-bottom:10px;}
 .vc2-det-label{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
-.vc2-det-desc{font-size:13px;color:var(--cream);line-height:1.5;}
+.vc2-det-desc{font-size:13px;color:var(--cream);line-height:1.5;white-space:pre-line;}
 .vc2-det-tools{display:flex;gap:6px;flex-wrap:wrap;}
 .vc2-media-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;}
 .vc2-media-strip::-webkit-scrollbar{height:6px;}
@@ -4810,7 +4810,7 @@ function renderVote(city){
 const _originalRenderVoteRuntimeNote=renderVoteRuntimeNote;
 renderVoteRuntimeNote=function(){
   const bannerTextEl=document.querySelector('.vob-text');
-  if(bannerTextEl) bannerTextEl.innerHTML='<b>Top Pick Dish</b> — Đã đóng bình chọn · Cảm ơn mọi người đã tham gia';
+  if(bannerTextEl&&voteState.votingClosed) bannerTextEl.innerHTML='<b>Top Pick Dish</b> — Đã đóng bình chọn · Cảm ơn mọi người đã tham gia';
   const noteEl=document.getElementById('voteRuntimeNote');
   if(!noteEl){
     if(typeof _originalRenderVoteRuntimeNote==='function') _originalRenderVoteRuntimeNote();
@@ -4939,7 +4939,7 @@ async function initVoteState(){
             title:c.title||'',person:c.owner_name||'',team:'',topic:'',
             desc:c.short_description||'',goal:c.full_description||'',
             tools:Array.isArray(c.tools_used)?c.tools_used:[],
-            demo:c.demo_url||'',gallery:[],
+            demo:(c.demo_url||'').split(',')[0].trim(),gallery:[],
             emoji:c.sticker||'🤖',
             grad:'linear-gradient(135deg,#1a1a2e,#16213e)'});
         }
