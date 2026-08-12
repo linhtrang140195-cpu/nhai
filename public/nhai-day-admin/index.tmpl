@@ -706,7 +706,7 @@ async function importSubmissionsFromSheet(){
     const cityCol=findCol(["đâu","city","thành phố","nhai day tại"]);
     const descCol=findCol(["mô tả","description","ngắn gọn"]);
     const demoCol=findCol(["demo","file","link","sản phẩm"]);
-    const existingEmails=new Set(state.cases.map(c=>c.owner_email).filter(Boolean));
+    const existingEmails=new Set(state.cases.filter(c=>c.season_id===state.currentSeason).map(c=>c.owner_email).filter(Boolean));
     const parsed=[];
     for(const row of rows.slice(1)){
       const email=(emailCol>=0?row[emailCol]:"")||"";
@@ -744,7 +744,7 @@ function importSubmissionsFromCSVFile(input){
       const cityCol=findCol(["đâu","city","thành phố","nhai day tại"]);
       const descCol=findCol(["mô tả","description","ngắn gọn"]);
       const demoCol=findCol(["demo","file","link","sản phẩm"]);
-      const existingEmails=new Set(state.cases.map(c=>c.owner_email).filter(Boolean));
+      const existingEmails=new Set(state.cases.filter(c=>c.season_id===state.currentSeason).map(c=>c.owner_email).filter(Boolean));
       const parsed=[];
       for(const row of rows.slice(1)){
         const email=(emailCol>=0?row[emailCol]:"")||"";
