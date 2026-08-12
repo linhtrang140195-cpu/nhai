@@ -48,17 +48,19 @@ app.post('/internal/seed', async (req, res) => {
   }
 });
 
-// One-time patch: update DAY #2 case descriptions from CSV source data.
+// One-time patch: update DAY #2 case descriptions and tools_used from CSV source data.
 app.post('/internal/patch-day2-desc', async (req, res) => {
   try {
+    delete require.cache[require.resolve('./migrations/day2-desc-data')];
     const updates = require('./migrations/day2-desc-data');
     const results = [];
     for (const u of updates) {
+      const toolsJson = JSON.stringify(u.tools || []);
       const [r] = await pool.query(
-        'UPDATE cases SET short_description=?, full_description=? WHERE title LIKE ?',
-        [u.desc, u.desc, `%${u.titleMatch}%`]
+        'UPDATE cases SET short_description=?, full_description=?, tools_used=? WHERE title LIKE ?',
+        [u.desc, u.desc, toolsJson, `%${u.titleMatch}%`]
       );
-      results.push({ title: u.titleMatch, affected: r.affectedRows });
+      results.push({ title: u.titleMatch, affected: r.affectedRows, tools: u.tools });
     }
     res.json({ ok: true, results });
   } catch (e) {

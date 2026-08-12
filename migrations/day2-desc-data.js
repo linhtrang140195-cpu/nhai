@@ -1,8 +1,9 @@
-// Full descriptions extracted from "data NHAI DAY - sn nhai 2.csv"
-// Keyed by title prefix (first 20 chars) for fuzzy matching
+// Full descriptions & tools extracted from "data NHAI DAY - sn nhai 2.csv"
+// tools[] is set directly into tools_used column to bypass parser
 module.exports = [
   {
     titleMatch: 'sử dụng MCP Garena',
+    tools: ['MCP Garena', 'Thư ký Kim'],
     desc: `Đề bài 1: khi nhận được giấy tờ từ đối tác, chị phải :
 Ghi nhận trên hệ thống Vendors.garena.vn những giấy tờ đã nhận được
 Nhắn tin cho từng requester qua seatalk để update tình trạng giấy tờ --> mất thời gian và làm phiền trực tiếp
@@ -24,6 +25,7 @@ Tool sử dụng: MCP Garena, Thư ký Kim`,
   },
   {
     titleMatch: 'Hoàn thiện công cụ Việt H',
+    tools: ['AI/Codex'],
     desc: `Mục Đích
 Công cụ này dùng để hỗ trợ Việt hóa font nhanh hơn cho team thiết kế, không cần tìm outsource
 
@@ -39,6 +41,7 @@ Tiếp tục test với các case thực tế để phát hiện lỗi (vì font
   },
   {
     titleMatch: 'Plugin Beat Shake',
+    tools: ['Claude'],
     desc: `Mục đích sử dụng:
 Làm capcut giật giật nhanh và tự động ngay trên Premiere
 Tool sử dụng:
@@ -50,17 +53,20 @@ Dùng MCP kết nối với Premiere và Plugin để tự động hơn nữa`,
   },
   {
     titleMatch: 'Check gian lận giờ chơi',
+    tools: [],
     desc: `Hỗ trợ team Community verify số liệu giờ chơi thực sự của người chơi tại các phòng net đối tác trong thời gian thực hiện chương trình khuyến mãi.
 
 Từ data session đăng nhập và thoát game, script tự động check game time của user trong giữa khoảng thời gian đó, để tránh trường hợp user chỉ vào game xong treo máy và chơi game khác.`,
   },
   {
     titleMatch: 'Tự động hóa quy trình báo cáo kế toán',
+    tools: ['Claude'],
     desc: `Mục đích: tự động hóa 1 phần  báo cáo kế toán
 Tool: Claude`,
   },
   {
     titleMatch: 'Tự động hóa quy trình transcript FGD',
+    tools: ['Gemini', 'Compass'],
     desc: `Mục đích: tự động chuyển video FGD thành transcript, giúp tiết kiệm thời gian note-taking và tổng hợp report cho các team game làm FGD
 
 Tool sử dụng:
@@ -71,6 +77,7 @@ Demo:
   },
   {
     titleMatch: 'Chuyển đổi giọng nói thành',
+    tools: ['Swift 6 + SwiftUI', 'whisper.cpp', 'Apple Translation', 'SQLite', 'OBS'],
     desc: `1.Mô tả ngắn gọn về case
 MacSpeechTranslator là ứng dụng macOS chuyển giọng nói tiếng Việt thành văn bản theo thời gian thực, sau đó dịch câu đã hoàn chỉnh và hiển thị phụ đề.
 2.Mục đích sử dụng
@@ -88,10 +95,12 @@ Chọn microphone hoặc system audio → app phát hiện giọng nói, tạo t
   },
   {
     titleMatch: 'Check quality bản build',
+    tools: ['Codex GPT 5.6 Sol', 'MCP Garena', 'Alpha Intelligence'],
     desc: `Giải quyết: Tự động phát hiện lỗi config và cảnh báo rủi ro "balance break" (mất cân bằng game) do thay đổi thông số. Giúp giảm tải hàng giờ đồng hồ review thủ công và tránh bug lọt xuống môi trường Production.
 Dành cho: Các Game Designer, Game Developers, và QA.
 
-Tool sử dụng: Codex GPT-4o, Alpha Intelligence hỗ trợ LLM workflow, bộ MCP của Garena.
+Tool sử dụng: Codex GPT 5.6 Sol để tạo nên website và backend + bộ MCP của Garena.
+Đồng thời Alpha Intelligence hỗ trợ cho LLM workflow.
 
 Workflow:
 - Người dùng điền thư mục chứa codebase và điền hai version cần được so sánh.
@@ -105,6 +114,7 @@ Follow/upgrade tiếp theo:
   },
   {
     titleMatch: 'Tự động hóa quy trình kiểm duyệt Publishing',
+    tools: ['TinyFaceDetection', 'Alpha Intelligence'],
     desc: `- Cải tiến quy trình kiểm duyệt Publishing bằng cách tích hợp AI vào extension preview ảnh, tự động phát hiện ảnh có chứa khuôn mặt người và đánh dấu các ảnh cần chú ý để người đánh giá đưa ra quyết định Từ chối/Xác nhận nhanh hơn.
 - Sử dụng model TinyFaceDetection để sàng lọc trước rồi đưa vô Alpha Intelligence để kiểm tra. Workflow tự động kết nối kết quả AI với UI preview và bộ lọc của extension.
 
@@ -121,12 +131,14 @@ Mở rộng tiếp theo: sexual content, violence, text/brand/logo detection, au
   },
   {
     titleMatch: 'Thiệu Kỳ',
+    tools: [],
     desc: `1. Auto planning timeline project/tracking + chat bot remind.
 
 2. Web test trắc nghiệm để user tìm ra lối chơi phù hợp (mục đích get UGC content)`,
   },
   {
     titleMatch: 'RosterForge',
+    tools: ['Claude Code'],
     desc: `Giải quyết việc sản xuất những video thay ảnh, thay tên số lượng nhiều như các file overlay Booyah, Champions của các giải đấu Free Fire esports, hoặc các clip thiệp mời KOL số lượng nhiều của team FCO. Các team khác cũng có thể sử dụng với công việc tương tự.
 
 Tool sử dụng: Claude Code để build.
@@ -135,6 +147,7 @@ Tool sử dụng: Claude Code để build.
   },
   {
     titleMatch: 'Tối ưu hóa workflow cho team PUGC',
+    tools: ['Claude', 'Demo System', 'Compass LLM'],
     desc: `Mục đích sử dụng
 - Hỗ trợ team tổng hợp thông tin khi cần, không cần phải manually input từng case và phải nhớ xem trước đây mình muốn feedback cái gì, lưu ở đâu
 
