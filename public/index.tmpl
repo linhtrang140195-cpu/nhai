@@ -4919,23 +4919,41 @@ async function initVoteState(){
     }
   }catch(e){}
   await loadVoteSnapshot();
-  // Augment TOP_PICK with any cases that exist in the active campaign but not in the static array
+  // Augment TOP_PICK with campaign cases not already in the static array.
+  // Uses /api/campaign-cases to get exact campaign cases (avoids broken in.() restShim filter).
   try{
-    const topPickIds=new Set(TOP_PICK.map(c=>c.id));
-    const missing=Object.keys(voteState.counts).filter(id=>!topPickIds.has(id));
-    if(missing.length){
-      const cases=await fetch('/rest/v1/cases?id=in.('+missing.join(',')+')'+'&is_active=eq.1&order=display_order').then(r=>r.json());
-      cases.forEach(c=>{
+    const campCases=await fetch('/api/campaign-cases?campaign_id='+encodeURIComponent(voteState.campaignId)).then(r=>r.json());
+    if(Array.isArray(campCases)&&campCases.length){
+      const topPickIds=new Set(TOP_PICK.map(c=>c.id));
+      const eventIds=new Set();
+      campCases.forEach(c=>{
         const city=c.city==='Hồ Chí Minh'?'HCM':'HN';
         const sn=(c.season_id||'').match(/(\d+)$/);
         const num=sn?String(parseInt(sn[1])).padStart(2,'0'):'02';
-        TOP_PICK.push({id:c.id,city,event:(city==='HCM'?'hcm':'hn')+num,
-          title:c.title||'',person:c.owner_name||'',team:'',topic:'',
-          desc:c.short_description||'',goal:c.full_description||'',
-          tools:Array.isArray(c.tools_used)?c.tools_used:[],
-          demo:c.demo_url||'',gallery:[],
-          grad:'linear-gradient(135deg,#1a1a2e,#16213e)'});
+        const evId=(city==='HCM'?'hcm':'hn')+num;
+        eventIds.add(evId);
+        if(!topPickIds.has(c.id)){
+          TOP_PICK.push({id:c.id,city,event:evId,
+            title:c.title||'',person:c.owner_name||'',team:'',topic:'',
+            desc:c.short_description||'',goal:c.full_description||'',
+            tools:Array.isArray(c.tools_used)?c.tools_used:[],
+            demo:c.demo_url||'',gallery:[],
+            grad:'linear-gradient(135deg,#1a1a2e,#16213e)'});
+        }
       });
+      // If the campaign has a different edition than what's default, activate that edition filter
+      const hasStaticEdition=campCases.some(c=>{
+        const sn=(c.season_id||'').match(/(\d+)$/);return sn&&parseInt(sn[1])===1;
+      });
+      if(!hasStaticEdition&&eventIds.size){
+        const edFilter=[...eventIds].join(',');
+        document.querySelectorAll('.vf-ed-btn').forEach(b=>{
+          const ed=b.dataset.ed||'';
+          if(ed===edFilter||[...eventIds].some(id=>ed.includes(id))){
+            b.classList.add('on');b.dataset.ed=edFilter;
+          }else{b.classList.remove('on');}
+        });
+      }
     }
   }catch(e){}
   renderVote('HN');

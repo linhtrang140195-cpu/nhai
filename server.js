@@ -48,6 +48,31 @@ app.post('/internal/seed', async (req, res) => {
   }
 });
 
+// Returns full case details for all active cases in a campaign (for public vote UI).
+app.get('/api/campaign-cases', async (req, res) => {
+  const campaignId = String(req.query.campaign_id || '');
+  if (!campaignId) return res.json([]);
+  try {
+    const [rows] = await pool.query(
+      `SELECT c.id, c.season_id, c.city, c.title, c.short_description, c.full_description,
+              c.demo_url, c.tools_used, c.owner_name, c.sticker
+       FROM top_pick_cases tc
+       JOIN cases c ON c.id = tc.case_id
+       WHERE tc.campaign_id = ? AND tc.is_active = 1 AND c.is_active = 1
+       ORDER BY c.display_order`,
+      [campaignId]
+    );
+    rows.forEach(r => {
+      if (typeof r.tools_used === 'string') {
+        try { r.tools_used = JSON.parse(r.tools_used); } catch { r.tools_used = []; }
+      }
+    });
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Returns the currently active voting campaign.
 app.get('/api/active-campaign', async (req, res) => {
   try {
