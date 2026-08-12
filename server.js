@@ -48,6 +48,24 @@ app.post('/internal/seed', async (req, res) => {
   }
 });
 
+// One-time patch: update DAY #2 case descriptions from CSV source data.
+app.post('/internal/patch-day2-desc', async (req, res) => {
+  try {
+    const updates = require('./migrations/day2-desc-data');
+    const results = [];
+    for (const u of updates) {
+      const [r] = await pool.query(
+        'UPDATE cases SET short_description=?, full_description=? WHERE title LIKE ?',
+        [u.desc, u.desc, `%${u.titleMatch}%`]
+      );
+      results.push({ title: u.titleMatch, affected: r.affectedRows });
+    }
+    res.json({ ok: true, results });
+  } catch (e) {
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
 // Returns full case details for all active cases in a campaign (for public vote UI).
 app.get('/api/campaign-cases', async (req, res) => {
   const campaignId = String(req.query.campaign_id || '');
