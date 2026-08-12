@@ -4904,6 +4904,41 @@ async function doVote(caseId,city,btn){
   renderVote(city);
 }
 
+function parseCaseDesc(raw){
+  if(!raw)return{goal:'',desc:'',tools:[]};
+  const text=raw.replace(/\r\n/g,'\n').trim();
+  const lines=text.split('\n');
+  const TOOL_RE=/^(tool[\s :—\-]|công cụ sử dụng)/i;
+  const DEMO_RE=/^(demo[\s:—]|link demo|video demo|link video)/i;
+  const toolIdx=lines.findIndex(l=>TOOL_RE.test(l.trim()));
+  const demoIdx=lines.findIndex(l=>DEMO_RE.test(l.trim()));
+  const sects=[toolIdx,demoIdx].filter(i=>i>-1);
+  const endGoal=sects.length?Math.min(...sects):lines.length;
+  const goalLines=lines.slice(0,endGoal).map(l=>{
+    const m=l.trim().match(/^(\d+\.\s*)?(mục đích[^:\n]*|giải quyết[^:\n]*|vấn đề[^:\n]*|đề bài[^:\n]*|mô tả[^:\n]*|bài toán[^:\n]*|output[^:\n]*|mục tiêu[^:\n]*):?\s*/i);
+    return m?l.trim().slice(m[0].length):l;
+  });
+  const goal=goalLines.join('\n').trim()||text.split('\n')[0];
+  const tools=[];
+  if(toolIdx>-1){
+    const hdr=lines[toolIdx];
+    const inl=(hdr.match(/:\s*(.+)/)||[])[1]||'';
+    if(inl.trim())inl.split(/[,;]+/).map(s=>s.replace(/^[-•\s]+/,'').trim()).filter(s=>s&&s.length<50).forEach(s=>tools.push(s));
+    const toolEnd=demoIdx>toolIdx?demoIdx:lines.length;
+    lines.slice(toolIdx+1,toolEnd).forEach(l=>{
+      const s=l.replace(/^[-•*\s]+/,'').trim();
+      if(!s)return;
+      const dM=s.match(/^dùng\s+([\w][\w\s\/\-]+?)(?:\s+(?:build|cài|để|cho|via)\b|\s*$)/i);
+      if(dM){tools.push(dM[1].trim());return;}
+      const htM=s.match(/hỗ trợ(?:\s+của)?\s+([\w\/\-][\w\/\-\s]+?)(?:\s*[,.);\n]|$)/i);
+      if(htM){tools.push(htM[1].trim());return;}
+      if(s.length<=35){tools.push(s);return;}
+      const pM=s.match(/^([\w\/\-][\w\/\s\-]{1,20}?)(?:\s+(?:model|thông qua|module|được tạo|cài|để|cho|build|via)\b)/i);
+      if(pM){tools.push(pM[1].trim());return;}
+    });
+  }
+  return{goal,desc:'',tools:[...new Set(tools)].filter(s=>s&&s.length>1&&s.length<50)};
+}
 async function initVoteState(){
   voteState.deviceId=getVoteDeviceId();
   analyticsState.deviceId=voteState.deviceId;
@@ -4935,10 +4970,12 @@ async function initVoteState(){
         const evId=(city==='HCM'?'hcm':'hn')+num;
         eventIds.add(evId);
         if(!topPickIds.has(c.id)){
+          const pd=parseCaseDesc(c.short_description||'');
+          const dbTools=Array.isArray(c.tools_used)&&c.tools_used.length?c.tools_used:[];
           TOP_PICK.push({id:c.id,city,event:evId,
             title:c.title||'',person:c.owner_name||'',team:'',topic:'',
-            desc:c.short_description||'',goal:c.full_description||'',
-            tools:Array.isArray(c.tools_used)?c.tools_used:[],
+            desc:pd.desc,goal:pd.goal||(c.full_description||''),
+            tools:dbTools.length?dbTools:pd.tools,
             demo:(c.demo_url||'').split(',')[0].trim(),gallery:[],
             emoji:c.sticker||'🤖',
             grad:'linear-gradient(135deg,#1a1a2e,#16213e)'});
