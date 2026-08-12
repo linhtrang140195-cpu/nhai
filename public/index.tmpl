@@ -4918,29 +4918,45 @@ function parseCaseDesc(raw){
     return m?l.trim().slice(m[0].length):l;
   });
   const goal=goalLines.join('\n').trim()||text.split('\n')[0];
+  // Stop tool section at non-tool section headings
+  const TOOL_STOP=/^(cách hoạt động|ý tưởng|workflow:|follow|upgrade|phụ đề|dự án sẽ|có ý tưởng|link dự án|ghi chú|lưu ý)/i;
   const tools=[];
+  function extractName(s){
+    const dM=s.match(/^dùng\s+([\w][\w\s\/\-]+?)(?:\s+(?:build|cài|để|cho|via)\b|\s*$)/i);
+    if(dM)return dM[1].trim();
+    const htM=s.match(/hỗ trợ(?:\s+của)?\s+([\w\/\-][\w\/\-\s]*?)(?=\s+[^\x00-\x7F]|\s*[,.);\n]|$)/i);
+    if(htM&&htM[1].trim())return htM[1].trim();
+    const pM=s.match(/^([\w\/\-][\w\/\s\-]{1,22}?)(?:\s+(?:model|thông qua|module|được tạo|cài|để|cho|build|via|hỗ trợ)\b)/i);
+    if(pM)return pM[1].trim();
+    if(s.length<=22)return s.replace(/[.,;:]$/,'').trim();
+    return null;
+  }
   if(toolIdx>-1){
     const hdr=lines[toolIdx];
     const inl=(hdr.match(/:\s*(.+)/)||[])[1]||'';
-    if(inl.trim())inl.split(/[,;]+/).map(s=>s.replace(/^[-•\s]+/,'').trim()).filter(s=>s&&s.length<50).forEach(s=>tools.push(s));
+    if(inl.trim()){
+      inl.split(/[,;+]+/).forEach(part=>{
+        const p=part.replace(/^[-•\s]+/,'').trim();
+        const n=extractName(p);
+        if(n&&n.length>1)tools.push(n);
+      });
+    }
     const toolEnd=demoIdx>toolIdx?demoIdx:lines.length;
     lines.slice(toolIdx+1,toolEnd).forEach(l=>{
+      const trimmed=l.trim();
+      if(!trimmed||TOOL_STOP.test(trimmed))return;
       const s=l.replace(/^[-•*\s]+/,'').trim();
       if(!s)return;
-      // "Dùng X build/cài/..." → X
-      const dM=s.match(/^dùng\s+([\w][\w\s\/\-]+?)(?:\s+(?:build|cài|để|cho|via)\b|\s*$)/i);
-      if(dM){tools.push(dM[1].trim());return;}
-      // "hỗ trợ của X" → X (stop before Vietnamese non-ASCII chars)
-      const htM=s.match(/hỗ trợ(?:\s+của)?\s+([\w\/\-][\w\/\-\s]*?)(?=\s+[^\x00-\x7F]|\s*[,.);\n]|$)/i);
-      if(htM){const ht=htM[1].trim();if(ht){tools.push(ht);return;}}
-      // "X models/thông qua/..." → X  (run before length check)
-      const pM=s.match(/^([\w\/\-][\w\/\s\-]{1,20}?)(?:\s+(?:model|thông qua|module|được tạo|cài|để|cho|build|via)\b)/i);
-      if(pM){tools.push(pM[1].trim());return;}
-      // Short text = likely a tool name
-      if(s.length<=20){tools.push(s);}
+      // Try comma-split first (multi-tool lines like "Claude, Gemini, ...")
+      const parts=s.split(/,\s*(?=[A-Z\w])/);
+      (parts.length>1?parts:[s]).forEach(part=>{
+        const p=part.replace(/^[-•\s]+/,'').trim();
+        const n=extractName(p);
+        if(n&&n.length>1)tools.push(n);
+      });
     });
   }
-  return{goal,desc:'',tools:[...new Set(tools)].filter(s=>s&&s.length>1&&s.length<50)};
+  return{goal,desc:'',tools:[...new Set(tools)].filter(s=>s&&s.length>1&&s.length<40)};
 }
 async function initVoteState(){
   voteState.deviceId=getVoteDeviceId();
