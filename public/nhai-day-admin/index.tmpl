@@ -745,19 +745,23 @@ function importSubmissionsFromCSVFile(input){
       const descCol=findCol(["mô tả","description","ngắn gọn"]);
       const demoCol=findCol(["demo","file","link","sản phẩm"]);
       const existingEmails=new Set(state.cases.filter(c=>c.season_id===state.currentSeason).map(c=>c.owner_email).filter(Boolean));
+      console.log('[import] headers:', headers);
+      console.log('[import] cols: email='+emailCol+' title='+titleCol+' city='+cityCol);
       const parsed=[];
+      let skipNoEmail=0,skipNoTitle=0,skipDupe=0;
       for(const row of rows.slice(1)){
         const email=(emailCol>=0?row[emailCol]:"")||"";
-        if(!email||!email.includes("@")||existingEmails.has(email))continue;
+        if(!email||!email.includes("@")){skipNoEmail++;continue;}
+        if(existingEmails.has(email)){skipDupe++;continue;}
         const title=(titleCol>=0?row[titleCol]:"")||"";
         const cityRaw=(cityCol>=0?row[cityCol]:"")||"";
         const desc=(descCol>=0?row[descCol]:"")||"";
         const demo=(demoCol>=0?row[demoCol]:"")||"";
-        if(!title.trim())continue;
+        if(!title.trim()){skipNoTitle++;continue;}
         const city=cityRaw.includes("Hồ Chí Minh")||cityRaw.includes("HCM")?"Hồ Chí Minh":"Hà Nội";
         parsed.push({email,title:title.slice(0,120),city,desc:desc.slice(0,200),demo});
       }
-      if(!parsed.length){toast(`Không có case mới (${rows.length-1} rows)`);return;}
+      if(!parsed.length){toast(`Không có case mới — ${rows.length-1} rows: noEmail=${skipNoEmail} noTitle=${skipNoTitle} dupe=${skipDupe}. Xem Console để debug`,"danger");return;}
       let n=0;
       for(const p of parsed){
         const id=(p.city==="Hà Nội"?"hn":"hcm")+"-auto-"+Date.now()+"-"+(n++);
