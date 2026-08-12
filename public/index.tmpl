@@ -4910,6 +4910,14 @@ async function initVoteState(){
   analyticsState.sessionId=getAnalyticsSessionId();
   renderVote('HN');
   startAnalyticsSession();
+  try{
+    const r=await fetch('/api/active-campaign');
+    const d=await r.json();
+    if(d.ok&&d.campaign&&d.campaign.id){
+      voteState.campaignId=d.campaign.id;
+      VOTE_CONFIG.campaignId=d.campaign.id;
+    }
+  }catch(e){}
   await loadVoteSnapshot();
   renderVote('HN');
 }

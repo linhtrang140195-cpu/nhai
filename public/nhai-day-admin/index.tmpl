@@ -644,7 +644,45 @@ function renderVoting(){
   const filteredActives=filterCases(actives).sort((a,b)=>(voteCounts[b.id]||0)-(voteCounts[a.id]||0));
   const filteredDrafts=filterCases(drafts);
 
-  return `
+  // Campaign panel
+  const seasonCamps=state.campaigns;
+  const activeCamp=seasonCamps.find(c=>c.is_active);
+  const now=new Date();
+  const toLocal=dt=>{if(!dt)return "";const d=new Date(dt);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);};
+  const campCard=`
+  <div class="card" style="border-top:2px solid var(--gold);margin-bottom:0">
+    <div class="card-header"><div class="card-title">🗳️ Voting Campaign</div><div class="card-sub">Tạo & kích hoạt campaign rồi push cases vào vote</div></div>
+    ${seasonCamps.length?seasonCamps.map(c=>{
+      const open=c.opens_at?new Date(c.opens_at):null,close=c.closes_at?new Date(c.closes_at):null;
+      const status=!c.is_active?"inactive":close&&close<now?"closed":open&&open>now?"scheduled":"active";
+      const statusLabel={inactive:"Tắt",closed:"Đã đóng",scheduled:"Sắp mở",active:"Đang mở"}[status];
+      const statusCls={inactive:"badge-muted",closed:"badge-danger",scheduled:"badge-muted",active:"badge-success"}[status];
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600">${c.name}</div>
+          <div style="font-size:10px;color:var(--textM);margin-top:2px">
+            ${c.opens_at?`Mở: ${new Date(c.opens_at).toLocaleString("vi-VN")}`:"Chưa đặt giờ"}
+            ${c.closes_at?` → Đóng: ${new Date(c.closes_at).toLocaleString("vi-VN")}`:""}
+          </div>
+        </div>
+        <span class="badge ${statusCls}">${statusLabel}</span>
+        <button class="btn btn-primary" style="font-size:10px;padding:3px 8px" onclick="editCampaign('${c.id}')">Sửa</button>
+        ${!c.is_active?`<button class="btn btn-success" style="font-size:10px;padding:3px 8px" onclick="activateCampaign('${c.id}')">Activate →</button>`:`<button class="btn" style="font-size:10px;padding:3px 8px" onclick="pushCasesToCampaign('${c.id}')">Push cases</button>`}
+      </div>`;
+    }).join(""):`<div class="empty-state" style="padding:12px">Chưa có campaign</div>`}
+    <div style="padding:14px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;color:var(--textM);margin-bottom:8px">+ Tạo campaign mới</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label style="grid-column:1/-1;font-size:11px">Tên campaign<input type="text" id="campName" placeholder="Top Pick Dish 2026 - Day 02" style="margin-bottom:0"/></label>
+        <label style="font-size:11px">Mở lúc<input type="datetime-local" id="campOpens" style="margin-bottom:0"/></label>
+        <label style="font-size:11px">Đóng lúc<input type="datetime-local" id="campCloses" style="margin-bottom:0"/></label>
+        <label style="font-size:11px">Max votes/người/city<input type="number" id="campMaxVotes" value="3" min="1" max="10" style="margin-bottom:0"/></label>
+        <div style="display:flex;align-items:flex-end"><button class="btn btn-primary" onclick="createCampaignForSeason()" style="width:100%">Tạo & Activate →</button></div>
+      </div>
+    </div>
+  </div>`;
+
+  return campCard+`
   <div class="card" style="border-top:2px solid var(--teal)">
     <div class="card-header">
       <div><div class="card-title">📥 Import cases từ Sheet submissions</div><div class="card-sub">Fetch → tự lọc HN/HCM → Publish khi sẵn sàng</div></div>
@@ -776,7 +814,7 @@ function showCsvMappingUI(rows){
         <label style="font-size:12px;color:var(--textS)">Row đầu là header?<select id="csvMap_hasHeader" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--night);color:var(--cream);font-size:13px"><option value="${firstIsHeader?1:0}" selected>${firstIsHeader?"Có (bỏ qua row 1)":"Không (import từ row 1)"}</option><option value="${firstIsHeader?0:1}">${firstIsHeader?"Không (import từ row 1)":"Có (bỏ qua row 1)"}</option></select></label>
       </div>
       <button class="btn btn-primary" onclick="doImportFromCsvMapping()">Import →</button>
-      <button class="btn" onclick="document.getElementById('csvMappingZone').innerHTML=''" style="margin-left:8px">Hủy</button>
+      <button class="btn" onclick="_csvRows=null;document.getElementById('csvMappingZone').innerHTML=''" style="margin-left:8px">Hủy</button>
     </div>`;}
 }
 
@@ -806,6 +844,67 @@ async function doImportFromCsvMapping(){
     await sb("cases",{method:"POST",body:{id,title:p.title,city:p.city,sticker:"🤖",owner_email:p.email,owner_name:p.email.split("@")[0],short_description:p.desc.slice(0,150),full_description:p.desc,demo_url:p.demo,tools_used:[],season_id:state.currentSeason,display_order:state.cases.length+n,is_active:false},headers:{Prefer:"return=representation"}});
   }
   toast(`Đã import ${n} cases (draft)`);_csvRows=null;document.getElementById("csvMappingZone").innerHTML="";loadAll();
+}
+
+async function createCampaignForSeason(){
+  const name=document.getElementById('campName')?.value.trim();
+  const opensAt=document.getElementById('campOpens')?.value;
+  const closesAt=document.getElementById('campCloses')?.value;
+  const maxVotes=parseInt(document.getElementById('campMaxVotes')?.value)||3;
+  if(!name||!opensAt||!closesAt){toast("Điền đủ Tên, Giờ mở, Giờ đóng","danger");return;}
+  const id='top-pick-'+state.currentSeason+'-'+Date.now();
+  await sb("top_pick_campaigns",{method:"POST",body:{id,name,opens_at:opensAt.replace('T',' '),closes_at:closesAt.replace('T',' '),max_votes_per_device:maxVotes,is_active:0},headers:{Prefer:"return=minimal"}});
+  toast("Đã tạo campaign, đang activate...");
+  await activateCampaign(id);
+}
+
+function editCampaign(id){
+  const c=state.campaigns.find(x=>x.id===id);if(!c)return;
+  const toLocal=dt=>{if(!dt)return "";const d=new Date(dt);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16);};
+  document.getElementById('modalArea').innerHTML=`
+  <div class="modal-bg" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Sửa campaign: ${c.name}</div>
+    <label>Tên</label><input type="text" id="ec_name" value="${(c.name||"").replace(/"/g,'&quot;')}"/>
+    <div class="two-col">
+      <div><label>Mở lúc</label><input type="datetime-local" id="ec_opens" value="${toLocal(c.opens_at)}"/></div>
+      <div><label>Đóng lúc</label><input type="datetime-local" id="ec_closes" value="${toLocal(c.closes_at)}"/></div>
+    </div>
+    <label>Max votes/người/city</label><input type="number" id="ec_max" value="${c.max_votes_per_device||3}" min="1" max="10"/>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveCampaignEdit('${id}')">Lưu</button>
+    </div>
+  </div></div>`;
+}
+
+async function saveCampaignEdit(id){
+  const name=document.getElementById('ec_name')?.value.trim();
+  const opensAt=document.getElementById('ec_opens')?.value;
+  const closesAt=document.getElementById('ec_closes')?.value;
+  const maxVotes=parseInt(document.getElementById('ec_max')?.value)||3;
+  if(!name){toast("Cần có tên","danger");return;}
+  await sb(`top_pick_campaigns?id=eq.${id}`,{method:"PATCH",body:{name,opens_at:opensAt?opensAt.replace('T',' '):null,closes_at:closesAt?closesAt.replace('T',' '):null,max_votes_per_device:maxVotes}});
+  toast("Đã lưu campaign");closeModal();loadAll();
+}
+
+async function activateCampaign(id){
+  for(const c of state.campaigns){
+    if(c.id!==id&&c.is_active)await sb(`top_pick_campaigns?id=eq.${c.id}`,{method:"PATCH",body:{is_active:0}});
+  }
+  await sb(`top_pick_campaigns?id=eq.${id}`,{method:"PATCH",body:{is_active:1}});
+  await pushCasesToCampaign(id);
+}
+
+async function pushCasesToCampaign(id){
+  const activeCases=state.cases.filter(c=>c.is_active&&c.season_id===state.currentSeason);
+  if(!activeCases.length){toast("Không có active case nào trong season này để push","danger");return;}
+  let added=0;
+  for(const c of activeCases){
+    const city=c.city==="Hồ Chí Minh"?"HCM":"HN";
+    await sb("top_pick_cases",{method:"POST",body:{case_id:c.id,campaign_id:id,city,title:c.title,is_active:1},headers:{Prefer:"return=minimal"}}).catch(()=>{});
+    added++;
+  }
+  toast(`Đã push ${added} cases vào campaign`);loadAll();
 }
 
 function renderAudit(){

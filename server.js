@@ -48,6 +48,19 @@ app.post('/internal/seed', async (req, res) => {
   }
 });
 
+// Returns the currently active voting campaign.
+app.get('/api/active-campaign', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, name, max_votes_per_device, opens_at, closes_at FROM top_pick_campaigns WHERE is_active = 1 ORDER BY created_at DESC LIMIT 1'
+    );
+    if (!rows[0]) return res.json({ ok: false, message: 'No active campaign.' });
+    res.json({ ok: true, campaign: rows[0] });
+  } catch (e) {
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
 // Pretty routes for the HTML pages. Source files are named .tmpl (not .html) so the
 // deploy platform's project-type detector — which unconditionally classifies any repo
 // containing an .html file as a static site, ignoring package.json entirely — picks up
