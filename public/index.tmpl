@@ -5165,6 +5165,9 @@ try{ renderRoadmap(); }catch(e){}
     if(!Array.isArray(cfg)||!cfg.length) return;
     ROADMAP_DISPLAY.splice(0,ROADMAP_DISPLAY.length,...cfg);
     renderRoadmap();
+    // scroll to active/register event so user sees current state
+    const activeCard=track.querySelector('.rm-card.active,.rm-card.register');
+    if(activeCard) activeCard.scrollIntoView({behavior:'smooth',block:'nearest',inline:'start'});
   }catch(e){}
 })();
 
