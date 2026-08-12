@@ -761,7 +761,7 @@ function importSubmissionsFromCSVFile(input){
         const city=cityRaw.includes("Hồ Chí Minh")||cityRaw.includes("HCM")?"Hồ Chí Minh":"Hà Nội";
         parsed.push({email,title:title.slice(0,120),city,desc:desc.slice(0,200),demo});
       }
-      if(!parsed.length){toast(`Không có case mới — ${rows.length-1} rows: noEmail=${skipNoEmail} noTitle=${skipNoTitle} dupe=${skipDupe}. Xem Console để debug`,"danger");return;}
+      if(!parsed.length){toast(`Cols: ${headers.slice(0,4).map((h,i)=>i+':'+h.slice(0,12)).join(' | ')} — noEmail=${skipNoEmail} noTitle=${skipNoTitle} dupe=${skipDupe}`,"danger");return;}
       let n=0;
       for(const p of parsed){
         const id=(p.city==="Hà Nội"?"hn":"hcm")+"-auto-"+Date.now()+"-"+(n++);
