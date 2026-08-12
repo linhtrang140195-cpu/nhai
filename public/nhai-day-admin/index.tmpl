@@ -1131,10 +1131,35 @@ function renderFAQ(){
     </div>`).join("")||'<div class="empty-state">Chưa có FAQ</div>'}</div>`;
 }
 
+function calcLiveFeedbackStats(seasonId){
+  const fbs=(state.feedbacks||[]).filter(f=>f.season_id===seasonId);
+  if(!fbs.length) return null;
+  const expArr=fbs.map(f=>f.overall_rating).filter(n=>n&&n>0);
+  const menArr=fbs.map(f=>f.mentor_rating).filter(n=>n&&n>0);
+  const hasDemo=fbs.filter(f=>/Có, demo|hoàn thiện/i.test(f.output_status||'')).length;
+  const wantCont=fbs.filter(f=>/chắc chắn/i.test(f.continue_dev||'')).length;
+  const willRec=fbs.filter(f=>/^Có$/i.test((f.recommend||'').trim())).length;
+  return {
+    count:fbs.length,
+    avg_experience:expArr.length?+(expArr.reduce((a,b)=>a+b,0)/expArr.length).toFixed(1):null,
+    avg_mentor:menArr.length?+(menArr.reduce((a,b)=>a+b,0)/menArr.length).toFixed(1):null,
+    pct_has_demo:+(hasDemo/fbs.length*100).toFixed(0),
+    pct_want_continue:+(wantCont/fbs.length*100).toFixed(0),
+    pct_recommend:+(willRec/fbs.length*100).toFixed(0),
+  };
+}
+
 function renderAnalytics(){
   const regsA=state.registrations.filter(r=>r.season_id===state.currentSeason);
   const ss=state.seasonStats.find(x=>x.season_id===state.currentSeason)||{};
   const totalAll=state.seasonStats.reduce((a,b)=>a+(b.total_participants||0),0);
+  // Live stats from web form (auto, no "Tính lại" needed)
+  const lv=calcLiveFeedbackStats(state.currentSeason);
+  // Merged: prefer live web stats; fall back to ss (Sheet sync)
+  const dispExp=lv?.avg_experience||ss.avg_experience||null;
+  const dispMentor=lv?.avg_mentor||ss.avg_mentor||null;
+  const dispContinue=lv?.pct_want_continue??ss.pct_want_continue??null;
+  const dispFbSrc=lv?`${lv.count} web${ss.feedback_count>lv.count?` + ${ss.feedback_count-lv.count} sheet`:''}`:(ss.feedback_count?`${ss.feedback_count} sheet`:null);
   const hcOf=list=>list.length + list.filter(r=>r.member2_name&&r.member2_name.trim()).length + list.filter(r=>r.member3_name&&r.member3_name.trim()).length;
   const headcount=hcOf(regsA);
   const allRegsCount=state.registrations.length;
@@ -1160,9 +1185,9 @@ function renderAnalytics(){
     <div class="stat"><div class="stat-bar" style="background:var(--purple)"></div><div style="font-size:14px;margin-bottom:6px">🗂️</div><div class="stat-num">${allRegsCount||"—"}</div><div class="stat-label">Tổng đơn đăng ký (tất cả mùa)</div><div class="stat-sub">${allHeadcount} người · ${seasonCount} mùa</div></div>
   </div>
   <div class="stat-grid">
-    <div class="stat"><div class="stat-bar" style="background:var(--pink)"></div><div style="font-size:14px;margin-bottom:6px">⭐</div><div class="stat-num">${ss.avg_experience?ss.avg_experience+"★":"—"}</div><div class="stat-label">Trải nghiệm</div></div>
-    <div class="stat"><div class="stat-bar" style="background:var(--teal)"></div><div style="font-size:14px;margin-bottom:6px">👨‍🏫</div><div class="stat-num">${ss.avg_mentor?ss.avg_mentor+"★":"—"}</div><div class="stat-label">Mentor</div></div>
-    <div class="stat"><div class="stat-bar" style="background:var(--purple)"></div><div style="font-size:14px;margin-bottom:6px">🔄</div><div class="stat-num">${ss.pct_want_continue?ss.pct_want_continue+"%":"—"}</div><div class="stat-label">Muốn tiếp tục</div></div>
+    <div class="stat"><div class="stat-bar" style="background:var(--pink)"></div><div style="font-size:14px;margin-bottom:6px">⭐</div><div class="stat-num">${dispExp?dispExp+"★":"—"}</div><div class="stat-label">Trải nghiệm</div>${dispFbSrc?`<div class="stat-sub">${dispFbSrc}</div>`:''}</div>
+    <div class="stat"><div class="stat-bar" style="background:var(--teal)"></div><div style="font-size:14px;margin-bottom:6px">👨‍🏫</div><div class="stat-num">${dispMentor?dispMentor+"★":"—"}</div><div class="stat-label">Mentor</div></div>
+    <div class="stat"><div class="stat-bar" style="background:var(--purple)"></div><div style="font-size:14px;margin-bottom:6px">🔄</div><div class="stat-num">${dispContinue!=null?dispContinue+"%":"—"}</div><div class="stat-label">Muốn tiếp tục</div></div>
   </div>
   <div class="card" style="margin-bottom:14px">
     <div class="card-header">

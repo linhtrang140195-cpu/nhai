@@ -128,18 +128,20 @@ app.get('/nhai-day.html', servePage('nhai-day.tmpl'));
 
 // Case submission endpoints
 app.post('/api/submit-case', async (req, res) => {
-  const { season_id, city, title, description, tools, demo_url, owner_name, owner_email, team_members } = req.body || {};
-  if (!owner_email || !owner_email.trim().toLowerCase().endsWith('@garena.vn'))
-    return res.status(400).json({ ok: false, message: 'Email phải là @garena.vn' });
-  if (!title || !description || !demo_url || !owner_name || !city)
-    return res.status(400).json({ ok: false, message: 'Vui lòng điền đầy đủ các trường bắt buộc.' });
-  const id = `sub-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
-  await pool.query(
-    `INSERT INTO case_submissions (id, season_id, city, title, description, tools, demo_url, owner_name, owner_email, team_members)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, (season_id||'nhai-day-02'), city, title.trim(), description.trim(), (tools||'').trim(), demo_url.trim(), owner_name.trim(), owner_email.trim().toLowerCase(), (team_members||'').trim()]
-  );
-  res.json({ ok: true, id });
+  try {
+    const { season_id, city, title, description, tools, demo_url, owner_name, owner_email, team_members } = req.body || {};
+    if (!owner_email || !owner_email.trim().toLowerCase().endsWith('@garena.vn'))
+      return res.status(400).json({ ok: false, message: 'Email phải là @garena.vn' });
+    if (!title || !description || !demo_url || !owner_name || !city)
+      return res.status(400).json({ ok: false, message: 'Vui lòng điền đầy đủ các trường bắt buộc.' });
+    const id = `sub-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+    await pool.query(
+      `INSERT INTO case_submissions (id, season_id, city, title, description, tools, demo_url, owner_name, owner_email, team_members)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, (season_id||'nhai-day-02'), city, title.trim(), description.trim(), (tools||'').trim(), demo_url.trim(), owner_name.trim(), owner_email.trim().toLowerCase(), (team_members||'').trim()]
+    );
+    res.json({ ok: true, id });
+  } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
 });
 
 app.post('/api/approve-submission', async (req, res) => {
