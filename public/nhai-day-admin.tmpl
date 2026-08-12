@@ -639,7 +639,7 @@ async function importSubmissionsFromSheet(){
       const demo=(demoCol>=0?row[demoCol]:"")||"";
       if(!title.trim())continue;
       const city=cityRaw.includes("Hồ Chí Minh")||cityRaw.includes("HCM")?"Hồ Chí Minh":"Hà Nội";
-      parsed.push({email,title:title.slice(0,120),city,desc:desc.slice(0,200),demo});
+      parsed.push({email,title:title.slice(0,120),city,desc,demo});
     }
     if(!parsed.length){toast(`Không có case mới (${rows.length-1} rows đã import hết)`);return;}
     // Auto import all as draft
