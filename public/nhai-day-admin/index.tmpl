@@ -654,6 +654,7 @@ function renderVoting(){
         <input type="file" id="subsCsvInput" accept=".csv" style="display:none" onchange="importSubmissionsFromCSVFile(this)">
       </div>
     </div>
+    <div id="csvMappingZone"></div>
     <div style="padding:12px 14px;display:flex;gap:8px;align-items:flex-end">
       <div style="flex:1"><label>Sheet Tab ID (gid) submissions · <a href="https://docs.google.com/spreadsheets/d/1YPwpx9Kz5rnFk1cZlkHms4BBZC-EVXJmN5g4bIzNaOM" target="_blank" style="color:var(--teal);text-decoration:none">Mở sheet →</a></label>
       <input type="text" id="subsGid" value="${gid}" placeholder="gid= trong URL khi click tab mùa này" style="margin-bottom:0"/></div>
@@ -730,58 +731,81 @@ async function importSubmissionsFromSheet(){
   }catch(e){toast("Lỗi: "+e.message,"danger");}
 }
 
+let _csvRows=null;
 function importSubmissionsFromCSVFile(input){
   const file=input.files[0];if(!file)return;input.value='';
   const reader=new FileReader();
-  reader.onload=async function(e){
+  reader.onload=function(e){
     try{
       const rows=parseCSV(e.target.result);
       if(rows.length<2){toast("File trống","danger");return;}
-      // Detect email column: scan all rows, find which col most often has "@"
-      const ncols=rows[0].length;
-      const atCount=Array(ncols).fill(0);
-      const cityCount=Array(ncols).fill(0);
-      for(const row of rows){
-        for(let ci=0;ci<ncols;ci++){
-          const v=row[ci]||"";
-          if(v.includes("@")&&v.includes("."))atCount[ci]++;
-          if(v.includes("Hà Nội")||v.includes("Hồ Chí"))cityCount[ci]++;
-        }
-      }
-      const emailCol=atCount.indexOf(Math.max(...atCount));
-      const cityCol=cityCount.indexOf(Math.max(...cityCount));
-      // First row: header if it has no "@" in email col, data otherwise
-      const firstIsData=rows[0][emailCol]&&rows[0][emailCol].includes("@");
-      const dataRows=firstIsData?rows:rows.slice(1);
-      // Title: first col that's not timestamp(0), email, city — pick by col index
-      const usedCols=new Set([emailCol,cityCol]);
-      const textCols=[...Array(ncols).keys()].filter(ci=>!usedCols.has(ci)&&ci!==0);
-      const titleCol=textCols[0]??2;
-      const descCol=textCols[1]??4;
-      const demoCol=textCols[2]??5;
-      const existingEmails=new Set(state.cases.filter(c=>c.season_id===state.currentSeason).map(c=>c.owner_email).filter(Boolean));
-      const parsed=[];
-      for(const row of dataRows){
-        const email=(row[emailCol]||"").trim();
-        if(!email||!email.includes("@")||existingEmails.has(email))continue;
-        const title=(row[titleCol]||"").trim();
-        if(!title)continue;
-        const cityRaw=row[cityCol]||"";
-        const desc=row[descCol]||"";
-        const demo=row[demoCol]||"";
-        const city=cityRaw.includes("Hồ Chí Minh")||cityRaw.includes("HCM")?"Hồ Chí Minh":"Hà Nội";
-        parsed.push({email,title:title.slice(0,120),city,desc,demo});
-      }
-      if(!parsed.length){toast(`Không có case mới — email col=${emailCol} city col=${cityCol} rows=${dataRows.length} existing=${existingEmails.size}`,"danger");return;}
-      let n=0;
-      for(const p of parsed){
-        const id=(p.city==="Hà Nội"?"hn":"hcm")+"-auto-"+Date.now()+"-"+(n++);
-        await sb("cases",{method:"POST",body:{id,title:p.title,city:p.city,sticker:"🤖",owner_email:p.email,owner_name:p.email.split("@")[0],short_description:p.desc.slice(0,150),full_description:p.desc,demo_url:p.demo,tools_used:[],season_id:state.currentSeason,display_order:state.cases.length+n,is_active:false},headers:{Prefer:"return=representation"}});
-      }
-      toast(`Đã import ${n} cases mới (draft)`);loadAll();
-    }catch(err){toast("Lỗi: "+err.message,"danger");}
+      _csvRows=rows;
+      showCsvMappingUI(rows);
+    }catch(err){toast("Lỗi đọc file: "+err.message,"danger");}
   };
   reader.readAsText(file,'UTF-8');
+}
+
+function showCsvMappingUI(rows){
+  const ncols=rows[0].length;
+  // Auto-suggest: find col with most "@" → email, most city → city
+  const atCount=Array(ncols).fill(0),cityCount=Array(ncols).fill(0);
+  for(const row of rows){for(let ci=0;ci<ncols;ci++){const v=row[ci]||"";if(v.includes("@"))atCount[ci]++;if(v.includes("Hà Nội")||v.includes("Hồ Chí"))cityCount[ci]++;}}
+  const suggestEmail=atCount.indexOf(Math.max(...atCount));
+  const suggestCity=cityCount.indexOf(Math.max(...cityCount));
+  const usedCols=new Set([suggestEmail,suggestCity]);
+  const textCols=[...Array(ncols).keys()].filter(ci=>!usedCols.has(ci)&&ci!==0);
+  const suggestTitle=textCols[0]??2,suggestDesc=textCols[1]??4,suggestDemo=textCols[2]??5;
+  // Preview: first 2 data rows (skip if first row is header)
+  const firstIsHeader=!rows[0][suggestEmail]?.includes("@");
+  const preview=rows.slice(firstIsHeader?1:0,firstIsHeader?3:2);
+  const opts=Array.from({length:ncols},(_,i)=>`<option value="${i}">Cột ${i}: ${(rows[0][i]||"").slice(0,30)}</option>`).join("");
+  const selOf=(name,def)=>`<select id="csvMap_${name}" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--night);color:var(--cream);font-size:13px">${Array.from({length:ncols},(_,i)=>`<option value="${i}"${i===def?" selected":""}>${i}: ${(rows[0][i]||"").slice(0,35)}</option>`).join("")}<option value="-1">— Bỏ qua —</option></select>`;
+  const previewHtml=preview.map(r=>`<tr>${r.map(c=>`<td style="padding:3px 6px;border:1px solid var(--line);font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(c||"").slice(0,40)}</td>`).join("")}</tr>`).join("");
+  const el=document.getElementById("csvMappingZone");
+  if(el){el.innerHTML=`
+    <div style="background:var(--cardBg);border:1px solid var(--goldBd);border-radius:12px;padding:16px;margin-top:12px">
+      <div style="font-weight:700;color:var(--gold);margin-bottom:10px">📋 Chọn cột tương ứng (${rows.length} rows, ${ncols} cột)</div>
+      <div style="overflow-x:auto;margin-bottom:12px"><table style="border-collapse:collapse">${previewHtml}</table></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <label style="font-size:12px;color:var(--textS)">Email *${selOf("email",suggestEmail)}</label>
+        <label style="font-size:12px;color:var(--textS)">Tên case *${selOf("title",suggestTitle)}</label>
+        <label style="font-size:12px;color:var(--textS)">City (HN/HCM)${selOf("city",suggestCity)}</label>
+        <label style="font-size:12px;color:var(--textS)">Mô tả${selOf("desc",suggestDesc)}</label>
+        <label style="font-size:12px;color:var(--textS)">Demo URL${selOf("demo",suggestDemo)}</label>
+        <label style="font-size:12px;color:var(--textS)">Row đầu là header?<select id="csvMap_hasHeader" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--night);color:var(--cream);font-size:13px"><option value="${firstIsHeader?1:0}" selected>${firstIsHeader?"Có (bỏ qua row 1)":"Không (import từ row 1)"}</option><option value="${firstIsHeader?0:1}">${firstIsHeader?"Không (import từ row 1)":"Có (bỏ qua row 1)"}</option></select></label>
+      </div>
+      <button class="btn btn-primary" onclick="doImportFromCsvMapping()">Import →</button>
+      <button class="btn" onclick="document.getElementById('csvMappingZone').innerHTML=''" style="margin-left:8px">Hủy</button>
+    </div>`;}
+}
+
+async function doImportFromCsvMapping(){
+  if(!_csvRows){toast("Chưa có file","danger");return;}
+  const get=id=>{const el=document.getElementById(id);return el?parseInt(el.value):-1;};
+  const emailCol=get("csvMap_email"),titleCol=get("csvMap_title"),cityCol=get("csvMap_city"),descCol=get("csvMap_desc"),demoCol=get("csvMap_demo");
+  const hasHeader=get("csvMap_hasHeader")===1;
+  if(emailCol<0||titleCol<0){toast("Phải chọn cột Email và Tên case","danger");return;}
+  const dataRows=hasHeader?_csvRows.slice(1):_csvRows;
+  const existingEmails=new Set(state.cases.filter(c=>c.season_id===state.currentSeason).map(c=>c.owner_email).filter(Boolean));
+  const parsed=[];
+  for(const row of dataRows){
+    const email=(row[emailCol]||"").trim();
+    if(!email||!email.includes("@")||existingEmails.has(email))continue;
+    const title=(row[titleCol]||"").trim();if(!title)continue;
+    const cityRaw=cityCol>=0?row[cityCol]||"":"";
+    const desc=descCol>=0?row[descCol]||"":"";
+    const demo=demoCol>=0?row[demoCol]||"":"";
+    const city=cityRaw.includes("Hồ Chí Minh")||cityRaw.includes("HCM")?"Hồ Chí Minh":"Hà Nội";
+    parsed.push({email,title:title.slice(0,120),city,desc,demo});
+  }
+  if(!parsed.length){toast(`Không có case mới — đã có ${existingEmails.size} email trong season này`,"danger");return;}
+  let n=0;
+  for(const p of parsed){
+    const id=(p.city==="Hà Nội"?"hn":"hcm")+"-auto-"+Date.now()+"-"+(n++);
+    await sb("cases",{method:"POST",body:{id,title:p.title,city:p.city,sticker:"🤖",owner_email:p.email,owner_name:p.email.split("@")[0],short_description:p.desc.slice(0,150),full_description:p.desc,demo_url:p.demo,tools_used:[],season_id:state.currentSeason,display_order:state.cases.length+n,is_active:false},headers:{Prefer:"return=representation"}});
+  }
+  toast(`Đã import ${n} cases (draft)`);_csvRows=null;document.getElementById("csvMappingZone").innerHTML="";loadAll();
 }
 
 function renderAudit(){
