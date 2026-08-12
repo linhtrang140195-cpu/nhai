@@ -1595,7 +1595,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 
 
   <div class="nav-right">
-
+    <button class="btn-submit-case" id="btnSubmitCase" onclick="openSubmitModal()" style="display:none">Submit Usecase</button>
 
     <button class="btn-reg" onclick="openReg()">Đăng ký ngay</button>
 
@@ -1612,16 +1612,16 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 <div class="page-tabs">
 
 
-  <button class="ptab on" onclick="switchTab('info',this)">Thông tin</button>
+  <button class="ptab on" data-tab="info" onclick="switchTab('info',this)">Thông tin</button>
 
 
-  <button class="ptab" onclick="switchTab('cases',this)">Đề bài gợi ý từ BTC</button>
+  <button class="ptab" data-tab="cases" onclick="switchTab('cases',this)">Đề bài gợi ý từ BTC</button>
 
 
-  <button class="ptab" onclick="switchTab('results',this)">Kết quả & Bình chọn</button>
+  <button class="ptab" data-tab="results" onclick="switchTab('results',this)">Kết quả & Bình chọn</button>
 
 
-  <button class="ptab" onclick="switchTab('faq',this)">FAQ</button>
+  <button class="ptab" data-tab="faq" onclick="switchTab('faq',this)">FAQ</button>
 
 
 </div>
@@ -2265,6 +2265,47 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 
 
 
+<!-- ===== SUBMIT CASE MODAL ===== -->
+<div class="overlay" id="submitModal">
+<div class="modal">
+  <button class="xbtn" onclick="closeSubmitModal()">✕</button>
+  <div id="submitFormWrap">
+    <div class="m-title">Submit Usecase</div>
+    <div class="m-sub" style="font-size:13px;line-height:1.7;margin-bottom:16px">Chia sẻ usecase AI của bạn — BTC sẽ review và đưa vào vòng bình chọn.<br><span style="opacity:.55;font-size:12px">* Demo/video/ảnh là bắt buộc</span></div>
+
+    <div class="fg"><label class="lbl">Tên dự án <span class="r">*</span></label><input class="inp" type="text" id="sfTitle" placeholder="Tên ngắn gọn, dễ nhớ"></div>
+
+    <div class="fg"><label class="lbl">Mô tả / Vấn đề giải quyết <span class="r">*</span></label><textarea class="inp" id="sfDesc" rows="4" placeholder="Dự án giải quyết vấn đề gì? Dùng AI như thế nào?" style="resize:vertical;min-height:90px"></textarea></div>
+
+    <div class="fg"><label class="lbl">Tool AI sử dụng <span class="r">*</span></label><input class="inp" type="text" id="sfTools" placeholder="Claude, Gemini, MCP Garena... (phân cách bằng dấu phẩy)"></div>
+
+    <div class="fg"><label class="lbl">Link demo / video / ảnh <span class="r">*</span></label><input class="inp" type="url" id="sfDemo" placeholder="https://drive.google.com/..."></div>
+
+    <div class="fg"><label class="lbl">Họ tên <span class="r">*</span></label><input class="inp" type="text" id="sfName" placeholder="Nguyễn Văn A"></div>
+
+    <div class="fg"><label class="lbl">Email Garena <span class="r">*</span></label><input class="inp" type="email" id="sfEmail" placeholder="ten.ban@garena.vn"><div class="email-warn" id="sfEmailWarn" style="display:none">⚠️ Vui lòng sử dụng email @garena.vn</div></div>
+
+    <div class="fg"><label class="lbl">Thành viên khác (nếu có)</label><input class="inp" type="text" id="sfMembers" placeholder="Tên / email của người cùng nhóm..."></div>
+
+    <div class="fg"><label class="lbl">Thành phố <span class="r">*</span></label>
+      <div class="opts">
+        <div class="opt"><input type="radio" name="sfCity" id="sfHN" value="HN"><label for="sfHN">🏙️ Hà Nội</label></div>
+        <div class="opt"><input type="radio" name="sfCity" id="sfHCM" value="HCM"><label for="sfHCM">🌆 TP. Hồ Chí Minh</label></div>
+      </div>
+    </div>
+
+    <div id="sfError" style="color:#ef4444;font-size:12px;margin-bottom:10px;display:none"></div>
+    <button class="btn-primary" id="sfSubmitBtn" onclick="submitCase()" style="width:100%;padding:14px;font-size:15px;border-radius:10px;border:none;background:var(--gold);color:#1a1226;font-weight:700;cursor:pointer">Gửi dự án →</button>
+  </div>
+  <div id="submitSuccessWrap" style="display:none;text-align:center;padding:40px 20px">
+    <div style="font-size:48px;margin-bottom:16px">🎉</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:8px">Đã nhận dự án!</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.7">BTC sẽ review và liên hệ qua email của bạn.<br>Cảm ơn bạn đã tham gia NHAI DAY! 🍜</div>
+    <button onclick="closeSubmitModal()" style="margin-top:24px;padding:10px 28px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--text);cursor:pointer;font-size:14px">Đóng</button>
+  </div>
+</div>
+</div>
+
 <!-- ===== REGISTRATION MODAL ===== -->
 
 
@@ -2594,7 +2635,7 @@ let myReacts = ls('nd_reacts',{});
 // ── TAB NAVIGATION ──
 
 
-function switchTab(id, btn){
+function switchTab(id, btn, noPush){
 
 
   document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on'));
@@ -2610,6 +2651,8 @@ function switchTab(id, btn){
 
   trackAnalyticsEvent('tab_view',{tab:id});
 
+  const tabUrl={info:'/thong-tin',cases:'/de-bai',results:'/ket-qua',faq:'/faq'};
+  if(!noPush&&tabUrl[id]) history.pushState({tab:id},'',tabUrl[id]);
 
 }
 
@@ -3036,6 +3079,98 @@ function togFaq(i){
 
 
 
+// ── SUBMIT CASE ──
+let _submitConfig = null;
+(async function(){
+  try {
+    const now = new Date();
+    let showBtn = false;
+
+    // Admin submit_config override
+    const r = await fetch('/rest/v1/site_config?key=eq.submit_config');
+    const rows = await r.json();
+    if (rows && rows[0]) {
+      let cfg = rows[0].value;
+      if (typeof cfg === 'string') cfg = JSON.parse(cfg);
+      _submitConfig = cfg;
+      const opens = cfg.opens_at ? new Date(cfg.opens_at) : null;
+      const closes = cfg.closes_at ? new Date(cfg.closes_at) : null;
+      if (cfg.is_open !== false && (!opens || now >= opens) && (!closes || now < closes)) showBtn = true;
+    }
+
+    // Fallback: auto-show when active voting campaign has started
+    if (!showBtn) {
+      try {
+        const cr = await fetch('/api/active-campaign');
+        const cd = await cr.json();
+        if (cd.ok && cd.campaign && cd.campaign.opens_at) {
+          const campOpens = new Date(cd.campaign.opens_at);
+          const campCloses = cd.campaign.closes_at ? new Date(cd.campaign.closes_at) : null;
+          if (now >= campOpens && (!campCloses || now < campCloses)) showBtn = true;
+        }
+      } catch(e) {}
+    }
+
+    if (showBtn) {
+      const btn = document.getElementById('btnSubmitCase');
+      if (btn) btn.style.display = '';
+    }
+  } catch(e) {}
+})();
+
+function openSubmitModal(){
+  document.getElementById('submitModal').classList.add('open');
+  document.getElementById('submitFormWrap').style.display = '';
+  document.getElementById('submitSuccessWrap').style.display = 'none';
+  document.body.style.overflow = 'hidden';
+}
+function closeSubmitModal(){
+  document.getElementById('submitModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+async function submitCase(){
+  const btn = document.getElementById('sfSubmitBtn');
+  const errEl = document.getElementById('sfError');
+  errEl.style.display = 'none';
+  const title = document.getElementById('sfTitle').value.trim();
+  const desc  = document.getElementById('sfDesc').value.trim();
+  const tools = document.getElementById('sfTools').value.trim();
+  const demo  = document.getElementById('sfDemo').value.trim();
+  const name  = document.getElementById('sfName').value.trim();
+  const email = document.getElementById('sfEmail').value.trim().toLowerCase();
+  const members = document.getElementById('sfMembers').value.trim();
+  const cityEl = document.querySelector('input[name="sfCity"]:checked');
+  const city = cityEl ? cityEl.value : '';
+
+  const warnEl = document.getElementById('sfEmailWarn');
+  if (!email.endsWith('@garena.vn')) { warnEl.style.display = ''; return; }
+  else warnEl.style.display = 'none';
+
+  if (!title || !desc || !tools || !demo || !name || !email || !city) {
+    errEl.textContent = 'Vui lòng điền đầy đủ các trường bắt buộc.';
+    errEl.style.display = '';
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Đang gửi...';
+  try {
+    const season_id = (_submitConfig && _submitConfig.season_id) || 'nhai-day-02';
+    const res = await fetch('/api/submit-case', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ season_id, city, title, description: desc, tools, demo_url: demo, owner_name: name, owner_email: email, team_members: members })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.message);
+    document.getElementById('submitFormWrap').style.display = 'none';
+    document.getElementById('submitSuccessWrap').style.display = '';
+  } catch(e) {
+    errEl.textContent = e.message || 'Gửi thất bại, thử lại sau.';
+    errEl.style.display = '';
+    btn.disabled = false; btn.textContent = 'Gửi dự án →';
+  }
+}
+
 // ── REGISTRATION ──
 
 
@@ -3058,13 +3193,28 @@ function closeReg(){
 
 
 document.getElementById('regModal').addEventListener('click',function(ev){if(ev.target===this)closeReg();});
-if(location.hash==='#register') openReg();
-if(location.pathname.replace(/\/$/,'')==='/ket-qua' || location.hash==='#ketqua' || location.hash==='#results' || location.hash==='#ketquabinhchon'){
-  setTimeout(function(){
-    switchTab('results', document.querySelectorAll('.ptab')[2]);
-    if(location.hash==='#vote') switchResTab('vote', document.querySelectorAll('.rtab')[1]);
-  },0);
-}
+// Tab routing: activate correct tab based on URL path
+(function(){
+  const pathMap={'/thong-tin':'info','/de-bai':'cases','/ket-qua':'results','/faq':'faq'};
+  const tabId=pathMap[location.pathname.replace(/\/$/,'')];
+  if(tabId){
+    const btn=document.querySelector('.ptab[data-tab="'+tabId+'"]')||document.querySelectorAll('.ptab')[['info','cases','results','faq'].indexOf(tabId)];
+    switchTab(tabId,btn,true);
+    if(tabId==='results'&&location.hash==='#vote'){
+      const vBtn=document.querySelectorAll('.rtab')[1];
+      if(typeof switchResTab==='function') switchResTab('vote',vBtn);
+    }
+  }
+  // Handle back/forward navigation
+  window.addEventListener('popstate',function(e){
+    if(e.state&&e.state.tab){
+      const b=document.querySelector('.ptab[data-tab="'+e.state.tab+'"]')||document.querySelectorAll('.ptab')[['info','cases','results','faq'].indexOf(e.state.tab)];
+      switchTab(e.state.tab,b,true);
+    }
+  });
+})();
+if(location.hash==='#register'||location.pathname.replace(/\/$/,'')==='/dang-ky') openReg();
+if(location.hash==='#submit'||location.pathname.replace(/\/$/,'')==='/submit-usecase') openSubmitModal();
 
 
 function onType(){

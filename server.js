@@ -115,9 +115,70 @@ function servePage(relPath) {
 }
 app.get('/', servePage('index.tmpl'));
 app.get(['/ket-qua', '/ket-qua/'], servePage('index.tmpl'));
+app.get(['/thong-tin', '/thong-tin/'], servePage('index.tmpl'));
+app.get(['/de-bai', '/de-bai/'], servePage('index.tmpl'));
+app.get(['/faq', '/faq/'], servePage('index.tmpl'));
+app.get(['/submit-usecase', '/submit-usecase/'], servePage('index.tmpl'));
+app.get(['/dang-ky', '/dang-ky/'], servePage('index.tmpl'));
 app.get(['/nhai-day-admin', '/nhai-day-admin/'], servePage('nhai-day-admin/index.tmpl'));
+app.get('/nhai-day-admin/:tab', servePage('nhai-day-admin/index.tmpl'));
 app.get('/nhai-day-admin.html', servePage('nhai-day-admin.tmpl'));
 app.get('/nhai-day.html', servePage('nhai-day.tmpl'));
+
+// Case submission endpoints
+app.post('/api/submit-case', async (req, res) => {
+  const { season_id, city, title, description, tools, demo_url, owner_name, owner_email, team_members } = req.body || {};
+  if (!owner_email || !owner_email.trim().toLowerCase().endsWith('@garena.vn'))
+    return res.status(400).json({ ok: false, message: 'Email phải là @garena.vn' });
+  if (!title || !description || !demo_url || !owner_name || !city)
+    return res.status(400).json({ ok: false, message: 'Vui lòng điền đầy đủ các trường bắt buộc.' });
+  const id = `sub-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+  await pool.query(
+    `INSERT INTO case_submissions (id, season_id, city, title, description, tools, demo_url, owner_name, owner_email, team_members)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, (season_id||'nhai-day-02'), city, title.trim(), description.trim(), (tools||'').trim(), demo_url.trim(), owner_name.trim(), owner_email.trim().toLowerCase(), (team_members||'').trim()]
+  );
+  res.json({ ok: true, id });
+});
+
+app.post('/api/approve-submission', async (req, res) => {
+  try {
+    const { submission_id, campaign_id, title, description, tools, demo_url } = req.body || {};
+    if (!submission_id) return res.status(400).json({ ok: false, message: 'submission_id required' });
+    const [rows] = await pool.query('SELECT * FROM case_submissions WHERE id = ?', [submission_id]);
+    const sub = rows[0];
+    if (!sub) return res.status(404).json({ ok: false, message: 'Submission not found' });
+    const caseId = `sub-${sub.city.toLowerCase()}-${Date.now()}`;
+    const caseTitle = (title || sub.title).trim();
+    const caseDesc  = (description || sub.description).trim();
+    const caseDemoUrl = (demo_url || sub.demo_url).trim();
+    const toolsArr = (tools || sub.tools || '').split(',').map(t=>t.trim()).filter(Boolean);
+    await pool.query(
+      `INSERT INTO cases (id, season_id, city, title, short_description, full_description, tools_used, demo_url, owner_name, owner_email, sticker, is_active, display_order)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '🤖', 1, 999)`,
+      [caseId, sub.season_id, sub.city, caseTitle, caseDesc, caseDesc, JSON.stringify(toolsArr), caseDemoUrl, sub.owner_name, sub.owner_email]
+    );
+    if (campaign_id) {
+      await pool.query(
+        `INSERT INTO top_pick_cases (case_id, campaign_id, city, title, is_active)
+         VALUES (?, ?, ?, ?, 1)
+         ON DUPLICATE KEY UPDATE title=VALUES(title), is_active=1`,
+        [caseId, campaign_id, sub.city, caseTitle]
+      );
+    }
+    await pool.query(`UPDATE case_submissions SET status='approved', reviewed_at=NOW(), case_id=? WHERE id=?`, [caseId, submission_id]);
+    res.json({ ok: true, case_id: caseId });
+  } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
+});
+
+app.post('/api/reject-submission', async (req, res) => {
+  try {
+    const { submission_id, notes } = req.body || {};
+    if (!submission_id) return res.status(400).json({ ok: false, message: 'submission_id required' });
+    await pool.query(`UPDATE case_submissions SET status='rejected', reviewed_at=NOW(), review_notes=? WHERE id=?`, [notes||'', submission_id]);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 

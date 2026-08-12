@@ -167,7 +167,7 @@ let seasonGids = JSON.parse(localStorage.getItem("nhai_gids") || JSON.stringify(
 function saveGids(){localStorage.setItem("nhai_gids",JSON.stringify(seasonGids));}
 function getUrl(type){const g=seasonGids[state.currentSeason]?.[type];return g?`/api/proxy-sheet?url=${encodeURIComponent(SHEETS[type]+'&gid='+g)}`:null;}
 
-let state={tab:"dashboard",seasons:[],events:[],mentors:[],faqs:[],registrations:[],awards:[],awardCats:[],cases:[],config:{},campaigns:[],votes:[],seasonStats:[],currentSeason:"nhai-day-01",loading:true,cityFilter:"all"};
+let state={tab:"dashboard",seasons:[],events:[],mentors:[],faqs:[],registrations:[],awards:[],awardCats:[],cases:[],config:{},campaigns:[],votes:[],seasonStats:[],submissions:[],currentSeason:"nhai-day-01",loading:true,cityFilter:"all"};
 
 async function sb(path,opts={}){
   try{
@@ -182,23 +182,26 @@ async function sb(path,opts={}){
 
 async function loadAll(){
   state.loading=true;render();
-  const[s,e,m,f,r,a,ac,c,cfg,camp,v,ss]=await Promise.all([
+  const[s,e,m,f,r,a,ac,c,cfg,camp,v,ss,subs]=await Promise.all([
     sb("seasons?order=display_order"),sb("events?order=display_order"),
     sb("mentors?order=display_order"),sb("faqs?order=display_order"),
     sb("registrations?order=created_at.desc&limit=5000"),sb("awards?order=created_at"),
     sb("award_categories?order=display_order"),sb("cases?order=display_order"),
-    sb("site_config"),sb("top_pick_campaigns?order=created_at"),
+    sb("site_config"),sb("top_pick_campaigns?order=created_at.desc"),
     sb("top_pick_votes?order=created_at.desc&limit=100"),
-    sb("season_stats?order=season_id").catch(()=>[])
+    sb("season_stats?order=season_id").catch(()=>[]),
+    sb("case_submissions?order=submitted_at.desc").catch(()=>[])
   ]);
   state.seasons=s;state.events=e;state.mentors=m;state.faqs=f;
   state.registrations=r;state.awards=a;state.awardCats=ac;state.cases=c;
-  state.campaigns=camp;state.votes=v;state.seasonStats=ss||[];
+  state.campaigns=camp;state.votes=v;state.seasonStats=ss||[];state.submissions=subs||[];
   const cfg2={};(cfg||[]).forEach(row=>{try{cfg2[row.key]=row.value}catch{}});state.config=cfg2;
   if(s.length&&!s.find(x=>x.id===state.currentSeason))state.currentSeason=s[0].id;
   state.loading=false;render();
   autoBackupToSheet();
 }
+
+function e(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
 function toast(msg,type="success"){
   document.getElementById("toastArea").innerHTML=`<div class="toast" style="background:${type==="danger"?"var(--danger)":"var(--teal)"}">${msg}</div>`;
@@ -211,7 +214,7 @@ function cycleSeason(){
   if(next){state.currentSeason=next.id;state.cityFilter="all";render();}
 }
 
-function setTab(t){state.tab=t;render();}
+function setTab(t,noPush){state.tab=t;render();if(!noPush)history.pushState({tab:t},'','/nhai-day-admin/'+t);}
 function setCityFilter(f){state.cityFilter=f;render();}
 function closeModal(){document.getElementById("modalArea").innerHTML="";}
 function getField(k){return document.getElementById("f_"+k)?.value||"";}
@@ -255,12 +258,12 @@ function parseCSV(text){
 // ===== RENDER =====
 function render(){
   renderSidebar();
-  const labels={dashboard:"Dashboard",analytics:"Analytics",schedule:"Lịch trình",results:"Kết quả",voting:"Voting",audit:"Vote audit",registrations:"Đăng ký tham gia",mentors:"Mentors",faq:"FAQ",media:"Ảnh và Media",settings:"Cài đặt site",criteria:"Tiêu chí & Giải thưởng",roadmap:"Roadmap"};
+  const labels={dashboard:"Dashboard",analytics:"Analytics",schedule:"Lịch trình",results:"Kết quả",voting:"Voting",audit:"Vote audit",registrations:"Đăng ký tham gia",mentors:"Mentors",faq:"FAQ",media:"Ảnh và Media",settings:"Cài đặt site",criteria:"Tiêu chí & Giải thưởng",roadmap:"Roadmap",submissions:"Case Submissions"};
   document.getElementById("topTitle").textContent=labels[state.tab]||"Dashboard";
   const s=state.seasons.find(x=>x.id===state.currentSeason);
   document.getElementById("seasonPick").textContent=`📅 ${s?s.name:"—"} ▾`;
   if(state.loading){document.getElementById("content").innerHTML=`<div class="empty-state"><div style="font-size:28px;margin-bottom:12px">🍜</div>Đang load...</div>`;return;}
-  const fn={dashboard:renderDashboard,analytics:renderAnalytics,schedule:renderSchedule,results:renderResults,voting:renderVoting,audit:renderAudit,registrations:renderRegistrations,mentors:renderMentors,faq:renderFAQ,media:renderMedia,settings:renderSettings,criteria:renderCriteria,roadmap:renderRoadmapAdmin};
+  const fn={dashboard:renderDashboard,analytics:renderAnalytics,schedule:renderSchedule,results:renderResults,voting:renderVoting,audit:renderAudit,registrations:renderRegistrations,mentors:renderMentors,faq:renderFAQ,media:renderMedia,settings:renderSettings,criteria:renderCriteria,roadmap:renderRoadmapAdmin,submissions:renderSubmissions};
   document.getElementById("content").innerHTML=(fn[state.tab]||renderDashboard)();
   if(state.tab==='criteria') setTimeout(loadCriteriaPanel,0);
 }
@@ -271,7 +274,8 @@ function renderSidebar(){
     {sec:"Nội dung mùa"},{id:"schedule",icon:"📅",label:"Lịch trình"},{id:"results",icon:"🏆",label:"Kết quả"},
     {id:"voting",icon:"❤️",label:"Voting"},{id:"audit",icon:"🛡️",label:"Vote audit"},
     {sec:"Danh sách"},{id:"registrations",icon:"👥",label:"Đăng ký tham gia"},{id:"mentors",icon:"⭐",label:"Mentors"},{id:"faq",icon:"❓",label:"FAQ"},
-    {sec:"Cấu hình"},{id:"criteria",icon:"🏅",label:"Tiêu chí & Giải"},{id:"roadmap",icon:"🗺️",label:"Roadmap"},{id:"media",icon:"🖼️",label:"Ảnh và Media"},{id:"settings",icon:"⚙️",label:"Cài đặt site"}
+    {sec:"Cấu hình"},{id:"criteria",icon:"🏅",label:"Tiêu chí & Giải"},{id:"roadmap",icon:"🗺️",label:"Roadmap"},{id:"media",icon:"🖼️",label:"Ảnh và Media"},{id:"settings",icon:"⚙️",label:"Cài đặt site"},
+    {sec:"Submissions"},{id:"submissions",icon:"📥",label:"Case Submissions"}
   ];
   let h=`<div class="logo"><div class="logo-icon">🍜</div><div><div class="logo-text">NHAI DAY <span>Admin</span></div><div class="logo-sub">NÊM AI VÀO CÔNG VIỆC</div></div></div>`;
   nav.forEach(n=>{
@@ -287,6 +291,7 @@ function renderDashboard(){
   const totalAllSeasons=state.seasonStats.reduce((a,b)=>a+(b.total_participants||0),0);
   const seasonRegs=state.registrations.filter(r=>r.season_id===state.currentSeason);
   const headcount=seasonRegs.length + seasonRegs.filter(r=>r.member2_name&&r.member2_name.trim()).length + seasonRegs.filter(r=>r.member3_name&&r.member3_name.trim()).length;
+  const teamCount=seasonRegs.length;
   return `
   <div style="background:linear-gradient(135deg,var(--goldBg),rgba(217,90,48,0.04));border:1px solid var(--goldBd);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:16px">
     <div style="width:44px;height:44px;border-radius:12px;background:rgba(245,200,66,0.15);border:1px solid var(--goldBd);display:flex;align-items:center;justify-content:center;font-size:20px">🍜</div>
@@ -295,7 +300,7 @@ function renderDashboard(){
     <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--teal)"><span style="width:6px;height:6px;background:var(--teal);border-radius:50%;display:inline-block"></span>MySQL live</div>
   </div>
   <div class="stat-grid" style="grid-template-columns:repeat(5,1fr)">
-    <div class="stat"><div class="stat-bar" style="background:var(--gold)"></div><div style="font-size:14px;margin-bottom:6px">📝</div><div class="stat-num">${headcount||"—"}</div><div class="stat-label">Đăng ký mùa này</div><div class="stat-sub">${seasonRegs.length} đăng ký</div></div>
+    <div class="stat"><div class="stat-bar" style="background:var(--gold)"></div><div style="font-size:14px;margin-bottom:6px">📝</div><div class="stat-num">${headcount||"—"}</div><div class="stat-label">Đăng ký mùa này</div><div class="stat-sub">${teamCount} team · ${headcount} người</div></div>
     <div class="stat"><div class="stat-bar" style="background:var(--teal)"></div><div style="font-size:14px;margin-bottom:6px">✅</div><div class="stat-num">${ss.total_participants||"—"}</div><div class="stat-label">Tham gia thực tế</div><div class="stat-sub">mùa này</div></div>
     <div class="stat"><div class="stat-bar" style="background:var(--purple)"></div><div style="font-size:14px;margin-bottom:6px">🌟</div><div class="stat-num">${totalAllSeasons||"—"}</div><div class="stat-label">Tổng tất cả mùa</div><div class="stat-sub">${state.seasonStats.length} mùa</div></div>
     <div class="stat"><div class="stat-bar" style="background:var(--pink)"></div><div style="font-size:14px;margin-bottom:6px">🎖️</div><div class="stat-num">${state.awards.filter(a=>a.season_id===state.currentSeason).length||"—"}</div><div class="stat-label">Giải thưởng</div><div class="stat-sub">${state.awards.filter(a=>a.season_id===state.currentSeason&&a.status==="announced").length} công bố</div></div>
@@ -1449,7 +1454,30 @@ function renderSettings(){
     <div><label>Apps Script Web App URL</label><div style="display:flex;gap:6px"><input type="text" id="backupSheetUrl" value="${state.config.backup_sheet_url||""}" placeholder="https://script.google.com/macros/s/.../exec" style="margin-bottom:0;flex:1"/><button class="btn btn-success" onclick="saveConfig('backup_sheet_url',document.getElementById('backupSheetUrl').value)">Lưu</button></div></div>
     <div id="backupStatus" style="font-size:11px;color:var(--textM)"></div>
     <button class="btn btn-primary" onclick="runBackupToSheet()" style="align-self:flex-start">📤 Backup ngay</button>
-  </div></div>`;
+  </div></div>
+  <div class="card" style="margin-top:14px">
+  <div class="card-header"><div class="card-title">📝 Cấu hình form "Nộp dự án"</div><button class="btn btn-primary" onclick="saveSubmitConfig()">💾 Lưu</button></div>
+  <div style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div><label style="font-size:11px;color:var(--textM);display:block;margin-bottom:4px">Mùa (season_id)</label><input type="text" id="scSeasonId" style="margin:0" value="${(()=>{let c=state.config.submit_config;if(typeof c==='string')try{c=JSON.parse(c);}catch{}; return (c&&c.season_id)||'nhai-day-02';})()}"></div>
+    <div><label style="font-size:11px;color:var(--textM);display:block;margin-bottom:4px">Mở nhận (opens_at, để trống = luôn mở)</label><input id="scOpensAt" type="datetime-local" style="margin:0" value="${(()=>{let c=state.config.submit_config;if(typeof c==='string')try{c=JSON.parse(c);}catch{};return(c&&c.opens_at)?c.opens_at.slice(0,16):'';})()}"></div>
+    <div><label style="font-size:11px;color:var(--textM);display:block;margin-bottom:4px">Đóng nhận (closes_at, để trống = không đóng)</label><input id="scClosesAt" type="datetime-local" style="margin:0" value="${(()=>{let c=state.config.submit_config;if(typeof c==='string')try{c=JSON.parse(c);}catch{};return(c&&c.closes_at)?c.closes_at.slice(0,16):'';})()}"></div>
+    <div style="display:flex;align-items:flex-end;gap:8px;padding-bottom:2px"><input type="checkbox" id="scIsOpen" ${(()=>{let c=state.config.submit_config;if(typeof c==='string')try{c=JSON.parse(c);}catch{};return(c&&c.is_open!==false)?'checked':'';})()}><label for="scIsOpen" style="font-size:12px">Bật form (is_open)</label></div>
+  </div>
+  </div>`;
+}
+
+async function saveSubmitConfig(){
+  const cfg={
+    season_id:document.getElementById('scSeasonId').value.trim()||'nhai-day-02',
+    is_open:document.getElementById('scIsOpen').checked,
+    opens_at:document.getElementById('scOpensAt').value||null,
+    closes_at:document.getElementById('scClosesAt').value||null,
+  };
+  const patchRes=await sb('site_config?key=eq.submit_config',{method:'PATCH',body:{value:JSON.stringify(cfg),updated_at:new Date().toISOString()}});
+  if(!patchRes||!patchRes.length) await sb('site_config',{method:'POST',body:{key:'submit_config',value:JSON.stringify(cfg),updated_at:new Date().toISOString()}});
+  state.config.submit_config=cfg;
+  toast('Đã lưu cấu hình submit!');
+  render();
 }
 
 // ===== MODALS =====
@@ -1571,6 +1599,134 @@ async function uploadAvatar(){
     toast("Ảnh đã sẵn sàng — bấm Lưu để cập nhật");
   }catch(e){toast("Lỗi: "+e.message,"danger");}
 }
+
+// ===== SUBMISSIONS =====
+function renderSubmissions(){
+  const subs = (state.submissions||[]);
+  const pending = subs.filter(s=>s.status==='pending');
+  const approved = subs.filter(s=>s.status==='approved');
+  const rejected = subs.filter(s=>s.status==='rejected');
+  const filterTab = window._subFilterTab || 'pending';
+  const shown = filterTab==='pending'?pending:filterTab==='approved'?approved:rejected;
+
+  return `
+  <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+    <button class="btn ${filterTab==='pending'?'btn-primary':''}" onclick="window._subFilterTab='pending';render()">${pending.length} Chờ duyệt</button>
+    <button class="btn ${filterTab==='approved'?'btn-primary':''}" onclick="window._subFilterTab='approved';render()">${approved.length} Đã duyệt</button>
+    <button class="btn ${filterTab==='rejected'?'btn-primary':''}" onclick="window._subFilterTab='rejected';render()">${rejected.length} Đã từ chối</button>
+    <button class="btn" onclick="loadAll()" style="margin-left:auto">🔄 Refresh</button>
+  </div>
+  <div class="card">
+    ${shown.length===0?`<div class="empty-state">Không có submission nào</div>`:
+      shown.map(s=>`
+      <div style="border-bottom:1px solid var(--border);padding:14px 16px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600;margin-bottom:2px">${e(s.title)}</div>
+            <div style="font-size:11px;color:var(--textM);margin-bottom:6px">${e(s.owner_name)} · ${e(s.owner_email)} · <span class="badge ${s.city==='HN'?'badge-hn':'badge-hcm'}">${s.city}</span> · ${new Date(s.submitted_at).toLocaleDateString('vi-VN')}</div>
+            <div style="font-size:12px;line-height:1.6;margin-bottom:6px;color:var(--text)">${e(s.description)}</div>
+            ${s.tools?`<div style="font-size:11px;color:var(--textM);margin-bottom:4px">🔧 ${e(s.tools)}</div>`:''}
+            ${s.team_members?`<div style="font-size:11px;color:var(--textM);margin-bottom:4px">👥 ${e(s.team_members)}</div>`:''}
+            <div style="margin-top:6px">
+              <a href="${e(s.demo_url)}" target="_blank" style="font-size:12px;color:var(--gold);text-decoration:none;border:1px solid var(--goldBd);padding:3px 10px;border-radius:6px">▶ Xem demo</a>
+            </div>
+          </div>
+          ${s.status==='pending'?`
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:120px">
+            <button class="btn btn-primary" style="font-size:11px" onclick="openApproveModal('${s.id}')">✓ Approve</button>
+            <button class="btn btn-danger" style="font-size:11px" onclick="rejectSub('${s.id}')">✗ Từ chối</button>
+          </div>`:`<div style="font-size:11px;color:var(--textM);text-align:right">${s.status==='approved'?'✅ Đã duyệt':'❌ Từ chối'}<br>${s.reviewed_at?new Date(s.reviewed_at).toLocaleDateString('vi-VN'):''}</div>`}
+        </div>
+      </div>`).join('')}
+  </div>
+
+  <!-- Approve modal -->
+  <div id="approveModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)closeApproveModal()">
+    <div style="background:var(--bg2);border-radius:16px;padding:24px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;position:relative">
+      <button onclick="closeApproveModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text);font-size:18px;cursor:pointer">✕</button>
+      <div style="font-size:16px;font-weight:700;margin-bottom:16px">✓ Approve submission</div>
+      <div style="font-size:11px;color:var(--textM);margin-bottom:12px">Chỉnh sửa trước khi approve nếu cần:</div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;display:block;margin-bottom:4px;color:var(--textM)">Tên dự án</label><input id="amTitle" style="width:100%;box-sizing:border-box"></div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;display:block;margin-bottom:4px;color:var(--textM)">Mô tả</label><textarea id="amDesc" rows="3" style="width:100%;box-sizing:border-box;resize:vertical"></textarea></div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;display:block;margin-bottom:4px;color:var(--textM)">Tools (phân cách dấu phẩy)</label><input id="amTools" style="width:100%;box-sizing:border-box"></div>
+      <div style="margin-bottom:16px"><label style="font-size:11px;display:block;margin-bottom:4px;color:var(--textM)">Link demo</label><input id="amDemo" style="width:100%;box-sizing:border-box"></div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:11px;display:block;margin-bottom:4px;color:var(--textM)">Thêm vào campaign voting</label>
+        <select id="amCampaign" style="width:100%">
+          <option value="">-- Không link vào vote (chỉ tạo case) --</option>
+          ${(state.campaigns||[]).map(c=>`<option value="${c.id}">${e(c.name)} (${c.id})</option>`).join('')}
+        </select>
+      </div>
+      <div id="amError" style="color:#ef4444;font-size:12px;margin-bottom:8px;display:none"></div>
+      <div style="display:flex;gap:8px">
+        <button id="amSubmitBtn" class="btn btn-primary" style="flex:1" onclick="doApprove()">✓ Approve & tạo case</button>
+        <button class="btn" onclick="closeApproveModal()">Hủy</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+let _approvingSubId = null;
+function openApproveModal(subId){
+  _approvingSubId = subId;
+  const sub = (state.submissions||[]).find(s=>s.id===subId);
+  if(!sub) return;
+  render();
+  setTimeout(()=>{
+    const modal=document.getElementById('approveModal');
+    if(!modal) return;
+    document.getElementById('amTitle').value = sub.title||'';
+    document.getElementById('amDesc').value = sub.description||'';
+    document.getElementById('amTools').value = sub.tools||'';
+    document.getElementById('amDemo').value = sub.demo_url||'';
+    document.getElementById('amCampaign').value = '';
+    document.getElementById('amError').style.display='none';
+    modal.style.display='flex';
+  },0);
+}
+function closeApproveModal(){
+  const modal=document.getElementById('approveModal');
+  if(modal) modal.style.display='none';
+}
+async function doApprove(){
+  const btn=document.getElementById('amSubmitBtn');
+  const errEl=document.getElementById('amError');
+  btn.disabled=true; btn.textContent='Đang xử lý...';
+  try{
+    const res=await fetch('/api/approve-submission',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      submission_id:_approvingSubId,
+      campaign_id:document.getElementById('amCampaign').value||null,
+      title:document.getElementById('amTitle').value,
+      description:document.getElementById('amDesc').value,
+      tools:document.getElementById('amTools').value,
+      demo_url:document.getElementById('amDemo').value,
+    })});
+    const data=await res.json();
+    if(!data.ok) throw new Error(data.message);
+    closeApproveModal();
+    await loadAll();
+    toast('Đã approve! Case ID: '+data.case_id);
+  }catch(e){
+    errEl.textContent=e.message; errEl.style.display='';
+    btn.disabled=false; btn.textContent='✓ Approve & tạo case';
+  }
+}
+async function rejectSub(subId){
+  const notes=prompt('Lý do từ chối (tùy chọn):');
+  if(notes===null) return;
+  await fetch('/api/reject-submission',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({submission_id:subId,notes})});
+  await loadAll();
+  toast('Đã từ chối submission.');
+}
+
+// Tab routing: activate correct tab from URL path and handle back/forward
+(function(){
+  const adminPath=location.pathname.match(/\/nhai-day-admin\/([^\/]+)/);
+  if(adminPath&&adminPath[1]) state.tab=adminPath[1];
+  window.addEventListener('popstate',function(e){
+    if(e.state&&e.state.tab) setTab(e.state.tab,true);
+  });
+})();
 
 // Init
 loadAll();

@@ -202,3 +202,23 @@ CREATE TABLE IF NOT EXISTS page_events (
   INDEX idx_events_name (event_name, created_at),
   INDEX idx_events_created (created_at)
 );
+
+CREATE TABLE IF NOT EXISTS case_submissions (
+  id VARCHAR(64) PRIMARY KEY,
+  season_id VARCHAR(64) NOT NULL,
+  city VARCHAR(8) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  tools VARCHAR(500),
+  demo_url TEXT NOT NULL,
+  owner_name VARCHAR(128) NOT NULL,
+  owner_email VARCHAR(128) NOT NULL,
+  team_members TEXT,
+  status VARCHAR(16) NOT NULL DEFAULT 'pending',
+  submitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reviewed_at DATETIME,
+  review_notes TEXT,
+  case_id VARCHAR(64),
+  INDEX idx_sub_season (season_id, status),
+  INDEX idx_sub_email (owner_email)
+);
