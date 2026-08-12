@@ -2290,10 +2290,11 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
     <div class="fg"><label class="lbl">Thành viên khác (nếu có)</label><input class="inp" type="text" id="sfMembers" placeholder="Tên / email của người cùng nhóm..."></div>
 
     <div class="fg"><label class="lbl">Thành phố <span class="r">*</span></label>
-      <div class="opts">
-        <div class="opt"><input type="radio" name="sfCity" id="sfHN" value="HN"><label for="sfHN">🏙️ Hà Nội</label></div>
-        <div class="opt"><input type="radio" name="sfCity" id="sfHCM" value="HCM"><label for="sfHCM">🌆 TP. Hồ Chí Minh</label></div>
-      </div>
+      <select class="sel" id="sfCity">
+        <option value="">-- Chọn thành phố --</option>
+        <option value="HN">🏙️ Hà Nội</option>
+        <option value="HCM">🌆 TP. Hồ Chí Minh</option>
+      </select>
     </div>
 
     <div class="fg"><label class="lbl">Bạn tham gia NHAI DAY mùa mấy? <span class="r">*</span></label>
@@ -3347,8 +3348,7 @@ async function submitCase(){
   const name  = document.getElementById('sfName').value.trim();
   const email = document.getElementById('sfEmail').value.trim().toLowerCase();
   const members = document.getElementById('sfMembers').value.trim();
-  const cityEl = document.querySelector('input[name="sfCity"]:checked');
-  const city = cityEl ? cityEl.value : '';
+  const city = document.getElementById('sfCity').value;
 
   const warnEl = document.getElementById('sfEmailWarn');
   if (!email.endsWith('@garena.vn')) { warnEl.style.display = ''; return; }
