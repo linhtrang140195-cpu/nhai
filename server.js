@@ -201,26 +201,30 @@ app.post('/api/submit-feedback', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 async function runSchemaMigration() {
-  const sqlFile = path.join(__dirname, 'migrations', '001_schema.sql');
-  const sql = fs.readFileSync(sqlFile, 'utf8');
-  const statements = sql
-    .split(/;\s*\n/)
-    .map(s => s.trim())
-    .filter(Boolean);
-  let applied = 0;
-  for (const stmt of statements) {
-    try {
-      await pool.query(stmt);
-      applied++;
-    } catch (e) {
-      if (e.errno === 1060) { // Duplicate column name — already exists, skip
+  const migrationFiles = ['001_schema.sql', '002_feedback_day2_import.sql'];
+  let totalApplied = 0;
+  for (const fileName of migrationFiles) {
+    const sqlFile = path.join(__dirname, 'migrations', fileName);
+    if (!fs.existsSync(sqlFile)) continue;
+    const sql = fs.readFileSync(sqlFile, 'utf8');
+    const statements = sql
+      .split(/;\s*\n/)
+      .map(s => s.trim())
+      .filter(Boolean);
+    let applied = 0;
+    for (const stmt of statements) {
+      try {
+        await pool.query(stmt);
         applied++;
-      } else {
-        throw e;
+      } catch (e) {
+        if (e.errno === 1060) { applied++; } // Duplicate column — already exists
+        else { throw e; }
       }
     }
+    console.log(`Migration ${fileName}: ${applied} statements applied.`);
+    totalApplied += applied;
   }
-  console.log(`Schema migration: ${applied} statements applied (idempotent).`);
+  console.log(`Schema migration: ${totalApplied} total statements applied.`);
 }
 
 const AWARD_CATEGORIES_SEED = [
