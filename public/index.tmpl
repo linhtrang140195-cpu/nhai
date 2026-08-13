@@ -5496,7 +5496,8 @@ renderRoadmap=function(){
   track.innerHTML=ROADMAP_DISPLAY.map((r,i)=>{
     const lbl=lblMap[r.status]||r.status;
     let cta='';
-    if(r.recapId) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>openRecap('${r.recapId}'),60)">Xem recap →</button>`;
+    if(r.articleUrl) cta=`<a href="${r.articleUrl}" target="_blank" rel="noopener" class="rm-cta-link" style="text-decoration:none;display:inline-block">Xem bài viết →</a>`;
+    else if(r.recapId) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>openRecap('${r.recapId}'),60)">Xem recap →</button>`;
     else if(r.voteCity) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>{switchResTab('vote',document.querySelectorAll('.rtab')[1]);filterVote('${r.voteCity}',document.querySelectorAll('.vf-btn')[0]);},60)">Xem kết quả →</button>`;
     else if(r.register) cta=`<button class="rm-cta-link" onclick="openReg()">Đăng ký ngay →</button>`;
     return `<div class="rm-card ${r.status} ${i===0?'first':''} ${i===ROADMAP_DISPLAY.length-1?'last':''}">

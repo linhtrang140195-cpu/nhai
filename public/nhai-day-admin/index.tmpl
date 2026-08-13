@@ -1394,6 +1394,7 @@ function _snapshotRoadmap(){
     status:document.getElementById(`rm_status_${i}`)?.value||r.status,
     date:document.getElementById(`rm_date_${i}`)?.value||r.date,
     name:document.getElementById(`rm_name_${i}`)?.value||r.name,
+    articleUrl:(document.getElementById(`rm_url_${i}`)?.value||'').trim()||r.articleUrl||'',
   }));
 }
 function moveRoadmapItem(i,dir){
@@ -1437,9 +1438,12 @@ function renderRoadmapAdmin(){
         <button onclick="moveRoadmapItem(${i},-1)" ${i===0?'disabled':''} style="width:24px;height:22px;padding:0;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">↑</button>
         <button onclick="moveRoadmapItem(${i},1)" ${i===items.length-1?'disabled':''} style="width:24px;height:22px;padding:0;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text)">↓</button>
       </div>
-      <input type="text" id="rm_name_${i}" value="${(r.name||'').replace(/"/g,'&quot;')}" placeholder="Tên sự kiện" style="flex:1;margin-bottom:0;font-size:11px"/>
-      <input type="text" id="rm_date_${i}" value="${(r.date||'').replace(/"/g,'&quot;')}" placeholder="Ngày / ghi chú" style="width:175px;margin-bottom:0;font-size:11px"/>
-      <select id="rm_status_${i}" style="width:155px;margin-bottom:0;font-size:11px">
+      <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+        <input type="text" id="rm_name_${i}" value="${(r.name||'').replace(/"/g,'&quot;')}" placeholder="Tên sự kiện" style="width:100%;margin-bottom:0;font-size:11px"/>
+        <input type="text" id="rm_url_${i}" value="${(r.articleUrl||'').replace(/"/g,'&quot;')}" placeholder="🔗 Link bài viết / recap (tuỳ chọn)" style="width:100%;margin-bottom:0;font-size:10px;opacity:.75"/>
+      </div>
+      <input type="text" id="rm_date_${i}" value="${(r.date||'').replace(/"/g,'&quot;')}" placeholder="Ngày / ghi chú" style="width:160px;margin-bottom:0;font-size:11px"/>
+      <select id="rm_status_${i}" style="width:145px;margin-bottom:0;font-size:11px">
         ${statusOpts.map(s=>`<option value="${s}"${r.status===s?' selected':''}>${statusLabels[s]||s}</option>`).join('')}
       </select>
       <button onclick="removeRoadmapItem(${i})" title="Xóa dòng này" style="width:26px;height:26px;padding:0;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);border-radius:6px;cursor:pointer;color:#ef4444;font-size:13px">✕</button>
@@ -1453,7 +1457,8 @@ function renderRoadmapAdmin(){
     <b>active</b> — Đang diễn ra<br>
     <b>soon</b> — Sắp tới<br>
     <b>tbd</b> — TBD, chưa xác định ngày<br><br>
-    Sau khi lưu, public site sẽ tự load config mới (không cần deploy lại).
+    <b>🔗 Link bài viết</b> — Nhập URL để hiện nút "Xem bài viết →" trên card (ưu tiên cao nhất, override recap/vote).<br><br>
+    Sau khi lưu, public site tự load config mới — không cần deploy lại.
   </div></div>`;
 }
 
