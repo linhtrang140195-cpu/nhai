@@ -203,6 +203,20 @@ app.post('/api/news-react', async (req, res) => {
   } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
 });
 
+app.post('/api/upload-news-image', async (req, res) => {
+  try {
+    const { data, type } = req.body || {};
+    if (!data || !type || !type.startsWith('image/')) return res.status(400).json({ ok: false, message: 'Invalid image data' });
+    const ext = type === 'image/png' ? '.png' : type === 'image/gif' ? '.gif' : type === 'image/webp' ? '.webp' : '.jpg';
+    const fname = `news-img-${Date.now()}${ext}`;
+    const dir = path.join(__dirname, 'public', 'uploads');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const base64 = data.replace(/^data:[^;]+;base64,/, '');
+    fs.writeFileSync(path.join(dir, fname), Buffer.from(base64, 'base64'));
+    res.json({ ok: true, url: '/uploads/' + fname });
+  } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
+});
+
 app.post('/api/submit-feedback', async (req, res) => {
   try {
     const { season_id, city, participation_type, output_status, no_output_reason, mentor_rating, mentor_comment, continue_dev, recommend, overall_rating, suggestions } = req.body || {};

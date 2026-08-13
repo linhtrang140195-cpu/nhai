@@ -2624,7 +2624,7 @@ window.NHAI_VOTE_CONFIG = {
   edgeFunctionUrl: "/api/top-pick-vote",
   analyticsEnabled: true,
   analyticsFunctionUrl: "/api/site-analytics",
-  campaignId: "top-pick-day01-2026",
+  campaignId: "top-pick-day02-2026",
   maxVotes: 3
 };
 </script>
@@ -3729,14 +3729,14 @@ for(const ev of EVENTS){
   if(RECAP_PHOTOS[ev.id]) ev.photos=RECAP_PHOTOS[ev.id];
 }
 
+const EDITIONS=[
+  {label:'NHAI DAY #1',ids:['hn01','hcm01'],done:true,topPickDone:true,topPickWinners:[
+    {label:'Hà Nội',title:'Ứng dụng AI để tối ưu quy trình Rough Cut trong sản xuất video',person:'Lê Xuân Mạnh · Vương Hoa Lê'},
+    {label:'TP.HCM',title:'Hỗ trợ kiểm tra hàng loạt phiếu yêu cầu tài khoản',person:'Vưu Khai Triển · Minh Tuấn · Sỹ Giáp'}
+  ]},
+  {label:'NHAI DAY #2',ids:['hn02','hcm02'],done:true,season_id:'nhai-day-02'},
+];
 function renderEvents(){
-  const EDITIONS=[
-    {label:'NHAI DAY #1',ids:['hn01','hcm01'],done:true,topPickDone:true,topPickWinners:[
-      {label:'Hà Nội',title:'Ứng dụng AI để tối ưu quy trình Rough Cut trong sản xuất video',person:'Lê Xuân Mạnh · Vương Hoa Lê'},
-      {label:'TP.HCM',title:'Hỗ trợ kiểm tra hàng loạt phiếu yêu cầu tài khoản',person:'Vưu Khai Triển · Minh Tuấn · Sỹ Giáp'}
-    ]},
-    {label:'NHAI DAY #2',ids:['hn02','hcm02'],done:true,season_id:'nhai-day-02'},
-  ];
   document.getElementById('edTabs').innerHTML=EDITIONS.map((ed,i)=>
     `<button class="ed-tab ${i===0?'on':''}" onclick="switchEdition(${i})">${ed.label}</button>`
   ).join('');
@@ -4524,7 +4524,7 @@ const VOTE_CONFIG=Object.assign({
   edgeFunctionUrl:'',
   analyticsEnabled:true,
   analyticsFunctionUrl:'',
-  campaignId:'top-pick-day01-2026',
+  campaignId:'top-pick-day02-2026',
   maxVotes:3
 }, window.NHAI_VOTE_CONFIG||{});
 
@@ -5520,7 +5520,8 @@ try{ renderFaq(); }catch(e){}
 // trackCare() removed — real data from nhai-config.js
 
 
-try{ renderEvents(); renderResultsTopPickWinners(); updateEditionTopPick(); loadEditionFromDB(1,'nhai-day-02'); }catch(e){}
+try{ renderEvents(); renderResultsTopPickWinners(); updateEditionTopPick(); }catch(e){}
+try{ loadEditionFromDB(1,'nhai-day-02'); }catch(e){}
 
 
 try{ initVoteState(); }catch(e){}
