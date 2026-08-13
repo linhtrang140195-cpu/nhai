@@ -1867,67 +1867,51 @@ function _refreshGalleryWrap(){
   if(!_editGallery.length){wrap.innerHTML='<span style="font-size:12px;color:var(--textM)">Chưa có ảnh gallery</span>';return;}
   wrap.innerHTML=_editGallery.map((u,i)=>`<div style="position:relative;width:80px;height:56px;flex:0 0 auto"><img src="${e(u)}" style="width:80px;height:56px;object-fit:cover;border-radius:6px"/><button onclick="removeGalleryImg(${i})" style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:#ef4444;border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button></div>`).join('');
 }
+function _compressToBase64(file, maxPx, quality){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        let w=img.naturalWidth,h=img.naturalHeight;
+        if(w>maxPx){h=Math.round(h*maxPx/w);w=maxPx;}
+        if(h>maxPx){w=Math.round(w*maxPx/h);h=maxPx;}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',quality));
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function handleGalleryUpload(input){
   const files=Array.from(input.files||[]);
   if(!files.length) return;
   input.value='';
-  const MAX=1200;
-  let uploaded=0;
+  let added=0;
   for(const file of files){
     if(_editGallery.length>=20){toast('Tối đa 20 ảnh gallery','danger');break;}
-    await new Promise(resolve=>{
-      const reader=new FileReader();
-      reader.onload=async ev=>{
-        const img=new Image();
-        img.onload=async()=>{
-          const canvas=document.createElement('canvas');
-          let w=img.naturalWidth,h=img.naturalHeight;
-          if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
-          canvas.width=w;canvas.height=h;
-          canvas.getContext('2d').drawImage(img,0,0,w,h);
-          const data=canvas.toDataURL('image/jpeg',.80);
-          try{
-            const res=await fetch('/api/upload-news-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data,type:'image/jpeg'})});
-            const json=await res.json();
-            if(json.ok){_editGallery.push(json.url);uploaded++;}
-          }catch{}
-          resolve();
-        };
-        img.src=ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
+    const dataUrl=await _compressToBase64(file,1200,.78);
+    _editGallery.push(dataUrl);
+    added++;
   }
   _refreshGalleryWrap();
-  if(uploaded) toast(`Đã upload ${uploaded} ảnh gallery`);
+  if(added) toast(`Đã thêm ${added} ảnh gallery`);
 }
 
 async function handleNewsImageUpload(input){
   const file=input.files&&input.files[0];
-  if(!file)return;
+  if(!file) return;
   input.value='';
-  const MAX=1400;
-  const reader=new FileReader();
-  reader.onload=async ev=>{
-    const img=new Image();
-    img.onload=async()=>{
-      const canvas=document.createElement('canvas');
-      let w=img.naturalWidth,h=img.naturalHeight;
-      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
-      canvas.width=w;canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      const data=canvas.toDataURL('image/jpeg',.82);
-      try{
-        const res=await fetch('/api/upload-news-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data,type:'image/jpeg'})});
-        const json=await res.json();
-        if(!json.ok)throw new Error(json.message);
-        const ed=document.getElementById('np_body');
-        if(ed){ed.focus();document.execCommand('insertHTML',false,`<img src="${json.url}" style="max-width:100%;border-radius:8px;margin:8px 0"/>`);}
-      }catch(err){toast('Lỗi upload ảnh: '+err.message,'danger');}
-    };
-    img.src=ev.target.result;
-  };
-  reader.readAsDataURL(file);
+  const dataUrl=await _compressToBase64(file,1400,.82);
+  const ed=document.getElementById('np_body');
+  if(ed){
+    ed.focus();
+    document.execCommand('insertHTML',false,`<img src="${dataUrl}" style="max-width:100%;border-radius:8px;margin:8px 0"/>`);
+  }
 }
 function renderFeedback(){
   const fbs = state.feedbacks || [];

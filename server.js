@@ -12,7 +12,8 @@ const { runSeed } = require('./src/seedCore');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json({ limit: '15mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use('/rest/v1', restShim);
 app.all('/api/top-pick-vote', topPickVote);
@@ -237,7 +238,7 @@ app.post('/api/submit-feedback', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 async function runSchemaMigration() {
-  const migrationFiles = ['001_schema.sql', '002_feedback_day2_import.sql', '003_news_posts.sql', '004_gallery_images.sql'];
+  const migrationFiles = ['001_schema.sql', '002_feedback_day2_import.sql', '003_news_posts.sql', '004_gallery_images.sql', '005_mediumtext_body.sql'];
   let totalApplied = 0;
   for (const fileName of migrationFiles) {
     const sqlFile = path.join(__dirname, 'migrations', fileName);
