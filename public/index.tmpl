@@ -3937,7 +3937,7 @@ function renderEvents(){
 async function loadEditionFromDB(idx,seasonId){
   try{
     const [awards,statsArr]=await Promise.all([
-      fetch('/rest/v1/awards?season_id=eq.'+seasonId+'&status=eq.announced&order=category_id.asc,city.asc').then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[]),
+      fetch('/rest/v1/awards?season_id=eq.'+seasonId+'&order=category_id.asc,city.asc').then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[]),
       fetch('/rest/v1/season_stats?season_id=eq.'+seasonId).then(r=>r.json())
     ]);
     const st=statsArr[0]||{};

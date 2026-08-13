@@ -282,7 +282,7 @@ async function computeFeedbackStats() {
       SELECT season_id,
         ROUND(AVG(overall_rating), 2) as avg_experience,
         ROUND(AVG(mentor_rating), 2) as avg_mentor,
-        ROUND(SUM(CASE WHEN output_status = 'Có, demo được' OR output_status LIKE '%hoàn thiện%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as pct_has_demo,
+        ROUND(SUM(CASE WHEN output_status IS NOT NULL AND output_status != '' AND output_status NOT LIKE '%không%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as pct_has_demo,
         ROUND(SUM(CASE WHEN continue_dev LIKE '%chắc chắn%' OR continue_dev LIKE '%Có thể%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as pct_want_continue,
         ROUND(SUM(CASE WHEN recommend = 'Có' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as pct_will_participate,
         SUM(city = 'HN') as hn_participants,
@@ -291,21 +291,32 @@ async function computeFeedbackStats() {
       FROM event_feedback
       GROUP BY season_id
     `);
+    // Count registrations per season to populate total_teams
+    const [regRows] = await pool.query(`
+      SELECT season_id, COUNT(*) as reg_count FROM registrations
+      WHERE season_id IS NOT NULL GROUP BY season_id
+    `);
+    const regMap = {};
+    regRows.forEach(r => { regMap[r.season_id] = r.reg_count; });
+
     for (const r of rows) {
+      const totalTeams = regMap[r.season_id] || null;
       await pool.query(
-        `INSERT INTO season_stats (season_id, avg_experience, avg_mentor, pct_has_demo, pct_want_continue, pct_will_participate, hn_participants, hcm_participants, feedback_count, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        `INSERT INTO season_stats (season_id, avg_experience, avg_mentor, pct_has_demo, pct_want_continue, pct_will_participate, hn_participants, hcm_participants, feedback_count, total_teams, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
          ON DUPLICATE KEY UPDATE
            avg_experience = VALUES(avg_experience), avg_mentor = VALUES(avg_mentor),
            pct_has_demo = VALUES(pct_has_demo), pct_want_continue = VALUES(pct_want_continue),
            pct_will_participate = VALUES(pct_will_participate),
            hn_participants = VALUES(hn_participants), hcm_participants = VALUES(hcm_participants),
-           feedback_count = VALUES(feedback_count), updated_at = NOW()`,
+           feedback_count = VALUES(feedback_count),
+           total_teams = COALESCE(VALUES(total_teams), total_teams),
+           updated_at = NOW()`,
         [r.season_id, r.avg_experience, r.avg_mentor, r.pct_has_demo, r.pct_want_continue,
-         r.pct_will_participate, r.hn_participants || 0, r.hcm_participants || 0, r.feedback_count]
+         r.pct_will_participate, r.hn_participants || 0, r.hcm_participants || 0, r.feedback_count, totalTeams]
       );
     }
-    if (rows.length) console.log(`Feedback stats computed: ${rows.map(r => `${r.season_id} (${r.feedback_count} responses)`).join(', ')}`);
+    if (rows.length) console.log(`Feedback stats computed: ${rows.map(r => `${r.season_id} (${r.feedback_count} responses, ${regMap[r.season_id]||0} registrations)`).join(', ')}`);
   } catch(e) { console.error('Feedback stats compute error:', e.message); }
 }
 
