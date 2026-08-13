@@ -2194,7 +2194,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
           <button class="vf-btn on" onclick="filterVoteCity('HN',this)">🏙️ Hà Nội</button>
           <button class="vf-btn" onclick="filterVoteCity('HCM',this)">🌆 HCM</button>
           <div class="vf-sep"></div>
-          <button class="vf-ed-btn" data-ed="hn01,hcm01" onclick="filterVoteEd('hn01,hcm01',this)">NHAI DAY #1</button>
+          <button class="vf-ed-btn" data-ed="hn01,hcm01" onclick="filterVoteEd('hn01,hcm01',this)" style="display:none">NHAI DAY #1</button>
           <button class="vf-ed-btn on" data-ed="hn02,hcm02" onclick="filterVoteEd('hn02,hcm02',this)">NHAI DAY #2</button>
           <button class="vf-ed-btn" data-ed="hn03,hcm03" onclick="filterVoteEd('hn03,hcm03',this)">NHAI DAY #3</button>
           <button class="vf-ed-btn" data-ed="hn04,hcm04" onclick="filterVoteEd('hn04,hcm04',this)">NHAI DAY #4</button>
@@ -3753,7 +3753,7 @@ for(const ev of EVENTS){
 
 function renderEvents(){
   const EDITIONS=[
-    {label:'NHAI DAY #1',ids:['hn01','hcm01'],done:true},
+    {label:'NHAI DAY #1',ids:['hn01','hcm01'],done:true,topPickDone:true},
     {label:'NHAI DAY #2',ids:['hn02','hcm02'],done:true,season_id:'nhai-day-02'},
   ];
   document.getElementById('edTabs').innerHTML=EDITIONS.map((ed,i)=>
@@ -3774,6 +3774,7 @@ function renderEvents(){
         <div class="ed-kpi"><span class="ek-n" id="ek-ct-${i}">—</span><div class="ek-l">Muốn tiếp tục</div></div>
         <div class="ed-kpi"><span class="ek-n" id="ek-dm-${i}">—</span><div class="ek-l">Có output/demo phát triển tiếp</div></div>
       </div>
+      <div id="ed-toppick-${i}"></div>
       <div id="ed-awards-${i}" style="text-align:center;padding:48px 16px;color:var(--textM)">Đang tải kết quả…</div>
     </div>`;
 
@@ -5355,6 +5356,47 @@ function parseCaseDesc(raw){
   }
   return{goal,desc:'',tools:[...new Set(tools)].filter(s=>s&&s.length>1&&s.length<40)};
 }
+function updateEditionTopPick(){
+  EDITIONS.forEach((ed,i)=>{
+    if(!ed.season_id) return;
+    const slot=document.getElementById('ed-toppick-'+i);
+    if(!slot) return;
+    // Hide vote tab button when voting is closed for this edition's campaign
+    if(voteState.votingClosed){
+      document.querySelectorAll('.vf-ed-btn').forEach(b=>{
+        const bEd=b.dataset.ed||'';
+        if(ed.ids.some(id=>bEd.includes(id))) b.style.display='none';
+      });
+    }
+    if(!voteState.votingClosed||slot.innerHTML.trim()) return;
+    const groups=[
+      {label:'Hà Nội',ids:ed.ids.filter(id=>id.startsWith('hn'))},
+      {label:'TP.HCM',ids:ed.ids.filter(id=>id.startsWith('hcm'))}
+    ];
+    const cards=groups.map(group=>{
+      const winner=getResultsTopPickWinner(group.ids);
+      if(!winner) return '';
+      const votes=getDisplayVoteCount(winner.id);
+      return `<div class="result-top-pick-card">
+        <div class="rtp-medal">🏆</div>
+        <div>
+          <div class="rtp-kicker">Top Pick Dish Winner <span class="rtp-badge">Đã công bố</span></div>
+          <div class="rtp-title">${e(winner.title)}</div>
+          <div class="rtp-meta"><b>${e(group.label)}</b>${winner.person?' · '+e(winner.person):''}</div>
+        </div>
+        <div class="rtp-side">
+          <div class="rtp-votes"><strong>${votes}</strong><span>votes</span></div>
+        </div>
+      </div>`;
+    }).filter(Boolean).join('');
+    if(cards){
+      slot.innerHTML=`<div class="award-section">
+        <div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#bdf3ce;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.25)">1.000.000đ · Đã công bố</span></div>
+        ${cards}
+      </div>`;
+    }
+  });
+}
 async function initVoteState(){
   voteState.deviceId=getVoteDeviceId();
   analyticsState.deviceId=voteState.deviceId;
@@ -5369,6 +5411,7 @@ async function initVoteState(){
       VOTE_CONFIG.campaignId=d.campaign.id;
       voteState.campaignOpens=d.campaign.opens_at||'';
       voteState.campaignCloses=d.campaign.closes_at||'';
+      if(voteState.campaignCloses&&new Date(voteState.campaignCloses)<new Date()) voteState.votingClosed=true;
     }
   }catch(e){}
   await loadVoteSnapshot();
@@ -5425,6 +5468,7 @@ async function initVoteState(){
     }
   })();
   renderVote('HN');
+  updateEditionTopPick();
 }
 
 
