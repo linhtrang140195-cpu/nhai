@@ -33,7 +33,7 @@ const TABLES = {
     pk: 'id',
     columns: ['id', 'season_id', 'campaign_id', 'city', 'title', 'short_description', 'full_description',
       'purpose', 'tools_used', 'demo_url', 'sticker', 'owner_name', 'owner_email', 'owner_team',
-      'team_members', 'category_tags', 'is_active', 'display_order', 'created_at']
+      'team_members', 'category_tags', 'is_active', 'display_order', 'next_step', 'created_at']
   },
   top_pick_campaigns: { pk: 'id', columns: ['id', 'name', 'max_votes_per_device', 'is_active', 'opens_at', 'closes_at', 'created_at'] },
   top_pick_cases: { pk: 'case_id', columns: ['case_id', 'campaign_id', 'city', 'title', 'is_active', 'created_at'] },

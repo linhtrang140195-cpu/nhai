@@ -1554,6 +1554,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 .vc2-det-block{margin-bottom:10px;}
 .vc2-det-label{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
 .vc2-det-desc{font-size:13px;color:var(--cream);line-height:1.5;white-space:pre-line;}
+.vc2-next-step{background:rgba(123,77,219,.08);border-left:2px solid rgba(123,77,219,.4);padding:8px 10px;border-radius:0 6px 6px 0;}
 .vc2-det-tools{display:flex;gap:6px;flex-wrap:wrap;}
 .vc2-media-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;}
 .vc2-media-strip::-webkit-scrollbar{height:6px;}
@@ -2359,6 +2360,8 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
         <option value="nhai-day-03">NHAI DAY #3</option>
       </select>
     </div>
+
+    <div class="fg"><label class="lbl">Kế hoạch tiếp theo (nếu có)</label><textarea class="inp" id="sfNextStep" rows="3" placeholder="Bạn dự định upgrade/cải thiện dự án như thế nào trong tương lai?" style="resize:vertical;min-height:70px"></textarea></div>
 
     <div id="sfError" style="color:#ef4444;font-size:12px;margin-bottom:10px;display:none"></div>
     <button class="btn-primary" id="sfSubmitBtn" onclick="submitCase()" style="width:100%;padding:14px;font-size:15px;border-radius:10px;border:none;background:var(--gold);color:#1a1226;font-weight:700;cursor:pointer">Gửi dự án →</button>
@@ -3471,6 +3474,7 @@ async function submitCase(){
   const name  = document.getElementById('sfName').value.trim();
   const email = document.getElementById('sfEmail').value.trim().toLowerCase();
   const members = document.getElementById('sfMembers').value.trim();
+  const next_step = document.getElementById('sfNextStep').value.trim();
   const city = document.getElementById('sfCity').value;
 
   const warnEl = document.getElementById('sfEmailWarn');
@@ -3489,7 +3493,7 @@ async function submitCase(){
     const res = await fetch('/api/submit-case', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ season_id, city, title, description: desc, tools, demo_url: demo, owner_name: name, owner_email: email, team_members: members })
+      body: JSON.stringify({ season_id, city, title, description: desc, tools, demo_url: demo, owner_name: name, owner_email: email, team_members: members, next_step })
     });
     const data = await res.json();
     if (!data.ok) throw new Error(data.message);
@@ -5142,6 +5146,10 @@ function renderVote(city){
           <div class="vc2-det-label">Tool sử dụng</div>
           <div class="vc2-det-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
         </div>`:''}
+        ${c.next_step?`<div class="vc2-det-block vc2-next-step">
+          <div class="vc2-det-label">🚀 Kế hoạch tiếp theo</div>
+          <div class="vc2-det-desc">${e(c.next_step)}</div>
+        </div>`:''}
         <div class="vc2-det-actions">
           ${accessText?`<button type="button" class="vc2-det-demo${(hasMedia||c.demo||c.accessLabel)?'':' no-link'}" onclick="event.stopPropagation();openCaseDemo('${c.id}')">${e(accessText)}</button>`:''}
           <span class="vc2-collapse" onclick="event.stopPropagation();this.closest('.vc2').classList.remove('open')">Thu gọn ↑</span>
@@ -5303,6 +5311,10 @@ function renderVote(city){
         ${c.tools&&c.tools.length?`<div class="vc2-det-block">
           <div class="vc2-det-label">Tool sử dụng</div>
           <div class="vc2-det-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
+        </div>`:''}
+        ${c.next_step?`<div class="vc2-det-block vc2-next-step">
+          <div class="vc2-det-label">🚀 Kế hoạch tiếp theo</div>
+          <div class="vc2-det-desc">${e(c.next_step)}</div>
         </div>`:''}
         <div class="vc2-det-actions">
           ${accessText?`<button type="button" class="vc2-det-demo${(hasMedia||c.demo||c.accessLabel)?'':' no-link'}" onclick="event.stopPropagation();openCaseDemo('${c.id}')">${e(accessText)}</button>`:''}
@@ -5563,6 +5575,7 @@ async function initVoteState(){
             tools:dbTools.length?dbTools:pd.tools,
             demo:(c.demo_url||'').split(',')[0].trim(),gallery:[],
             emoji:c.sticker||'🤖',
+            next_step:c.next_step||'',
             grad:'linear-gradient(135deg,#1a1a2e,#16213e)'});
         }
       });

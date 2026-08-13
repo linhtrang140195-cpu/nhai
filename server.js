@@ -76,7 +76,7 @@ app.get('/api/campaign-cases', async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT c.id, c.season_id, c.city, c.title, c.short_description, c.full_description,
-              c.demo_url, c.tools_used, c.owner_name, c.sticker
+              c.demo_url, c.tools_used, c.owner_name, c.sticker, c.next_step
        FROM top_pick_cases tc
        JOIN cases c ON c.id = tc.case_id
        WHERE tc.campaign_id = ? AND tc.is_active = 1 AND c.is_active = 1 AND (c.is_master_chef IS NULL OR c.is_master_chef = 0)
@@ -131,16 +131,16 @@ app.get('/nhai-day.html', servePage('nhai-day.tmpl'));
 // Case submission endpoints
 app.post('/api/submit-case', async (req, res) => {
   try {
-    const { season_id, city, title, description, tools, demo_url, owner_name, owner_email, team_members } = req.body || {};
+    const { season_id, city, title, description, tools, demo_url, owner_name, owner_email, team_members, next_step } = req.body || {};
     if (!owner_email || !owner_email.trim().toLowerCase().endsWith('@garena.vn'))
       return res.status(400).json({ ok: false, message: 'Email phải là @garena.vn' });
     if (!title || !description || !demo_url || !owner_name || !city)
       return res.status(400).json({ ok: false, message: 'Vui lòng điền đầy đủ các trường bắt buộc.' });
     const id = `sub-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
     await pool.query(
-      `INSERT INTO case_submissions (id, season_id, city, title, description, tools, demo_url, owner_name, owner_email, team_members)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, (season_id||'nhai-day-02'), city, title.trim(), description.trim(), (tools||'').trim(), demo_url.trim(), owner_name.trim(), owner_email.trim().toLowerCase(), (team_members||'').trim()]
+      `INSERT INTO case_submissions (id, season_id, city, title, description, tools, demo_url, owner_name, owner_email, team_members, next_step)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, (season_id||'nhai-day-02'), city, title.trim(), description.trim(), (tools||'').trim(), demo_url.trim(), owner_name.trim(), owner_email.trim().toLowerCase(), (team_members||'').trim(), (next_step||'').trim()]
     );
     res.json({ ok: true, id });
   } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
@@ -159,9 +159,9 @@ app.post('/api/approve-submission', async (req, res) => {
     const caseDemoUrl = (demo_url || sub.demo_url).trim();
     const toolsArr = (tools || sub.tools || '').split(',').map(t=>t.trim()).filter(Boolean);
     await pool.query(
-      `INSERT INTO cases (id, season_id, city, title, short_description, full_description, tools_used, demo_url, owner_name, owner_email, sticker, is_active, display_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '🤖', 1, 999)`,
-      [caseId, sub.season_id, sub.city, caseTitle, caseDesc, caseDesc, JSON.stringify(toolsArr), caseDemoUrl, sub.owner_name, sub.owner_email]
+      `INSERT INTO cases (id, season_id, city, title, short_description, full_description, tools_used, demo_url, owner_name, owner_email, sticker, is_active, display_order, next_step)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '🤖', 1, 999, ?)`,
+      [caseId, sub.season_id, sub.city, caseTitle, caseDesc, caseDesc, JSON.stringify(toolsArr), caseDemoUrl, sub.owner_name, sub.owner_email, (sub.next_step||'').trim()]
     );
     if (campaign_id) {
       await pool.query(
@@ -238,7 +238,7 @@ app.post('/api/submit-feedback', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 async function runSchemaMigration() {
-  const migrationFiles = ['001_schema.sql', '002_feedback_day2_import.sql', '003_news_posts.sql', '004_gallery_images.sql', '005_mediumtext_body.sql'];
+  const migrationFiles = ['001_schema.sql', '002_feedback_day2_import.sql', '003_news_posts.sql', '004_gallery_images.sql', '005_mediumtext_body.sql', '006_next_step.sql', '007_submission_next_step.sql'];
   let totalApplied = 0;
   for (const fileName of migrationFiles) {
     const sqlFile = path.join(__dirname, 'migrations', fileName);
