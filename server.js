@@ -283,7 +283,7 @@ async function computeFeedbackStats() {
         ROUND(AVG(overall_rating), 2) as avg_experience,
         ROUND(AVG(mentor_rating), 2) as avg_mentor,
         ROUND(SUM(CASE WHEN output_status LIKE '%demo%' OR output_status LIKE '%hoàn thiện%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as pct_has_demo,
-        ROUND(SUM(CASE WHEN continue_dev LIKE '%chắc chắn%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as pct_want_continue,
+        ROUND(SUM(CASE WHEN continue_dev LIKE '%chắc chắn%' OR continue_dev LIKE '%Có thể%' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as pct_want_continue,
         ROUND(SUM(CASE WHEN recommend = 'Có' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as pct_will_participate,
         SUM(city = 'HN') as hn_participants,
         SUM(city = 'HCM') as hcm_participants,

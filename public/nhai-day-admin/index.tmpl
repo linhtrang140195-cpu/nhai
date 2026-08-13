@@ -1149,7 +1149,7 @@ function calcLiveFeedbackStats(seasonId){
   const expArr=fbs.map(f=>f.overall_rating).filter(n=>n&&n>0);
   const menArr=fbs.map(f=>f.mentor_rating).filter(n=>n&&n>0);
   const hasDemo=fbs.filter(f=>/Có, demo|hoàn thiện/i.test(f.output_status||'')).length;
-  const wantCont=fbs.filter(f=>/chắc chắn/i.test(f.continue_dev||'')).length;
+  const wantCont=fbs.filter(f=>/chắc chắn|Có thể/i.test(f.continue_dev||'')).length;
   const willRec=fbs.filter(f=>/^Có$/i.test((f.recommend||'').trim())).length;
   return {
     count:fbs.length,
@@ -1302,7 +1302,7 @@ async function calcFeedbackStats(){
     const expScores=filtered.map(r=>parseFloat(expCol>=0?r[expCol]:0)).filter(n=>!isNaN(n)&&n>0);
     const mentorScores=filtered.map(r=>parseFloat(mentorCol>=0?r[mentorCol]:0)).filter(n=>!isNaN(n)&&n>0);
     const hasDemo=filtered.filter(r=>demoCol>=0&&/hoàn thiện|demo|Có,\s*demo/i.test(r[demoCol]||"")).length;
-    const wantContinue=filtered.filter(r=>continueCol>=0&&/chắc chắn|Có, chắc/i.test(r[continueCol]||"")).length;
+    const wantContinue=filtered.filter(r=>continueCol>=0&&/chắc chắn|Có thể|Có, chắc/i.test(r[continueCol]||"")).length;
 
     // Also merge data from web event_feedback table
     let webRows=[];
@@ -1310,7 +1310,7 @@ async function calcFeedbackStats(){
     const webExpScores=webRows.map(r=>r.overall_rating).filter(n=>n&&n>0);
     const webMentorScores=webRows.map(r=>r.mentor_rating).filter(n=>n&&n>0);
     const webHasDemo=webRows.filter(r=>/Có, demo|hoàn thiện/i.test(r.output_status||"")).length;
-    const webWantContinue=webRows.filter(r=>/chắc chắn/i.test(r.continue_dev||"")).length;
+    const webWantContinue=webRows.filter(r=>/chắc chắn|Có thể/i.test(r.continue_dev||"")).length;
 
     const allExpScores=[...expScores,...webExpScores];
     const allMentorScores=[...mentorScores,...webMentorScores];
