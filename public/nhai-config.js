@@ -212,13 +212,16 @@
     SEASON_ED.forEach((sid, i) => {
       const ss = seasonStats.find(s => s.season_id === sid);
       const hc = headcountBySeason[sid];
+      const _rawOv = siteConfig['stat_override_' + sid];
+      const ov = !_rawOv ? {} : (typeof _rawOv === 'string' ? JSON.parse(_rawOv) : _rawOv);
+      const pOrO = k => ov[k] !== undefined ? ov[k] : (ss ? ss[k] : undefined);
 
       const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.textContent = val; };
       if (hc) set(`ek-p-${i}`, hc);
       if (ss) {
-        if (ss.total_teams)      set(`ek-t-${i}`,  ss.total_teams);
-        if (ss.avg_experience)   set(`ek-xp-${i}`, ss.avg_experience + '★');
-        if (ss.avg_mentor)       set(`ek-mn-${i}`, ss.avg_mentor + '★');
+        const teams = pOrO('total_teams'); if (teams) set(`ek-t-${i}`, teams);
+        const xp = pOrO('avg_experience'); if (xp != null) set(`ek-xp-${i}`, (+xp).toFixed(2) + '★');
+        const mn = pOrO('avg_mentor'); if (mn != null) set(`ek-mn-${i}`, (+mn).toFixed(2) + '★');
         if (ss.pct_will_participate) set(`ek-ct-${i}`, ss.pct_will_participate + '%');
         if (ss.pct_has_demo)     set(`ek-dm-${i}`, ss.pct_has_demo + '%');
       }
