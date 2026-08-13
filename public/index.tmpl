@@ -3904,8 +3904,31 @@ function renderEvents(){
       </div>
 
       <div class="award-section">
-        <div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#b79bff;background:rgba(123,77,219,.1);border-color:rgba(123,77,219,.25)">1.000.000đ · Đã đóng bình chọn</span></div>
-        <button class="btn-recap" onclick="switchResTab('vote',document.querySelectorAll('.rtab')[1])">Xem & bình chọn →</button>
+        <div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#bdf3ce;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.25)">1.000.000đ · Đã công bố</span></div>
+        <div class="result-top-pick-grid">
+          <div class="result-top-pick-card">
+            <div class="rtp-medal">🏆</div>
+            <div>
+              <div class="rtp-kicker">Top Pick Dish Winner <span class="rtp-badge">Đã công bố</span></div>
+              <div class="rtp-title">Ứng dụng AI để tối ưu quy trình Rough Cut trong sản xuất video</div>
+              <div class="rtp-meta"><b>NHAI DAY #1</b> · Hà Nội · Lê Xuân Mạnh + Vương Hoa Lê</div>
+            </div>
+            <div class="rtp-side">
+              <button class="rtp-btn" onclick="switchResTab('vote',document.querySelectorAll('.rtab')[1]);filterVoteCity('HN',document.querySelectorAll('.vf-btn')[0])">Xem kết quả →</button>
+            </div>
+          </div>
+          <div class="result-top-pick-card">
+            <div class="rtp-medal">🏆</div>
+            <div>
+              <div class="rtp-kicker">Top Pick Dish Winner <span class="rtp-badge">Đã công bố</span></div>
+              <div class="rtp-title">Hỗ trợ kiểm tra hàng loạt phiếu yêu cầu tài khoản</div>
+              <div class="rtp-meta"><b>NHAI DAY #1</b> · TP.HCM · Vưu Khai Triển + Minh Tuấn + Sỹ Giáp</div>
+            </div>
+            <div class="rtp-side">
+              <button class="rtp-btn" onclick="switchResTab('vote',document.querySelectorAll('.rtab')[1]);filterVoteCity('HCM',document.querySelectorAll('.vf-btn')[1])">Xem kết quả →</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>`;
   }).join('');
