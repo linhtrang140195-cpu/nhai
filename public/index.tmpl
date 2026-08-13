@@ -3046,23 +3046,12 @@ function renderAnns(){
 
 
       <div class="ann-foot">
-
-
         <div class="reacts">
-
-
           <button class="react${myReacts['a'+i+'r1']?' on':''}" onclick="doReact('anns',${i},'r1',this)">🔥 <span class="cn">${a.r1}</span></button>
-
-
           <button class="react${myReacts['a'+i+'r2']?' on':''}" onclick="doReact('anns',${i},'r2',this)">👍 <span class="cn">${a.r2}</span></button>
-
-
         </div>
-
-
+        ${a.link?`<a class="ann-read-link" href="${e(a.link)}" target="_blank" rel="noopener">Xem bài →</a>`:''}
       </div>
-
-
     </div>`).join('');
 
 
@@ -3076,29 +3065,18 @@ function renderAnns(){
 
 
 function doReact(arr,i,f,btn){
-
-
   const k=arr[0]+i+f;
-
-
   const cn=btn.querySelector('.cn');
-
-
   const data=arr==='cases'?cases:anns;
-
-
-  if(myReacts[k]){data[i][f]--;delete myReacts[k];btn.classList.remove('on');}
-
-
-  else{data[i][f]++;myReacts[k]=1;btn.classList.add('on');}
-
-
-  cn.textContent=data[i][f];
-
-
-  ss('nd_reacts',myReacts);ss('nd_'+arr,data);
-
-
+  const item=data[i];
+  if(myReacts[k]){item[f]--;delete myReacts[k];btn.classList.remove('on');}
+  else{item[f]++;myReacts[k]=1;btn.classList.add('on');}
+  cn.textContent=item[f];
+  ss('nd_reacts',myReacts);if(!item?.fromDB)ss('nd_'+arr,data);
+  if(item?.fromDB&&item?.id&&!myReacts[k+'sent']){
+    myReacts[k+'sent']=1;
+    fetch('/api/news-react',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({post_id:item.id,type:f==='r1'?'fire':'thumb'})}).catch(()=>{});
+  }
 }
 
 
@@ -3753,7 +3731,10 @@ for(const ev of EVENTS){
 
 function renderEvents(){
   const EDITIONS=[
-    {label:'NHAI DAY #1',ids:['hn01','hcm01'],done:true,topPickDone:true},
+    {label:'NHAI DAY #1',ids:['hn01','hcm01'],done:true,topPickDone:true,topPickWinners:[
+      {label:'Hà Nội',title:'Ứng dụng AI để tối ưu quy trình Rough Cut trong sản xuất video',person:'Lê Xuân Mạnh · Vương Hoa Lê'},
+      {label:'TP.HCM',title:'Hỗ trợ kiểm tra hàng loạt phiếu yêu cầu tài khoản',person:'Vưu Khai Triển · Minh Tuấn · Sỹ Giáp'}
+    ]},
     {label:'NHAI DAY #2',ids:['hn02','hcm02'],done:true,season_id:'nhai-day-02'},
   ];
   document.getElementById('edTabs').innerHTML=EDITIONS.map((ed,i)=>
@@ -3808,6 +3789,7 @@ function renderEvents(){
         <div class="ed-kpi"><span class="ek-n" id="ek-ct-${i}">—</span><div class="ek-l">Muốn tiếp tục</div></div>
         <div class="ed-kpi"><span class="ek-n" id="ek-dm-${i}">—</span><div class="ek-l">Có output/demo phát triển tiếp</div></div>
       </div>
+      <div id="ed-toppick-${i}"></div>
 
       <div class="award-section">
         <div class="award-sec-label"><h3>🏆 Master Chef</h3><span class="award-badge">2.000.000đ</span></div>
@@ -3904,33 +3886,6 @@ function renderEvents(){
         </div>
       </div>
 
-      <div class="award-section">
-        <div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#bdf3ce;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.25)">1.000.000đ · Đã công bố</span></div>
-        <div class="result-top-pick-grid">
-          <div class="result-top-pick-card">
-            <div class="rtp-medal">🏆</div>
-            <div>
-              <div class="rtp-kicker">Top Pick Dish Winner <span class="rtp-badge">Đã công bố</span></div>
-              <div class="rtp-title">Ứng dụng AI để tối ưu quy trình Rough Cut trong sản xuất video</div>
-              <div class="rtp-meta"><b>NHAI DAY #1</b> · Hà Nội · Lê Xuân Mạnh + Vương Hoa Lê</div>
-            </div>
-            <div class="rtp-side">
-              <button class="rtp-btn" onclick="switchResTab('vote',document.querySelectorAll('.rtab')[1]);filterVoteCity('HN',document.querySelectorAll('.vf-btn')[0])">Xem kết quả →</button>
-            </div>
-          </div>
-          <div class="result-top-pick-card">
-            <div class="rtp-medal">🏆</div>
-            <div>
-              <div class="rtp-kicker">Top Pick Dish Winner <span class="rtp-badge">Đã công bố</span></div>
-              <div class="rtp-title">Hỗ trợ kiểm tra hàng loạt phiếu yêu cầu tài khoản</div>
-              <div class="rtp-meta"><b>NHAI DAY #1</b> · TP.HCM · Vưu Khai Triển + Minh Tuấn + Sỹ Giáp</div>
-            </div>
-            <div class="rtp-side">
-              <button class="rtp-btn" onclick="switchResTab('vote',document.querySelectorAll('.rtab')[1]);filterVoteCity('HCM',document.querySelectorAll('.vf-btn')[1])">Xem kết quả →</button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>`;
   }).join('');
 }
@@ -3948,12 +3903,13 @@ async function loadEditionFromDB(idx,seasonId){
     const get=(k,raw)=>ov[k]!==undefined?ov[k]:(raw?st[k]:st[k]);
     const si=k=>{const el=document.getElementById(k);if(el)el.textContent=k;};
     const pOrO=k=>ov[k]!==undefined?ov[k]:st[k];
-    if(pOrO('total_participants')){document.getElementById('ek-p-'+idx).textContent=pOrO('total_participants');}
-    if(pOrO('total_teams')){document.getElementById('ek-t-'+idx).textContent=pOrO('total_teams');}
-    if(pOrO('avg_experience')){document.getElementById('ek-xp-'+idx).textContent=(+pOrO('avg_experience')).toFixed(2)+'★';}
-    if(pOrO('avg_mentor')){document.getElementById('ek-mn-'+idx).textContent=(+pOrO('avg_mentor')).toFixed(2)+'★';}
-    if(pOrO('pct_will_participate')){document.getElementById('ek-ct-'+idx).textContent=(pOrO('pct_will_participate')*1).toFixed(2)+'%';}
-    if(pOrO('pct_has_demo')){document.getElementById('ek-dm-'+idx).textContent=(pOrO('pct_has_demo')*1).toFixed(2)+'%';}
+    const setEl=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.textContent=v;};
+    setEl('ek-p-'+idx,pOrO('total_participants')||undefined);
+    setEl('ek-t-'+idx,pOrO('total_teams')||undefined);
+    const avgXp=pOrO('avg_experience');if(avgXp!=null)setEl('ek-xp-'+idx,(+avgXp).toFixed(2)+'★');
+    const avgMn=pOrO('avg_mentor');if(avgMn!=null)setEl('ek-mn-'+idx,(+avgMn).toFixed(2)+'★');
+    const pct1=pOrO('pct_will_participate');if(pct1!=null)setEl('ek-ct-'+idx,(pct1*1).toFixed(2)+'%');
+    const pct2=pOrO('pct_has_demo');if(pct2!=null)setEl('ek-dm-'+idx,(pct2*1).toFixed(2)+'%');
     const masterHN=awards.find(a=>a.category_id==='master-chef'&&a.city==='Hà Nội');
     const masterHCM=awards.find(a=>a.category_id==='master-chef'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
     const earlyHN=awards.filter(a=>a.category_id==='early-bird'&&a.city==='Hà Nội');
@@ -5358,17 +5314,34 @@ function parseCaseDesc(raw){
 }
 function updateEditionTopPick(){
   EDITIONS.forEach((ed,i)=>{
-    if(!ed.season_id) return;
     const slot=document.getElementById('ed-toppick-'+i);
     if(!slot) return;
-    // Hide vote tab button when voting is closed for this edition's campaign
-    if(voteState.votingClosed){
+    // Hide vote tab button for this edition when done
+    if(ed.topPickDone||voteState.votingClosed){
       document.querySelectorAll('.vf-ed-btn').forEach(b=>{
         const bEd=b.dataset.ed||'';
         if(ed.ids.some(id=>bEd.includes(id))) b.style.display='none';
       });
     }
-    if(!voteState.votingClosed||slot.innerHTML.trim()) return;
+    if(slot.innerHTML.trim()) return; // already rendered
+    // Static winners (e.g. NHAI #1 — results known, no live vote data needed)
+    if(ed.topPickWinners){
+      const cards=ed.topPickWinners.map(w=>`<div class="result-top-pick-card">
+        <div class="rtp-medal">🏆</div>
+        <div>
+          <div class="rtp-kicker">Top Pick Dish Winner <span class="rtp-badge">Đã công bố</span></div>
+          <div class="rtp-title">${e(w.title)}</div>
+          <div class="rtp-meta"><b>${e(w.label)}</b>${w.person?' · '+e(w.person):''}</div>
+        </div>
+      </div>`).join('');
+      slot.innerHTML=`<div class="award-section">
+        <div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#bdf3ce;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.25)">1.000.000đ · Đã công bố</span></div>
+        <div class="result-top-pick-grid">${cards}</div>
+      </div>`;
+      return;
+    }
+    // Dynamic winners from vote data (e.g. NHAI #2 — render when campaign closes)
+    if(!ed.season_id||!voteState.votingClosed) return;
     const groups=[
       {label:'Hà Nội',ids:ed.ids.filter(id=>id.startsWith('hn'))},
       {label:'TP.HCM',ids:ed.ids.filter(id=>id.startsWith('hcm'))}
@@ -5392,7 +5365,7 @@ function updateEditionTopPick(){
     if(cards){
       slot.innerHTML=`<div class="award-section">
         <div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#bdf3ce;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.25)">1.000.000đ · Đã công bố</span></div>
-        ${cards}
+        <div class="result-top-pick-grid">${cards}</div>
       </div>`;
     }
   });
@@ -5527,6 +5500,15 @@ try{ renderCases(); }catch(e){}
 
 
 try{ renderAnns(); }catch(e){}
+// Load news from DB and prepend above static announcements
+(async()=>{try{
+  const posts=await fetch('/rest/v1/news_posts?is_active=eq.1&order=published_at.desc').then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[]);
+  if(!posts.length)return;
+  const fmt=d=>{if(!d)return'';const dt=new Date(d);return(dt.getDate()+'').padStart(2,'0')+'/'+(dt.getMonth()+1+'').padStart(2,'0')+'/'+dt.getFullYear()+' · AI Help Team';};
+  const dbAnns=posts.map(p=>({id:p.id,ico:p.emoji||'📢',title:p.title,text:p.body||'',link:p.link_url||'',date:fmt(p.published_at),r1:p.react_fire||0,r2:p.react_thumb||0,fromDB:true}));
+  anns=[...dbAnns,...anns];
+  renderAnns();
+}catch(e){}})();
 
 
 try{ renderMentors(); }catch(e){}
@@ -5538,7 +5520,7 @@ try{ renderFaq(); }catch(e){}
 // trackCare() removed — real data from nhai-config.js
 
 
-try{ renderEvents(); renderResultsTopPickWinners(); loadEditionFromDB(1,'nhai-day-02'); }catch(e){}
+try{ renderEvents(); renderResultsTopPickWinners(); updateEditionTopPick(); loadEditionFromDB(1,'nhai-day-02'); }catch(e){}
 
 
 try{ initVoteState(); }catch(e){}

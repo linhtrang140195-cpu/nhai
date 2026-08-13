@@ -167,7 +167,7 @@ let seasonGids = JSON.parse(localStorage.getItem("nhai_gids") || JSON.stringify(
 function saveGids(){localStorage.setItem("nhai_gids",JSON.stringify(seasonGids));}
 function getUrl(type){const g=seasonGids[state.currentSeason]?.[type];return g?`/api/proxy-sheet?url=${encodeURIComponent(SHEETS[type]+'&gid='+g)}`:null;}
 
-let state={tab:"dashboard",seasons:[],events:[],mentors:[],faqs:[],registrations:[],awards:[],awardCats:[],cases:[],config:{},campaigns:[],votes:[],seasonStats:[],submissions:[],feedbacks:[],currentSeason:"nhai-day-01",loading:true,cityFilter:"all"};
+let state={tab:"dashboard",seasons:[],events:[],mentors:[],faqs:[],registrations:[],awards:[],awardCats:[],cases:[],config:{},campaigns:[],votes:[],seasonStats:[],submissions:[],feedbacks:[],newsPosts:[],editingPost:null,currentSeason:"nhai-day-01",loading:true,cityFilter:"all"};
 
 async function sb(path,opts={}){
   try{
@@ -182,7 +182,7 @@ async function sb(path,opts={}){
 
 async function loadAll(){
   state.loading=true;render();
-  const[s,e,m,f,r,a,ac,c,cfg,camp,v,ss,subs,fbs]=await Promise.all([
+  const[s,e,m,f,r,a,ac,c,cfg,camp,v,ss,subs,fbs,np]=await Promise.all([
     sb("seasons?order=display_order"),sb("events?order=display_order"),
     sb("mentors?order=display_order"),sb("faqs?order=display_order"),
     sb("registrations?order=created_at.desc&limit=5000"),sb("awards?order=created_at"),
@@ -191,13 +191,18 @@ async function loadAll(){
     sb("top_pick_votes?order=created_at.desc&limit=100"),
     sb("season_stats?order=season_id").catch(()=>[]),
     sb("case_submissions?order=submitted_at.desc").catch(()=>[]),
-    sb("event_feedback?order=submitted_at.desc").catch(()=>[])
+    sb("event_feedback?order=submitted_at.desc").catch(()=>[]),
+    sb("news_posts?order=published_at.desc").catch(()=>[])
   ]);
   state.seasons=s;state.events=e;state.mentors=m;state.faqs=f;
   state.registrations=r;state.awards=a;state.awardCats=ac;state.cases=c;
-  state.campaigns=camp;state.votes=v;state.seasonStats=ss||[];state.submissions=subs||[];state.feedbacks=fbs||[];
+  state.campaigns=camp;state.votes=v;state.seasonStats=ss||[];state.submissions=subs||[];state.feedbacks=fbs||[];state.newsPosts=np||[];
   const cfg2={};(cfg||[]).forEach(row=>{try{cfg2[row.key]=row.value}catch{}});state.config=cfg2;
-  if(s.length&&!s.find(x=>x.id===state.currentSeason))state.currentSeason=s[0].id;
+  if(s.length){
+    // Always land on the latest season on load so overrides/analytics use the correct key
+    const sorted=[...s].sort((a,b)=>(a.display_order||0)-(b.display_order||0));
+    state.currentSeason=sorted[sorted.length-1].id;
+  }
   state.loading=false;render();
   autoBackupToSheet();
 }
@@ -268,12 +273,12 @@ function parseCSV(text){
 // ===== RENDER =====
 function render(){
   renderSidebar();
-  const labels={dashboard:"Dashboard",analytics:"Analytics",schedule:"Lịch trình",results:"Kết quả",voting:"Voting",audit:"Vote audit",registrations:"Đăng ký tham gia",mentors:"Mentors",faq:"FAQ",media:"Ảnh và Media",settings:"Cài đặt site",criteria:"Tiêu chí & Giải thưởng",roadmap:"Roadmap",submissions:"Case Submissions",feedback:"Event Feedback"};
+  const labels={dashboard:"Dashboard",analytics:"Analytics",schedule:"Lịch trình",results:"Kết quả",voting:"Voting",audit:"Vote audit",registrations:"Đăng ký tham gia",mentors:"Mentors",faq:"FAQ",news:"Tin tức",media:"Ảnh và Media",settings:"Cài đặt site",criteria:"Tiêu chí & Giải thưởng",roadmap:"Roadmap",submissions:"Case Submissions",feedback:"Event Feedback"};
   document.getElementById("topTitle").textContent=labels[state.tab]||"Dashboard";
   const s=state.seasons.find(x=>x.id===state.currentSeason);
   document.getElementById("seasonPick").textContent=`📅 ${s?s.name:"—"} ▾`;
   if(state.loading){document.getElementById("content").innerHTML=`<div class="empty-state"><div style="font-size:28px;margin-bottom:12px">🍜</div>Đang load...</div>`;return;}
-  const fn={dashboard:renderDashboard,analytics:renderAnalytics,schedule:renderSchedule,results:renderResults,voting:renderVoting,audit:renderAudit,registrations:renderRegistrations,mentors:renderMentors,faq:renderFAQ,media:renderMedia,settings:renderSettings,criteria:renderCriteria,roadmap:renderRoadmapAdmin,submissions:renderSubmissions,feedback:renderFeedback};
+  const fn={dashboard:renderDashboard,analytics:renderAnalytics,schedule:renderSchedule,results:renderResults,voting:renderVoting,audit:renderAudit,registrations:renderRegistrations,mentors:renderMentors,faq:renderFAQ,news:renderNews,media:renderMedia,settings:renderSettings,criteria:renderCriteria,roadmap:renderRoadmapAdmin,submissions:renderSubmissions,feedback:renderFeedback};
   document.getElementById("content").innerHTML=(fn[state.tab]||renderDashboard)();
   if(state.tab==='criteria') setTimeout(loadCriteriaPanel,0);
 }
@@ -283,7 +288,7 @@ function renderSidebar(){
     {sec:"Tổng quan"},{id:"dashboard",icon:"📊",label:"Dashboard"},{id:"analytics",icon:"📈",label:"Analytics"},
     {sec:"Nội dung mùa"},{id:"schedule",icon:"📅",label:"Lịch trình"},{id:"results",icon:"🏆",label:"Kết quả"},
     {id:"voting",icon:"❤️",label:"Voting"},{id:"audit",icon:"🛡️",label:"Vote audit"},
-    {sec:"Danh sách"},{id:"registrations",icon:"👥",label:"Đăng ký tham gia"},{id:"mentors",icon:"⭐",label:"Mentors"},{id:"faq",icon:"❓",label:"FAQ"},
+    {sec:"Danh sách"},{id:"registrations",icon:"👥",label:"Đăng ký tham gia"},{id:"mentors",icon:"⭐",label:"Mentors"},{id:"faq",icon:"❓",label:"FAQ"},{id:"news",icon:"📰",label:"Tin tức"},
     {sec:"Cấu hình"},{id:"criteria",icon:"🏅",label:"Tiêu chí & Giải"},{id:"roadmap",icon:"🗺️",label:"Roadmap"},{id:"media",icon:"🖼️",label:"Ảnh và Media"},{id:"settings",icon:"⚙️",label:"Cài đặt site"},
     {sec:"Submissions"},{id:"submissions",icon:"📥",label:"Case Submissions"},{id:"feedback",icon:"💬",label:"Event Feedback"}
   ];
@@ -1711,6 +1716,100 @@ async function saveFeedbackConfig(){
 }
 
 // ===== FEEDBACK =====
+function renderNews(){
+  const posts=state.newsPosts||[];
+  const ep=state.editingPost;
+  const fmtDate=d=>{if(!d)return'';const dt=new Date(d);return dt.toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric'});};
+  const postRows=posts.map(p=>`<tr>
+    <td style="padding:8px 10px;font-weight:500">${e(p.emoji||'📢')} ${e(p.title)}</td>
+    <td style="padding:8px 10px;color:var(--textM);font-size:12px">${fmtDate(p.published_at)}</td>
+    <td style="padding:8px 10px;text-align:center">${p.is_active?'✓':''}</td>
+    <td style="padding:8px 10px;white-space:nowrap">
+      <button class="btn btn-primary" style="padding:4px 10px;font-size:12px" onclick="editPost('${e(p.id)}')">Sửa</button>
+      <button class="btn btn-danger" style="padding:4px 10px;font-size:12px;margin-left:4px" onclick="deletePost('${e(p.id)}')">Xóa</button>
+    </td>
+  </tr>`).join('');
+
+  const formHtml=`<div class="card" style="margin-top:16px">
+    <div class="card-header">
+      <div class="card-title">${ep?'✏️ Sửa bài':'+ Bài mới'}</div>
+      <div style="display:flex;gap:8px">
+        ${ep?`<button class="btn" onclick="cancelEditPost()">Hủy</button>`:''}
+        <button class="btn btn-primary" onclick="savePost()">Lưu bài</button>
+      </div>
+    </div>
+    <div style="padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><label>Tiêu đề</label><input type="text" id="np_title" value="${ep?e(ep.title||''):''}" placeholder="Tiêu đề bài viết"/></div>
+      <div><label>Link video (YouTube — cho bài lớn)</label><input type="text" id="np_link" value="${ep?e(ep.link_url||''):''}" placeholder="https://youtu.be/..."/></div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <div style="flex:1"><label>Emoji icon</label><input type="text" id="np_emoji" value="${ep?e(ep.emoji||'📢'):'📢'}" style="max-width:80px"/></div>
+        <div style="flex:1"><label>Ngày đăng</label><input type="date" id="np_date" value="${ep&&ep.published_at?(ep.published_at+'').slice(0,10):new Date().toISOString().slice(0,10)}"/></div>
+        <div style="flex:0 0 auto;padding-bottom:8px"><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="np_active" ${!ep||ep.is_active?'checked':''}/> Hiển thị trên site</label></div>
+      </div>
+      <div><label>Season liên quan</label>
+        <select id="np_season"><option value="">— Tất cả —</option>${(state.seasons||[]).map(s=>`<option value="${e(s.id)}" ${ep&&ep.season_id===s.id?'selected':''}>${e(s.name)}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div style="padding:0 14px 14px">
+      <label>Nội dung / Mô tả ngắn</label>
+      <div id="np_toolbar" style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-bottom:none;border-radius:8px 8px 0 0">
+        ${['B','I','U','S'].map(t=>`<button type="button" class="btn" style="padding:2px 8px;font-size:12px;font-weight:${t==='B'?'bold':'400'};font-style:${t==='I'?'italic':'normal'};text-decoration:${t==='S'?'line-through':t==='U'?'underline':'none'}" onclick="document.execCommand('${t==='B'?'bold':t==='I'?'italic':t==='U'?'underline':'strikethrough'}',false)">${t}</button>`).join('')}
+        <button type="button" class="btn" style="padding:2px 8px;font-size:12px" onclick="document.execCommand('insertOrderedList',false)">1. List</button>
+        <button type="button" class="btn" style="padding:2px 8px;font-size:12px" onclick="document.execCommand('insertUnorderedList',false)">• List</button>
+      </div>
+      <div id="np_body" contenteditable="true" style="min-height:120px;padding:10px 12px;background:var(--bg2);border:1px solid rgba(255,255,255,.1);border-radius:0 0 8px 8px;outline:none;line-height:1.6;font-size:14px">${ep?ep.body||'':''}</div>
+    </div>
+  </div>`;
+
+  return `<div class="card" style="margin-bottom:4px">
+    <div class="card-header">
+      <div><div class="card-title">📰 Tin tức</div><div class="card-sub">Bài mới nhất sẽ hiển thị to trên trang Tin tức. Ảnh bìa/ảnh trong bài tối đa 4MB, tự nén khi lưu. Video = dán link YouTube.</div></div>
+      <button class="btn btn-primary" onclick="newPost()">+ Bài mới</button>
+    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+        <th style="padding:8px 10px;text-align:left;font-size:12px;color:var(--textM)">TIÊU ĐỀ</th>
+        <th style="padding:8px 10px;text-align:left;font-size:12px;color:var(--textM)">NGÀY</th>
+        <th style="padding:8px 10px;text-align:center;font-size:12px;color:var(--textM)">HIỂN THỊ</th>
+        <th style="padding:8px 10px"></th>
+      </tr></thead>
+      <tbody>${postRows||'<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--textM)">Chưa có bài nào</td></tr>'}</tbody>
+    </table>
+  </div>
+  ${formHtml}`;
+}
+async function newPost(){state.editingPost={id:'',title:'',body:'',link_url:'',emoji:'📢',season_id:'',is_active:1,published_at:new Date().toISOString()};render();setTimeout(()=>document.getElementById('np_title')?.focus(),50);}
+function cancelEditPost(){state.editingPost=null;render();}
+function editPost(id){state.editingPost=state.newsPosts.find(p=>p.id===id)||null;render();setTimeout(()=>document.getElementById('np_title')?.focus(),50);}
+async function deletePost(id){
+  if(!confirm('Xóa bài này?'))return;
+  await sb(`news_posts?id=eq.${id}`,{method:'DELETE'});
+  state.newsPosts=state.newsPosts.filter(p=>p.id!==id);
+  render();toast('Đã xóa!');
+}
+async function savePost(){
+  const title=document.getElementById('np_title')?.value?.trim();
+  if(!title){toast('Cần có tiêu đề','danger');return;}
+  const body=document.getElementById('np_body')?.innerHTML||'';
+  const link_url=document.getElementById('np_link')?.value?.trim()||'';
+  const emoji=document.getElementById('np_emoji')?.value?.trim()||'📢';
+  const dateVal=document.getElementById('np_date')?.value;
+  const is_active=document.getElementById('np_active')?.checked?1:0;
+  const season_id=document.getElementById('np_season')?.value||'';
+  const published_at=dateVal?new Date(dateVal).toISOString().slice(0,19).replace('T',' '):(new Date().toISOString().slice(0,19).replace('T',' '));
+  const ep=state.editingPost;
+  if(ep&&ep.id){
+    await sb(`news_posts?id=eq.${ep.id}`,{method:'PATCH',body:{title,body,link_url,emoji,season_id,is_active,published_at}});
+    const idx=state.newsPosts.findIndex(p=>p.id===ep.id);
+    if(idx>=0)state.newsPosts[idx]={...state.newsPosts[idx],title,body,link_url,emoji,season_id,is_active,published_at};
+  }else{
+    const id='np-'+Date.now();
+    const rows=await sb('news_posts',{method:'POST',body:{id,title,body,link_url,emoji,season_id,is_active,published_at,react_fire:0,react_thumb:0}});
+    state.newsPosts.unshift(rows?.[0]||{id,title,body,link_url,emoji,season_id,is_active,published_at,react_fire:0,react_thumb:0});
+  }
+  state.editingPost=null;
+  toast('Đã lưu bài!');render();
+}
 function renderFeedback(){
   const fbs = state.feedbacks || [];
   const bySeason = {};

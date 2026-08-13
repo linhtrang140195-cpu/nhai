@@ -192,6 +192,17 @@ app.post('/api/toggle-master-chef', async (req, res) => {
   } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
 });
 
+app.post('/api/news-react', async (req, res) => {
+  try {
+    const { post_id, type } = req.body || {};
+    if (!post_id || !['fire','thumb'].includes(type)) return res.status(400).json({ ok: false });
+    const col = type === 'fire' ? 'react_fire' : 'react_thumb';
+    await pool.query(`UPDATE news_posts SET ${col} = ${col} + 1 WHERE id = ?`, [post_id]);
+    const [[row]] = await pool.query('SELECT react_fire, react_thumb FROM news_posts WHERE id = ?', [post_id]);
+    res.json({ ok: true, react_fire: row?.react_fire||0, react_thumb: row?.react_thumb||0 });
+  } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
+});
+
 app.post('/api/submit-feedback', async (req, res) => {
   try {
     const { season_id, city, participation_type, output_status, no_output_reason, mentor_rating, mentor_comment, continue_dev, recommend, overall_rating, suggestions } = req.body || {};
@@ -211,7 +222,7 @@ app.post('/api/submit-feedback', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 async function runSchemaMigration() {
-  const migrationFiles = ['001_schema.sql', '002_feedback_day2_import.sql'];
+  const migrationFiles = ['001_schema.sql', '002_feedback_day2_import.sql', '003_news_posts.sql'];
   let totalApplied = 0;
   for (const fileName of migrationFiles) {
     const sqlFile = path.join(__dirname, 'migrations', fileName);

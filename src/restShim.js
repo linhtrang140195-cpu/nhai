@@ -42,6 +42,10 @@ const TABLES = {
     pk: 'session_id',
     columns: ['session_id', 'device_id', 'entry_path', 'page_title', 'user_agent', 'started_at', 'ended_at', 'duration_seconds', 'last_event_at']
   },
+  news_posts: {
+    pk: 'id',
+    columns: ['id', 'title', 'body', 'link_url', 'emoji', 'season_id', 'is_active', 'react_fire', 'react_thumb', 'published_at', 'created_at']
+  },
   page_events: {
     pk: 'id',
     columns: ['id', 'session_id', 'device_id', 'event_name', 'event_value', 'meta', 'created_at']
