@@ -3914,7 +3914,7 @@ function renderEvents(){
 async function loadEditionFromDB(idx,seasonId){
   try{
     const [awards,statsArr]=await Promise.all([
-      fetch('/rest/v1/awards?season_id=eq.'+seasonId+'&status=eq.announced&order=category_id.asc,city.asc').then(r=>r.json()),
+      fetch('/rest/v1/awards?season_id=eq.'+seasonId+'&status=eq.announced&order=category_id.asc,city.asc').then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[]),
       fetch('/rest/v1/season_stats?season_id=eq.'+seasonId).then(r=>r.json())
     ]);
     const st=statsArr[0]||{};
@@ -3923,7 +3923,7 @@ async function loadEditionFromDB(idx,seasonId){
     if(st.total_teams){document.getElementById('ek-t-'+idx).textContent=st.total_teams;}
     if(st.avg_experience){document.getElementById('ek-xp-'+idx).textContent=st.avg_experience.toFixed(2)+'★';}
     if(st.avg_mentor){document.getElementById('ek-mn-'+idx).textContent=st.avg_mentor.toFixed(2)+'★';}
-    if(st.pct_will_participate){document.getElementById('ek-ct-'+idx).textContent=(st.pct_will_participate*1).toFixed(2)+'%';}
+    if(st.pct_want_continue){document.getElementById('ek-ct-'+idx).textContent=(st.pct_want_continue*1).toFixed(2)+'%';}
     if(st.pct_has_demo){document.getElementById('ek-dm-'+idx).textContent=(st.pct_has_demo*1).toFixed(2)+'%';}
     const masterHN=awards.find(a=>a.category_id==='master-chef'&&a.city==='Hà Nội');
     const masterHCM=awards.find(a=>a.category_id==='master-chef'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
@@ -4034,6 +4034,10 @@ function renderResultsTopPickWinners(){
 renderResultsTopPickWinners=function(){
   const panel=document.getElementById('ed-0');
   if(!panel) return;
+  // Guard: if voting closed but no vote data loaded (all 0), keep static content intact
+  const day1Cases=TOP_PICK.filter(c=>c.event==='hn01'||c.event==='hcm01');
+  const totalVotes=day1Cases.reduce((sum,c)=>sum+getDisplayVoteCount(c.id),0);
+  if(voteState.votingClosed&&totalVotes===0) return;
   const sections=Array.from(panel.querySelectorAll('.award-section'));
   const topPickSection=sections.find(sec=>sec.textContent.includes('Top Pick Dish'));
   if(!topPickSection) return;
