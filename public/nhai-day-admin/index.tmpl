@@ -1755,6 +1755,20 @@ function renderNews(){
       <label>Nội dung / Mô tả ngắn</label>
       <div id="np_toolbar" style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-bottom:none;border-radius:8px 8px 0 0">
         ${['B','I','U','S'].map(t=>`<button type="button" class="btn" style="padding:2px 8px;font-size:12px;font-weight:${t==='B'?'bold':'400'};font-style:${t==='I'?'italic':'normal'};text-decoration:${t==='S'?'line-through':t==='U'?'underline':'none'}" onclick="document.execCommand('${t==='B'?'bold':t==='I'?'italic':t==='U'?'underline':'strikethrough'}',false)">${t}</button>`).join('')}
+        <span style="width:1px;background:rgba(255,255,255,.12);margin:0 2px;align-self:stretch;display:inline-block"></span>
+        <button type="button" class="btn" style="padding:2px 8px;font-size:13px" title="Căn trái" onclick="document.execCommand('justifyLeft',false)">&#8676;</button>
+        <button type="button" class="btn" style="padding:2px 8px;font-size:13px" title="Căn giữa" onclick="document.execCommand('justifyCenter',false)">&#8660;</button>
+        <button type="button" class="btn" style="padding:2px 8px;font-size:13px" title="Căn phải" onclick="document.execCommand('justifyRight',false)">&#8677;</button>
+        <span style="width:1px;background:rgba(255,255,255,.12);margin:0 2px;align-self:stretch;display:inline-block"></span>
+        <select style="background:var(--bg2);border:1px solid rgba(255,255,255,.1);color:var(--textH);font-size:12px;padding:2px 4px;border-radius:6px;cursor:pointer" onchange="document.execCommand('formatBlock',false,this.value);this.value=''">
+          <option value="">Kiểu chữ</option>
+          <option value="p">Thường</option>
+          <option value="h2">Tiêu đề lớn</option>
+          <option value="h3">Tiêu đề vừa</option>
+          <option value="h4">Tiêu đề nhỏ</option>
+          <option value="blockquote">Trích dẫn</option>
+        </select>
+        <span style="width:1px;background:rgba(255,255,255,.12);margin:0 2px;align-self:stretch;display:inline-block"></span>
         <button type="button" class="btn" style="padding:2px 8px;font-size:12px" onclick="document.execCommand('insertOrderedList',false)">1. List</button>
         <button type="button" class="btn" style="padding:2px 8px;font-size:12px" onclick="document.execCommand('insertUnorderedList',false)">• List</button>
         <button type="button" class="btn" style="padding:2px 8px;font-size:12px" onclick="document.getElementById('np_img_input').click()" title="Chèn ảnh">🖼️</button>
