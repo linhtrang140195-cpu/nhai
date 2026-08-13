@@ -1778,6 +1778,8 @@ function renderNews(){
           <option value="blockquote">Trích dẫn</option>
         </select>
         <span style="width:1px;background:rgba(255,255,255,.12);margin:0 2px;align-self:stretch;display:inline-block"></span>
+        <button type="button" class="btn" style="padding:2px 8px;font-size:12px" title="Chèn link" onclick="(function(){const url=prompt('Nhập URL:','https://');if(!url)return;const sel=window.getSelection();if(sel&&sel.toString()){document.execCommand('createLink',false,url);}else{document.execCommand('insertHTML',false,'<a href=&quot;'+url+'&quot; target=&quot;_blank&quot;>'+url+'</a>');};})()">🔗</button>
+        <span style="width:1px;background:rgba(255,255,255,.12);margin:0 2px;align-self:stretch;display:inline-block"></span>
         <button type="button" class="btn" style="padding:2px 8px;font-size:12px" onclick="document.execCommand('insertOrderedList',false)">1. List</button>
         <button type="button" class="btn" style="padding:2px 8px;font-size:12px" onclick="document.execCommand('insertUnorderedList',false)">• List</button>
         <button type="button" class="btn" style="padding:2px 8px;font-size:12px" onclick="document.getElementById('np_img_input').click()" title="Chèn ảnh">🖼️</button>

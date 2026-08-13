@@ -3066,6 +3066,27 @@ function filterCase(f,btn){
 
 // ── ARTICLE MODAL ──
 let _glImages=[], _glIdx=0, _artPrevUrl=null;
+function _linkifyEl(el){
+  const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+  const nodes=[];
+  while(walker.nextNode()) nodes.push(walker.currentNode);
+  const re=/https?:\/\/[^\s<>"')\]]+/g;
+  nodes.forEach(node=>{
+    if(!re.test(node.textContent)) return;
+    re.lastIndex=0;
+    const frag=document.createDocumentFragment();
+    let last=0,m;
+    while((m=re.exec(node.textContent))!==null){
+      if(m.index>last) frag.appendChild(document.createTextNode(node.textContent.slice(last,m.index)));
+      const a=document.createElement('a');
+      a.href=m[0];a.textContent=m[0];a.target='_blank';a.rel='noopener';
+      frag.appendChild(a);
+      last=m.index+m[0].length;
+    }
+    if(last<node.textContent.length) frag.appendChild(document.createTextNode(node.textContent.slice(last)));
+    if(node.parentElement&&node.parentElement.tagName!=='A') node.parentNode.replaceChild(frag,node);
+  });
+}
 function _renderGallery(imgs){
   if(!imgs||!imgs.length) return '';
   return `<div class="art-gallery"><div class="art-gallery-label">📸 Ảnh sự kiện</div>
@@ -3094,7 +3115,9 @@ function openArticleModal(src){
   const setContent=(title,body,meta,gallery,postId)=>{
     _glImages=gallery||[];
     document.getElementById('artTitle').textContent=title||'';
-    document.getElementById('artBody').innerHTML=(body||'')+_renderGallery(_glImages);
+    const artBody=document.getElementById('artBody');
+    artBody.innerHTML=(body||'')+_renderGallery(_glImages);
+    _linkifyEl(artBody);
     document.getElementById('artMeta').textContent=meta||'';
     modal.classList.add('open');
     document.body.style.overflow='hidden';
