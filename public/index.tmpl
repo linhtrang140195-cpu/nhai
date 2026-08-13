@@ -4060,12 +4060,8 @@ function renderResultsTopPickWinners(){
 }
 
 renderResultsTopPickWinners=function(){
-  const panel=document.getElementById('ed-0');
-  if(!panel) return;
-  // Guard: if voting closed but no vote data loaded (all 0), keep static content intact
-  const day1Cases=TOP_PICK.filter(c=>c.event==='hn01'||c.event==='hcm01');
-  const totalVotes=day1Cases.reduce((sum,c)=>sum+getDisplayVoteCount(c.id),0);
-  if(voteState.votingClosed&&totalVotes===0) return;
+  // NHAI DAY #1 winners are hardcoded in static HTML — do not overwrite with vote data
+  return;
   const sections=Array.from(panel.querySelectorAll('.award-section'));
   const topPickSection=sections.find(sec=>sec.textContent.includes('Top Pick Dish'));
   if(!topPickSection) return;
