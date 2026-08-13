@@ -226,7 +226,8 @@ function closeModal(){document.getElementById("modalArea").innerHTML="";}
 function getField(k){return document.getElementById("f_"+k)?.value||"";}
 
 async function saveConfig(key,value){
-  await sb(`site_config?key=eq.${key}`,{method:"PATCH",body:{value:JSON.stringify(value),updated_at:new Date().toISOString()}});
+  const patchRes=await sb(`site_config?key=eq.${key}`,{method:"PATCH",body:{value:JSON.stringify(value),updated_at:new Date().toISOString()}});
+  if(!patchRes||!patchRes.length) await sb(`site_config`,{method:"POST",body:{key,value:JSON.stringify(value),updated_at:new Date().toISOString()}});
   state.config[key]=value;toast(`Đã lưu ${key}`);render();
 }
 
@@ -1426,13 +1427,16 @@ function _getRoadmapItems(){
 
 function _snapshotRoadmap(){
   const items=_getRoadmapItems();
-  return items.map((r,i)=>({
-    ...r,
-    status:document.getElementById(`rm_status_${i}`)?.value||r.status,
-    date:document.getElementById(`rm_date_${i}`)?.value||r.date,
-    name:document.getElementById(`rm_name_${i}`)?.value||r.name,
-    articleUrl:(document.getElementById(`rm_url_${i}`)?.value||'').trim()||r.articleUrl||'',
-  }));
+  return items.map((r,i)=>{
+    const status=document.getElementById(`rm_status_${i}`)?.value||r.status;
+    const articleUrl=(document.getElementById(`rm_url_${i}`)?.value||'').trim();
+    const out={status,date:document.getElementById(`rm_date_${i}`)?.value||r.date,name:document.getElementById(`rm_name_${i}`)?.value||r.name,articleUrl};
+    // preserve voteCity/recapId but strip stale register/voteCity when status changed
+    if(r.voteCity&&status!=='done'&&status!=='register') out.voteCity=r.voteCity;
+    if(r.recapId) out.recapId=r.recapId;
+    if(status==='register') out.register=true;
+    return out;
+  });
 }
 function moveRoadmapItem(i,dir){
   const items=_snapshotRoadmap();
@@ -1515,6 +1519,7 @@ function renderSettings(){
     {key:"show_results",label:"Hiện tab Kết quả",desc:"Hiện tab Kết quả & Bình chọn"},
     {key:"show_top_pick_dish",label:"Hiện Top Pick Dish",desc:"Bật sau khi đóng voting và có winner"},
     {key:"show_vote_button",label:"Nút vote",desc:"Cho phép user vote — tắt khi đóng"},
+    {key:"show_event_dates",label:"Cards ngày tổ chức",desc:"Hiện 3 cards HN / HCM / Đăng ký ở đầu trang — tắt sau khi event kết thúc"},
     {key:"show_register_button",label:"Nút đăng ký",desc:"Hiện CTA Đăng ký ngay"},
     {key:"show_winner_banner",label:"Banner người thắng",desc:"Hiện banner kết quả trên homepage"},
     {key:"show_btc_section",label:"Đề bài từ BTC",desc:"Hiện section Đề bài gợi ý"},
