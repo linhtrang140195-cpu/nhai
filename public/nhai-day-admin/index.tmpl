@@ -442,6 +442,24 @@ function saveGid(type,inputId){
   saveGids();toast("Đã lưu gid!");render();
 }
 
+async function saveStatOverrides(){
+  const n=v=>v===''||v===null||v===undefined?undefined:+v;
+  const ov={};
+  const xp=n(document.getElementById('ov_avg_xp')?.value);
+  const mn=n(document.getElementById('ov_avg_mn')?.value);
+  const teams=n(document.getElementById('ov_total_teams')?.value);
+  const participants=n(document.getElementById('ov_total_participants')?.value);
+  if(xp!==undefined)ov.avg_experience=xp;
+  if(mn!==undefined)ov.avg_mentor=mn;
+  if(teams!==undefined)ov.total_teams=teams;
+  if(participants!==undefined)ov.total_participants=participants;
+  const key='stat_override_'+state.currentSeason;
+  const patchRes=await sb(`site_config?key=eq.${key}`,{method:'PATCH',body:{value:JSON.stringify(ov),updated_at:new Date().toISOString()}});
+  if(!patchRes||!patchRes.length)await sb('site_config',{method:'POST',body:{key,value:JSON.stringify(ov),updated_at:new Date().toISOString()}});
+  state.config[key]=ov;
+  toast('Đã lưu ghi đè!');render();
+}
+
 async function autoBackupToSheet(){
   const url=(state.config.backup_sheet_url||"").trim();
   if(!url||!state.registrations.length)return;
@@ -1212,6 +1230,20 @@ function renderAnalytics(){
       <button class="btn btn-success" onclick="saveGid('feedback','fbGid')">Lưu</button>
     </div>
   </div>
+  ${(()=>{
+    const ovKey='stat_override_'+state.currentSeason;
+    const ov=state.config[ovKey]||{};
+    return `<div class="card" style="margin-bottom:14px">
+      <div class="card-header"><div><div class="card-title">✏️ Ghi đè thủ công số liệu công khai</div><div class="card-sub">Ghi đè avg★, team tham gia hiển thị trên website (ưu tiên cao hơn tính tự động)</div></div><button class="btn btn-primary" onclick="saveStatOverrides()">Lưu ghi đè</button></div>
+      <div style="padding:12px 14px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+        <div><label>⭐ Trải nghiệm chung (★)</label><input type="number" step="0.01" id="ov_avg_xp" value="${ov.avg_experience||''}" placeholder="Auto" style="margin-bottom:0"/></div>
+        <div><label>👨‍🏫 Hữu Ích (★)</label><input type="number" step="0.01" id="ov_avg_mn" value="${ov.avg_mentor||''}" placeholder="Auto" style="margin-bottom:0"/></div>
+        <div><label>🏠 Team tham gia (số)</label><input type="number" id="ov_total_teams" value="${ov.total_teams||''}" placeholder="Auto (từ đơn đăng ký)" style="margin-bottom:0"/></div>
+        <div><label>👥 Người tham gia (số)</label><input type="number" id="ov_total_participants" value="${ov.total_participants||''}" placeholder="Không đổi" style="margin-bottom:0"/></div>
+      </div>
+      <div style="padding:0 14px 10px;font-size:10px;color:var(--textM)">Để trống = dùng giá trị tính tự động. Nhập số = ghi đè hiển thị trên web công khai.</div>
+    </div>`;
+  })()}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
     <div class="card"><div class="card-header"><div class="card-title">📊 Team đăng ký</div><div class="card-sub">Tổng ${headcount} đầu người (${state.registrations.length} đăng ký + ${headcount-state.registrations.length} thành viên)</div></div><div style="padding:14px">${bars||'<div class="empty-state">Chưa có data</div>'}</div></div>
     <div class="card"><div class="card-header"><div class="card-title">🏙️ HN vs HCM</div></div><div style="padding:14px">

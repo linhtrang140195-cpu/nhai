@@ -204,6 +204,7 @@ app.post('/api/submit-feedback', async (req, res) => {
       [id, season_id||'nhai-day-02', city, participation_type, output_status, no_output_reason||null, mentor_rating||null, mentor_comment||null, continue_dev||null, recommend||null, overall_rating||null, suggestions||null]
     );
     res.json({ ok: true, id });
+    computeFeedbackStats().catch(()=>{});
   } catch(e) { res.status(500).json({ ok: false, message: e.message }); }
 });
 

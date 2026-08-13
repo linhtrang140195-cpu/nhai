@@ -3936,18 +3936,22 @@ function renderEvents(){
 
 async function loadEditionFromDB(idx,seasonId){
   try{
-    const [awards,statsArr]=await Promise.all([
+    const [awards,statsArr,overrideCfg]=await Promise.all([
       fetch('/rest/v1/awards?season_id=eq.'+seasonId+'&order=category_id.asc,city.asc').then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[]),
-      fetch('/rest/v1/season_stats?season_id=eq.'+seasonId).then(r=>r.json())
+      fetch('/rest/v1/season_stats?season_id=eq.'+seasonId).then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[]),
+      fetch('/rest/v1/site_config?key=eq.stat_override_'+seasonId).then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[])
     ]);
     const st=statsArr[0]||{};
+    const ov=overrideCfg[0]?JSON.parse(overrideCfg[0].value||'{}'):{};
+    const get=(k,raw)=>ov[k]!==undefined?ov[k]:(raw?st[k]:st[k]);
     const si=k=>{const el=document.getElementById(k);if(el)el.textContent=k;};
-    if(st.total_participants){document.getElementById('ek-p-'+idx).textContent=st.total_participants;}
-    if(st.total_teams){document.getElementById('ek-t-'+idx).textContent=st.total_teams;}
-    if(st.avg_experience){document.getElementById('ek-xp-'+idx).textContent=st.avg_experience.toFixed(2)+'★';}
-    if(st.avg_mentor){document.getElementById('ek-mn-'+idx).textContent=st.avg_mentor.toFixed(2)+'★';}
-    if(st.pct_will_participate){document.getElementById('ek-ct-'+idx).textContent=(st.pct_will_participate*1).toFixed(2)+'%';}
-    if(st.pct_has_demo){document.getElementById('ek-dm-'+idx).textContent=(st.pct_has_demo*1).toFixed(2)+'%';}
+    const pOrO=k=>ov[k]!==undefined?ov[k]:st[k];
+    if(pOrO('total_participants')){document.getElementById('ek-p-'+idx).textContent=pOrO('total_participants');}
+    if(pOrO('total_teams')){document.getElementById('ek-t-'+idx).textContent=pOrO('total_teams');}
+    if(pOrO('avg_experience')){document.getElementById('ek-xp-'+idx).textContent=(+pOrO('avg_experience')).toFixed(2)+'★';}
+    if(pOrO('avg_mentor')){document.getElementById('ek-mn-'+idx).textContent=(+pOrO('avg_mentor')).toFixed(2)+'★';}
+    if(pOrO('pct_will_participate')){document.getElementById('ek-ct-'+idx).textContent=(pOrO('pct_will_participate')*1).toFixed(2)+'%';}
+    if(pOrO('pct_has_demo')){document.getElementById('ek-dm-'+idx).textContent=(pOrO('pct_has_demo')*1).toFixed(2)+'%';}
     const masterHN=awards.find(a=>a.category_id==='master-chef'&&a.city==='Hà Nội');
     const masterHCM=awards.find(a=>a.category_id==='master-chef'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
     const earlyHN=awards.filter(a=>a.category_id==='early-bird'&&a.city==='Hà Nội');
