@@ -44,7 +44,7 @@ const TABLES = {
   },
   news_posts: {
     pk: 'id',
-    columns: ['id', 'title', 'body', 'link_url', 'emoji', 'season_id', 'is_active', 'react_fire', 'react_thumb', 'published_at', 'created_at']
+    columns: ['id', 'title', 'body', 'link_url', 'emoji', 'season_id', 'is_active', 'react_fire', 'react_thumb', 'gallery_images', 'published_at', 'created_at']
   },
   page_events: {
     pk: 'id',
