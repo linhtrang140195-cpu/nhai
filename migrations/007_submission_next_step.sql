@@ -1,1 +1,1 @@
-ALTER TABLE case_submissions ADD COLUMN IF NOT EXISTS next_step TEXT DEFAULT NULL;
+ALTER TABLE case_submissions ADD COLUMN next_step TEXT DEFAULT NULL;
