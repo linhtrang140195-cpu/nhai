@@ -834,6 +834,24 @@ textarea.inp{resize:vertical;min-height:64px;}
 
 .recap-xbtn{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.08);border:none;color:var(--muted);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;}
 
+/* ARTICLE MODAL */
+.art-overlay{display:none;position:fixed;inset:0;background:rgba(5,4,16,.88);backdrop-filter:blur(12px);z-index:310;overflow-y:auto;padding:20px;}
+.art-overlay.open{display:flex;align-items:flex-start;justify-content:center;}
+.art-box{background:var(--night);border:1px solid rgba(242,185,51,.18);border-radius:22px;width:100%;max-width:760px;margin:auto;padding:38px 32px 40px;position:relative;box-shadow:0 30px 90px rgba(0,0,0,.6);}
+.art-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.08);border:none;color:var(--muted);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;}
+.art-close:hover{background:rgba(255,255,255,.14);}
+.art-meta{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.art-title{font-size:22px;font-weight:800;color:var(--cream);line-height:1.35;margin-bottom:20px;}
+.art-body{color:rgba(220,210,240,.85);font-size:15px;line-height:1.75;}
+.art-body img{max-width:100%;border-radius:10px;margin:12px 0;}
+.art-body h1,.art-body h2,.art-body h3{color:var(--cream);margin:1.2em 0 .5em;}
+.art-body ul,.art-body ol{padding-left:1.4em;margin:.6em 0;}
+.art-body li{margin:.3em 0;}
+.art-body a{color:var(--gold);text-decoration:underline;}
+.art-body b,.art-body strong{color:var(--cream);}
+.ann-read-btn{background:none;border:1px solid rgba(242,185,51,.3);color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.05em;padding:5px 12px;border-radius:999px;cursor:pointer;transition:background .15s;}
+.ann-read-btn:hover{background:rgba(242,185,51,.1);}
+
 
 .recap-hero{position:relative;margin-bottom:22px;padding:18px;border-radius:20px;background:radial-gradient(circle at top center,rgba(123,77,219,.18),transparent 42%),radial-gradient(circle at 18% 18%,rgba(242,185,51,.12),transparent 28%),linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);overflow:hidden;}
 .recap-hero::before{content:'';position:absolute;inset:-12% -6%;pointer-events:none;opacity:.3;background:radial-gradient(circle at 14% 24%,rgba(255,255,255,.55) 0 1px,transparent 2px),radial-gradient(circle at 78% 18%,rgba(255,235,180,.45) 0 1px,transparent 2px),radial-gradient(circle at 66% 68%,rgba(255,255,255,.35) 0 1px,transparent 2px),radial-gradient(circle at 28% 74%,rgba(255,235,180,.3) 0 1px,transparent 2px);filter:blur(1px);}
@@ -2267,6 +2285,16 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 
 
 
+<!-- ===== ARTICLE MODAL ===== -->
+<div class="art-overlay" id="artModal">
+<div class="art-box">
+  <button class="art-close" onclick="closeArticleModal()">✕</button>
+  <div class="art-meta" id="artMeta"></div>
+  <div class="art-title" id="artTitle"></div>
+  <div class="art-body" id="artBody"></div>
+</div>
+</div>
+
 <!-- ===== SUBMIT CASE MODAL ===== -->
 <div class="overlay" id="submitModal">
 <div class="modal">
@@ -3009,6 +3037,36 @@ function filterCase(f,btn){
 
 
 
+// ── ARTICLE MODAL ──
+function openArticleModal(src){
+  const modal=document.getElementById('artModal');
+  const setContent=(title,body,meta)=>{
+    document.getElementById('artTitle').textContent=title||'';
+    document.getElementById('artBody').innerHTML=body||'';
+    document.getElementById('artMeta').textContent=meta||'';
+    modal.classList.add('open');
+    document.body.style.overflow='hidden';
+  };
+  if(typeof src==='string'){
+    // src is a news post ID — fetch from DB
+    fetch('/rest/v1/news_posts?id=eq.'+encodeURIComponent(src)+'&limit=1')
+      .then(r=>r.json())
+      .then(rows=>{
+        const p=rows&&rows[0];
+        if(!p) return;
+        setContent(p.title, p.body||'', (p.emoji?p.emoji+' ':'')+p.published_at?.slice(0,10));
+      }).catch(()=>{});
+  } else {
+    // src is an ann object
+    setContent(src.title, src.text||'', (src.ico?src.ico+' ':'')+src.date);
+  }
+}
+function closeArticleModal(){
+  const modal=document.getElementById('artModal');
+  modal.classList.remove('open');
+  document.body.style.overflow='';
+}
+
 // ── ANNOUNCEMENTS ──
 
 
@@ -3033,7 +3091,7 @@ function renderAnns(){
           <div class="ann-title" data-e data-mf="anns.${i}.title">${e(a.title)}</div>
 
 
-          <div class="ann-text" data-e data-mf="anns.${i}.text">${e(a.text)}</div>
+          <div class="ann-text" data-e data-mf="anns.${i}.text">${a.fromDB?e(a.text.replace(/<[^>]*>/g,'')).slice(0,220)+(a.text.replace(/<[^>]*>/g,'').length>220?'…':''):e(a.text)}</div>
 
 
           <span class="ann-date" data-e data-mf="anns.${i}.date">${e(a.date)}</span>
@@ -3050,6 +3108,7 @@ function renderAnns(){
           <button class="react${myReacts['a'+i+'r1']?' on':''}" onclick="doReact('anns',${i},'r1',this)">🔥 <span class="cn">${a.r1}</span></button>
           <button class="react${myReacts['a'+i+'r2']?' on':''}" onclick="doReact('anns',${i},'r2',this)">👍 <span class="cn">${a.r2}</span></button>
         </div>
+        ${a.fromDB&&a.text?`<button class="ann-read-btn" onclick="openArticleModal(anns[${i}])">Đọc thêm →</button>`:''}
         ${a.link?`<a class="ann-read-link" href="${e(a.link)}" target="_blank" rel="noopener">Xem bài →</a>`:''}
       </div>
     </div>`).join('');
@@ -4856,7 +4915,7 @@ function openCaseDemo(caseId){
   }
 }
 document.addEventListener('keydown',ev=>{
-  if(ev.key==='Escape'){ closeImageLightbox(); closeDemoModal(); }
+  if(ev.key==='Escape'){ closeImageLightbox(); closeDemoModal(); closeArticleModal(); }
 });
 
 
@@ -5547,7 +5606,8 @@ renderRoadmap=function(){
   track.innerHTML=ROADMAP_DISPLAY.map((r,i)=>{
     const lbl=lblMap[r.status]||r.status;
     let cta='';
-    if(r.articleUrl) cta=`<a href="${r.articleUrl}" target="_blank" rel="noopener" class="rm-cta-link" style="text-decoration:none;display:inline-block">Xem bài viết →</a>`;
+    if(r.articleUrl&&/^np-/.test(r.articleUrl)) cta=`<button class="rm-cta-link" onclick="openArticleModal('${r.articleUrl.replace(/'/g,'\\x27')}')">Xem recap →</button>`;
+    else if(r.articleUrl) cta=`<a href="${r.articleUrl}" target="_blank" rel="noopener" class="rm-cta-link" style="text-decoration:none;display:inline-block">Xem bài viết →</a>`;
     else if(r.recapId) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>openRecap('${r.recapId}'),60)">Xem recap →</button>`;
     else if(r.voteCity) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>{switchResTab('vote',document.querySelectorAll('.rtab')[1]);filterVote('${r.voteCity}',document.querySelectorAll('.vf-btn')[0]);},60)">Xem kết quả →</button>`;
     else if(r.register) cta=`<button class="rm-cta-link" onclick="openReg()">Đăng ký ngay →</button>`;

@@ -1727,6 +1727,7 @@ function renderNews(){
     <td style="padding:8px 10px;white-space:nowrap">
       <button class="btn btn-primary" style="padding:4px 10px;font-size:12px" onclick="editPost('${e(p.id)}')">Sửa</button>
       <button class="btn btn-danger" style="padding:4px 10px;font-size:12px;margin-left:4px" onclick="deletePost('${e(p.id)}')">Xóa</button>
+      <button class="btn" style="padding:4px 8px;font-size:11px;margin-left:4px" onclick="navigator.clipboard.writeText('${e(p.id)}').then(()=>toast('Đã copy ID: ${e(p.id)}'))">📋 ID</button>
     </td>
   </tr>`).join('');
 
@@ -1756,6 +1757,8 @@ function renderNews(){
         ${['B','I','U','S'].map(t=>`<button type="button" class="btn" style="padding:2px 8px;font-size:12px;font-weight:${t==='B'?'bold':'400'};font-style:${t==='I'?'italic':'normal'};text-decoration:${t==='S'?'line-through':t==='U'?'underline':'none'}" onclick="document.execCommand('${t==='B'?'bold':t==='I'?'italic':t==='U'?'underline':'strikethrough'}',false)">${t}</button>`).join('')}
         <button type="button" class="btn" style="padding:2px 8px;font-size:12px" onclick="document.execCommand('insertOrderedList',false)">1. List</button>
         <button type="button" class="btn" style="padding:2px 8px;font-size:12px" onclick="document.execCommand('insertUnorderedList',false)">• List</button>
+        <button type="button" class="btn" style="padding:2px 8px;font-size:12px" onclick="document.getElementById('np_img_input').click()" title="Chèn ảnh">🖼️</button>
+        <input type="file" id="np_img_input" accept="image/*" style="display:none" onchange="handleNewsImageUpload(this)"/>
       </div>
       <div id="np_body" contenteditable="true" style="min-height:120px;padding:10px 12px;background:var(--bg2);border:1px solid rgba(255,255,255,.1);border-radius:0 0 8px 8px;outline:none;line-height:1.6;font-size:14px">${ep?ep.body||'':''}</div>
     </div>
@@ -1809,6 +1812,33 @@ async function savePost(){
   }
   state.editingPost=null;
   toast('Đã lưu bài!');render();
+}
+async function handleNewsImageUpload(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  input.value='';
+  const MAX=1400;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    const img=new Image();
+    img.onload=async()=>{
+      const canvas=document.createElement('canvas');
+      let w=img.naturalWidth,h=img.naturalHeight;
+      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const data=canvas.toDataURL('image/jpeg',.82);
+      try{
+        const res=await fetch('/api/upload-news-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data,type:'image/jpeg'})});
+        const json=await res.json();
+        if(!json.ok)throw new Error(json.message);
+        const ed=document.getElementById('np_body');
+        if(ed){ed.focus();document.execCommand('insertHTML',false,`<img src="${json.url}" style="max-width:100%;border-radius:8px;margin:8px 0"/>`);}
+      }catch(err){toast('Lỗi upload ảnh: '+err.message,'danger');}
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 function renderFeedback(){
   const fbs = state.feedbacks || [];
