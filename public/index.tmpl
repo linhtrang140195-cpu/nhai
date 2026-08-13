@@ -3946,7 +3946,7 @@ async function loadEditionFromDB(idx,seasonId){
     if(st.total_teams){document.getElementById('ek-t-'+idx).textContent=st.total_teams;}
     if(st.avg_experience){document.getElementById('ek-xp-'+idx).textContent=st.avg_experience.toFixed(2)+'★';}
     if(st.avg_mentor){document.getElementById('ek-mn-'+idx).textContent=st.avg_mentor.toFixed(2)+'★';}
-    if(st.pct_want_continue){document.getElementById('ek-ct-'+idx).textContent=(st.pct_want_continue*1).toFixed(2)+'%';}
+    if(st.pct_will_participate){document.getElementById('ek-ct-'+idx).textContent=(st.pct_will_participate*1).toFixed(2)+'%';}
     if(st.pct_has_demo){document.getElementById('ek-dm-'+idx).textContent=(st.pct_has_demo*1).toFixed(2)+'%';}
     const masterHN=awards.find(a=>a.category_id==='master-chef'&&a.city==='Hà Nội');
     const masterHCM=awards.find(a=>a.category_id==='master-chef'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));

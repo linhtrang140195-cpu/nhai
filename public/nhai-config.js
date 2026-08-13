@@ -219,7 +219,7 @@
         if (ss.total_teams)      set(`ek-t-${i}`,  ss.total_teams);
         if (ss.avg_experience)   set(`ek-xp-${i}`, ss.avg_experience + '★');
         if (ss.avg_mentor)       set(`ek-mn-${i}`, ss.avg_mentor + '★');
-        if (ss.pct_want_continue) set(`ek-ct-${i}`, ss.pct_want_continue + '%');
+        if (ss.pct_will_participate) set(`ek-ct-${i}`, ss.pct_will_participate + '%');
         if (ss.pct_has_demo)     set(`ek-dm-${i}`, ss.pct_has_demo + '%');
       }
     });
