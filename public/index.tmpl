@@ -3942,7 +3942,8 @@ async function loadEditionFromDB(idx,seasonId){
       fetch('/rest/v1/site_config?key=eq.stat_override_'+seasonId).then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[])
     ]);
     const st=statsArr[0]||{};
-    const ov=overrideCfg[0]?JSON.parse(overrideCfg[0].value||'{}'):{};
+    const _rawOv=overrideCfg[0]?.value;
+    const ov=!_rawOv?{}:(typeof _rawOv==='string'?JSON.parse(_rawOv):_rawOv);
     const get=(k,raw)=>ov[k]!==undefined?ov[k]:(raw?st[k]:st[k]);
     const si=k=>{const el=document.getElementById(k);if(el)el.textContent=k;};
     const pOrO=k=>ov[k]!==undefined?ov[k]:st[k];
