@@ -1498,7 +1498,11 @@ function renderRoadmapAdmin(){
     <b>active</b> — Đang diễn ra<br>
     <b>soon</b> — Sắp tới<br>
     <b>tbd</b> — TBD, chưa xác định ngày<br><br>
-    <b>🔗 Link bài viết</b> — Nhập URL để hiện nút "Xem bài viết →" trên card (ưu tiên cao nhất, override recap/vote).<br><br>
+    <b>done / result</b> — Nếu không có link → tự hiện nút "Xem kết quả →" chuyển sang tab Kết quả.<br><br>
+    <b>🔗 Link bài viết / recap</b><br>
+    • Dán <b>ID bài tin tức</b> (np-...) từ Admin → Tin tức → 📋 ID → mở bài dạng popup<br>
+    • Dán <b>URL ngoài</b> (https://...) → mở tab mới<br>
+    • Để trống → dùng nút mặc định của status<br><br>
     Sau khi lưu, public site tự load config mới — không cần deploy lại.
   </div></div>`;
 }
