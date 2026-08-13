@@ -121,6 +121,7 @@ app.get(['/faq', '/faq/'], servePage('index.tmpl'));
 app.get(['/submit-usecase', '/submit-usecase/'], servePage('index.tmpl'));
 app.get(['/dang-ky', '/dang-ky/'], servePage('index.tmpl'));
 app.get(['/feedback', '/feedback/'], servePage('index.tmpl'));
+app.get('/bai-viet/:postId', servePage('index.tmpl'));
 app.get(['/nhai-day-admin', '/nhai-day-admin/'], servePage('nhai-day-admin/index.tmpl'));
 app.get('/nhai-day-admin/:tab', servePage('nhai-day-admin/index.tmpl'));
 app.get('/nhai-day-admin.html', servePage('nhai-day-admin.tmpl'));
