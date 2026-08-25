@@ -2637,6 +2637,12 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
 
     <div class="fg"><label class="lbl">Bài toán muốn giải quyết</label><textarea class="inp" id="fProb" placeholder="Pain point bạn muốn cook cùng AI (có thể để trống — mentor sẽ giúp bạn tìm đề)"></textarea></div>
 
+    <div class="fg"><label class="lbl">Bạn đang build dở hay bắt đầu làm từ đầu?</label>
+      <div class="opts">
+        <div class="opt"><input type="radio" name="build_status" id="bsDo" value="Đang build dở"><label for="bsDo">🔧 Đang build dở</label></div>
+        <div class="opt"><input type="radio" name="build_status" id="bsNew" value="Bắt đầu từ đầu"><label for="bsNew">✨ Bắt đầu từ đầu</label></div>
+      </div>
+    </div>
 
     <button class="fsub" onclick="submitReg()">✦ Xác nhận đăng ký</button>
 
@@ -3603,7 +3609,8 @@ async function submitReg(){
     member3_email: document.getElementById('m3e').value.trim().toLowerCase()||null,
     member3_team: document.getElementById('m3t').value||null,
     team_matching_note: document.getElementById('fMatch').value.trim()||null,
-    problem_to_solve: document.getElementById('fProb').value.trim()||null
+    problem_to_solve: document.getElementById('fProb').value.trim()||null,
+    ai_level: (document.querySelector('input[name="build_status"]:checked')||{}).value||null
   };
 
   const ctrl=new AbortController();
