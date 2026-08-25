@@ -1381,7 +1381,7 @@ function renderCriteria(){
 function loadCriteriaPanel(){
   const el=document.getElementById('criteriaPanel');
   if(!el) return;
-  sb('/rest/v1/award_categories?order=display_order.asc').then(rows=>{
+  sb('award_categories?order=display_order.asc').then(rows=>{
     if(!Array.isArray(rows)||!rows.length){el.innerHTML='<div class="empty-state">Không có dữ liệu</div>';return;}
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:14px;margin-top:4px">
       ${rows.map(r=>`<div class="card" style="padding:16px;display:grid;grid-template-columns:48px 1fr 140px 80px;gap:12px;align-items:start">
@@ -1403,7 +1403,7 @@ function loadCriteriaPanel(){
 async function saveCriteriaRow(id){
   const get=k=>document.getElementById(k+'_'+id)?.value||'';
   const body={icon:get('ci_icon'),name:get('ci_name'),description:get('ci_desc'),prize_amount:get('ci_prize'),section:get('ci_sec')};
-  await sb(`/rest/v1/award_categories?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(body)});
+  await sb(`award_categories?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(body)});
   showToast('Đã lưu ✓');
 }
 
