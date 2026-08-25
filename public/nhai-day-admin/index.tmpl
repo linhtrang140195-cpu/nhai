@@ -1403,7 +1403,7 @@ function loadCriteriaPanel(){
 async function saveCriteriaRow(id){
   const get=k=>document.getElementById(k+'_'+id)?.value||'';
   const body={icon:get('ci_icon'),name:get('ci_name'),description:get('ci_desc'),prize_amount:get('ci_prize'),section:get('ci_sec')};
-  await sb(`award_categories?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(body)});
+  await sb(`award_categories?id=eq.${id}`,{method:'PATCH',body});
   showToast('Đã lưu ✓');
 }
 
