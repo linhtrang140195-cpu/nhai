@@ -28,7 +28,7 @@ const TABLES = {
     columns: ['id', 'season_id', 'category_id', 'city', 'winner_case_id', 'winner_name', 'winner_team',
       'winner_description', 'category_tags', 'status', 'votes_count', 'created_at']
   },
-  award_categories: { pk: 'id', columns: ['id', 'name', 'description', 'prize_amount', 'icon', 'display_order'] },
+  award_categories: { pk: 'id', columns: ['id', 'name', 'description', 'prize_amount', 'icon', 'display_order', 'section'] },
   cases: {
     pk: 'id',
     columns: ['id', 'season_id', 'campaign_id', 'city', 'title', 'short_description', 'full_description',
