@@ -1384,7 +1384,7 @@ function loadCriteriaPanel(){
   sb('award_categories?order=display_order.asc').then(rows=>{
     if(!Array.isArray(rows)||!rows.length){el.innerHTML='<div class="empty-state">Không có dữ liệu</div>';return;}
     el.innerHTML=`<div style="display:flex;flex-direction:column;gap:14px;margin-top:4px">
-      ${rows.map(r=>`<div class="card" style="padding:16px;display:grid;grid-template-columns:48px 1fr 140px 80px;gap:12px;align-items:start">
+      ${rows.map(r=>`<div class="card" style="padding:16px;display:grid;grid-template-columns:48px 1fr 140px 80px 36px;gap:12px;align-items:start" id="ci_row_${r.id}">
         <input value="${r.icon||''}" style="font-size:22px;text-align:center;background:var(--bg3);border:1px solid var(--borderL);border-radius:8px;padding:6px;color:var(--text);width:48px" id="ci_icon_${r.id}">
         <div style="display:flex;flex-direction:column;gap:6px">
           <input value="${r.name||''}" placeholder="Tên giải" style="background:var(--bg3);border:1px solid var(--borderL);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;font-weight:600;width:100%" id="ci_name_${r.id}">
@@ -1396,6 +1396,7 @@ function loadCriteriaPanel(){
         </div>
         <input value="${r.prize_amount||''}" placeholder="Giá trị" style="background:var(--bg3);border:1px solid var(--borderL);border-radius:6px;padding:6px 10px;color:var(--gold);font-size:13px;font-weight:700;width:100%" id="ci_prize_${r.id}">
         <button class="btn-sm btn-primary" onclick="saveCriteriaRow('${r.id}')" style="align-self:center">Lưu</button>
+        <button class="btn-sm" onclick="deleteCriteriaRow('${r.id}')" style="align-self:center;background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:13px" title="Xóa">🗑</button>
       </div>`).join('')}
     </div>`;
   }).catch(()=>{el.innerHTML='<div class="empty-state">Lỗi tải dữ liệu</div>';});
@@ -1405,6 +1406,12 @@ async function saveCriteriaRow(id){
   const body={icon:get('ci_icon'),name:get('ci_name'),description:get('ci_desc'),prize_amount:get('ci_prize'),section:get('ci_sec')};
   await sb(`award_categories?id=eq.${id}`,{method:'PATCH',body});
   showToast('Đã lưu ✓');
+}
+async function deleteCriteriaRow(id){
+  if(!confirm('Xóa tiêu chí này?')) return;
+  await sb(`award_categories?id=eq.${id}`,{method:'DELETE'});
+  document.getElementById('ci_row_'+id)?.remove();
+  showToast('Đã xóa ✓');
 }
 
 const _ROADMAP_DEFAULT=[
