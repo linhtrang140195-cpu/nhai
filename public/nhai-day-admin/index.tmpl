@@ -1978,12 +1978,60 @@ function renderFeedback(){
 
 // ===== SUBMISSIONS =====
 function renderSubmissions(){
-  const subs = (state.submissions||[]);
+  const allSubs = (state.submissions||[]);
+  const subs = allSubs.filter(s=>s.season_id===state.currentSeason);
   const pending = subs.filter(s=>s.status==='pending');
   const approved = subs.filter(s=>s.status==='approved');
   const rejected = subs.filter(s=>s.status==='rejected');
   const filterTab = window._subFilterTab || 'pending';
   const shown = filterTab==='pending'?pending:filterTab==='approved'?approved:rejected;
+
+  const approvedTable = `
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="border-bottom:1px solid var(--border);text-align:left">
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600;white-space:nowrap">#</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600">Tên dự án</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600">Người submit</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600">Email</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600">TP</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600">Tools</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600">Demo</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600">Ngày</th>
+      </tr></thead>
+      <tbody>
+        ${approved.map((s,i)=>`<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:8px 10px;color:var(--textM)">${i+1}</td>
+          <td style="padding:8px 10px;font-weight:600;max-width:200px">${e(s.title)}</td>
+          <td style="padding:8px 10px;white-space:nowrap">${e(s.owner_name)}</td>
+          <td style="padding:8px 10px;color:var(--textM);white-space:nowrap">${e(s.owner_email)}</td>
+          <td style="padding:8px 10px"><span class="badge ${s.city==='HN'?'badge-hn':'badge-hcm'}">${s.city}</span></td>
+          <td style="padding:8px 10px;color:var(--textM);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e(s.tools||'')}</td>
+          <td style="padding:8px 10px">${s.demo_url?`<a href="${e(s.demo_url)}" target="_blank" style="color:var(--gold);text-decoration:none;font-size:11px">▶ Xem</a>`:''}</td>
+          <td style="padding:8px 10px;white-space:nowrap;color:var(--textM)">${s.submitted_at?new Date(s.submitted_at).toLocaleDateString('vi-VN'):''}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    ${approved.length===0?`<div class="empty-state">Không có submission nào</div>`:''}
+    </div>`;
+
+  const cardList = shown.map(s=>`
+    <div style="border-bottom:1px solid var(--border);padding:14px 16px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px">${e(s.title)}</div>
+          <div style="font-size:11px;color:var(--textM);margin-bottom:6px">${e(s.owner_name)} · ${e(s.owner_email)} · <span class="badge ${s.city==='HN'?'badge-hn':'badge-hcm'}">${s.city}</span> · ${s.submitted_at?new Date(s.submitted_at).toLocaleDateString('vi-VN'):''}</div>
+          <div style="font-size:12px;line-height:1.6;margin-bottom:6px;color:var(--text)">${e(s.description)}</div>
+          ${s.tools?`<div style="font-size:11px;color:var(--textM);margin-bottom:4px">🔧 ${e(s.tools)}</div>`:''}
+          ${s.team_members?`<div style="font-size:11px;color:var(--textM);margin-bottom:4px">👥 ${e(s.team_members)}</div>`:''}
+          <div style="margin-top:6px"><a href="${e(s.demo_url)}" target="_blank" style="font-size:12px;color:var(--gold);text-decoration:none;border:1px solid var(--goldBd);padding:3px 10px;border-radius:6px">▶ Xem demo</a></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:120px">
+          <button class="btn btn-primary" style="font-size:11px" onclick="openApproveModal('${s.id}')">✓ Approve</button>
+          <button class="btn btn-danger" style="font-size:11px" onclick="rejectSub('${s.id}')">✗ Từ chối</button>
+        </div>
+      </div>
+    </div>`).join('');
 
   return `
   <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
@@ -1993,27 +2041,7 @@ function renderSubmissions(){
     <button class="btn" onclick="loadAll()" style="margin-left:auto">🔄 Refresh</button>
   </div>
   <div class="card">
-    ${shown.length===0?`<div class="empty-state">Không có submission nào</div>`:
-      shown.map(s=>`
-      <div style="border-bottom:1px solid var(--border);padding:14px 16px">
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:600;margin-bottom:2px">${e(s.title)}</div>
-            <div style="font-size:11px;color:var(--textM);margin-bottom:6px">${e(s.owner_name)} · ${e(s.owner_email)} · <span class="badge ${s.city==='HN'?'badge-hn':'badge-hcm'}">${s.city}</span> · ${new Date(s.submitted_at).toLocaleDateString('vi-VN')}</div>
-            <div style="font-size:12px;line-height:1.6;margin-bottom:6px;color:var(--text)">${e(s.description)}</div>
-            ${s.tools?`<div style="font-size:11px;color:var(--textM);margin-bottom:4px">🔧 ${e(s.tools)}</div>`:''}
-            ${s.team_members?`<div style="font-size:11px;color:var(--textM);margin-bottom:4px">👥 ${e(s.team_members)}</div>`:''}
-            <div style="margin-top:6px">
-              <a href="${e(s.demo_url)}" target="_blank" style="font-size:12px;color:var(--gold);text-decoration:none;border:1px solid var(--goldBd);padding:3px 10px;border-radius:6px">▶ Xem demo</a>
-            </div>
-          </div>
-          ${s.status==='pending'?`
-          <div style="display:flex;flex-direction:column;gap:6px;min-width:120px">
-            <button class="btn btn-primary" style="font-size:11px" onclick="openApproveModal('${s.id}')">✓ Approve</button>
-            <button class="btn btn-danger" style="font-size:11px" onclick="rejectSub('${s.id}')">✗ Từ chối</button>
-          </div>`:`<div style="font-size:11px;color:var(--textM);text-align:right">${s.status==='approved'?'✅ Đã duyệt':'❌ Từ chối'}<br>${s.reviewed_at?new Date(s.reviewed_at).toLocaleDateString('vi-VN'):''}</div>`}
-        </div>
-      </div>`).join('')}
+    ${filterTab==='approved' ? approvedTable : (shown.length===0?`<div class="empty-state">Không có submission nào</div>`:cardList)}
   </div>
 
   <!-- Approve modal -->
