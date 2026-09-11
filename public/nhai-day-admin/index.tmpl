@@ -981,6 +981,25 @@ function exportRegCSV(all){
   toast("Đã export "+regs.length+" bản ghi!");
 }
 
+function exportSubCSV(){
+  const approved=(state.submissions||[]).filter(s=>s.status==='approved'&&s.season_id===state.currentSeason);
+  if(!approved.length){toast("Không có dữ liệu để export","danger");return;}
+  const cols=["season_id","city","title","owner_name","owner_email","team_members","tools","demo_url","submitted_at","reviewed_at"];
+  const header=cols.join(",");
+  const rows=approved.map(r=>cols.map(c=>{
+    const v=r[c]||"";
+    return typeof v==="string"&&(v.includes(",")||v.includes('"')||v.includes("\n"))
+      ?'"'+v.replace(/"/g,'""')+'"':v;
+  }).join(","));
+  const csv=[header,...rows].join("\n");
+  const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download="submissions_approved_"+state.currentSeason+".csv";
+  a.click();URL.revokeObjectURL(url);
+  toast("Đã export "+approved.length+" submissions!");
+}
+
 function getFilteredRegs(){
   let regs=state.registrations;
   if(regFilter.season==='current')regs=regs.filter(r=>r.season_id===state.currentSeason);
@@ -2034,11 +2053,12 @@ function renderSubmissions(){
     </div>`).join('');
 
   return `
-  <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+  <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
     <button class="btn ${filterTab==='pending'?'btn-primary':''}" onclick="window._subFilterTab='pending';render()">${pending.length} Chờ duyệt</button>
     <button class="btn ${filterTab==='approved'?'btn-primary':''}" onclick="window._subFilterTab='approved';render()">${approved.length} Đã duyệt</button>
     <button class="btn ${filterTab==='rejected'?'btn-primary':''}" onclick="window._subFilterTab='rejected';render()">${rejected.length} Đã từ chối</button>
     <button class="btn" onclick="loadAll()" style="margin-left:auto">🔄 Refresh</button>
+    ${filterTab==='approved'&&approved.length?`<button class="btn btn-success" onclick="exportSubCSV()">↓ Export (${approved.length})</button>`:''}
   </div>
   <div class="card">
     ${filterTab==='approved' ? approvedTable : (shown.length===0?`<div class="empty-state">Không có submission nào</div>`:cardList)}
