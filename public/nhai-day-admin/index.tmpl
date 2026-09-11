@@ -2017,6 +2017,7 @@ function renderSubmissions(){
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Tools</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Demo</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Ngày</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600">Vote</th>
       </tr></thead>
       <tbody>
         ${approved.map((s,i)=>`<tr style="border-bottom:1px solid var(--border)">
@@ -2028,6 +2029,7 @@ function renderSubmissions(){
           <td style="padding:8px 10px;color:var(--textM);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e(s.tools||'')}</td>
           <td style="padding:8px 10px">${s.demo_url?`<a href="${e(s.demo_url)}" target="_blank" style="color:var(--gold);text-decoration:none;font-size:11px">▶ Xem</a>`:''}</td>
           <td style="padding:8px 10px;white-space:nowrap;color:var(--textM)">${s.submitted_at?new Date(s.submitted_at).toLocaleDateString('vi-VN'):''}</td>
+          <td style="padding:8px 10px">${s.case_id?`<button class="btn" style="font-size:10px;padding:3px 8px;white-space:nowrap" onclick="openLinkVoteModal('${s.case_id}','${(s.city||'').replace(/'/g,"\\'")}','${(s.title||'').replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">🗳 Link vote</button>`:`<span style="color:var(--textM);font-size:10px">—</span>`}</td>
         </tr>`).join('')}
       </tbody>
     </table>
@@ -2062,6 +2064,25 @@ function renderSubmissions(){
   </div>
   <div class="card">
     ${filterTab==='approved' ? approvedTable : (shown.length===0?`<div class="empty-state">Không có submission nào</div>`:cardList)}
+  </div>
+
+  <!-- Link vote modal -->
+  <div id="linkVoteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)closeLinkVoteModal()">
+    <div style="background:var(--bg2);border-radius:16px;padding:24px;width:420px;max-width:95vw;position:relative">
+      <button onclick="closeLinkVoteModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text);font-size:18px;cursor:pointer">✕</button>
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px">🗳 Link vào campaign vote</div>
+      <div id="lvCaseName" style="font-size:12px;color:var(--textM);margin-bottom:16px"></div>
+      <label style="font-size:11px;color:var(--textM);display:block;margin-bottom:4px">Chọn campaign</label>
+      <select id="lvCampaign" style="width:100%;margin-bottom:16px">
+        <option value="">-- Chọn campaign --</option>
+        ${(state.campaigns||[]).map(c=>`<option value="${c.id}">${e(c.name)} (${c.id})</option>`).join('')}
+      </select>
+      <div id="lvError" style="color:#ef4444;font-size:12px;margin-bottom:8px;display:none"></div>
+      <div style="display:flex;gap:8px">
+        <button id="lvSubmitBtn" class="btn btn-primary" style="flex:1" onclick="doLinkVote()">🗳 Link vào vote</button>
+        <button class="btn" onclick="closeLinkVoteModal()">Hủy</button>
+      </div>
+    </div>
   </div>
 
   <!-- Approve modal -->
@@ -2111,6 +2132,53 @@ function openApproveModal(subId){
 function closeApproveModal(){
   const modal=document.getElementById('approveModal');
   if(modal) modal.style.display='none';
+}
+
+let _linkVoteCaseId=null, _linkVoteCity=null;
+function openLinkVoteModal(caseId,city,title){
+  _linkVoteCaseId=caseId; _linkVoteCity=city;
+  render();
+  setTimeout(()=>{
+    const modal=document.getElementById('linkVoteModal');
+    if(!modal) return;
+    const nameEl=document.getElementById('lvCaseName');
+    if(nameEl) nameEl.textContent=title||caseId;
+    document.getElementById('lvCampaign').value='';
+    document.getElementById('lvError').style.display='none';
+    const btn=document.getElementById('lvSubmitBtn');
+    if(btn){btn.disabled=false;btn.textContent='🗳 Link vào vote';}
+    modal.style.display='flex';
+  },0);
+}
+function closeLinkVoteModal(){
+  const modal=document.getElementById('linkVoteModal');
+  if(modal) modal.style.display='none';
+}
+async function doLinkVote(){
+  const btn=document.getElementById('lvSubmitBtn');
+  const errEl=document.getElementById('lvError');
+  const campaignId=document.getElementById('lvCampaign').value;
+  errEl.style.display='none';
+  if(!campaignId){errEl.textContent='Vui lòng chọn campaign';errEl.style.display='block';return;}
+  if(!_linkVoteCaseId){errEl.textContent='Không tìm thấy case_id';errEl.style.display='block';return;}
+  btn.disabled=true; btn.textContent='Đang xử lý...';
+  try{
+    const caseData=(await sb(`cases?id=eq.${_linkVoteCaseId}`))[0];
+    if(!caseData){throw new Error('Không tìm thấy case');}
+    await sb('top_pick_cases',{method:'POST',body:{
+      case_id:_linkVoteCaseId,
+      campaign_id:campaignId,
+      city:caseData.city||_linkVoteCity||'',
+      title:caseData.title||'',
+      is_active:0
+    }});
+    toast('Đã link case vào campaign vote ✓');
+    closeLinkVoteModal();
+  }catch(err){
+    errEl.textContent='Lỗi: '+(err.message||'Không thể link');
+    errEl.style.display='block';
+    btn.disabled=false; btn.textContent='🗳 Link vào vote';
+  }
 }
 async function doApprove(){
   const btn=document.getElementById('amSubmitBtn');
