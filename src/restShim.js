@@ -49,6 +49,17 @@ const TABLES = {
   page_events: {
     pk: 'id',
     columns: ['id', 'session_id', 'device_id', 'event_name', 'event_value', 'meta', 'created_at']
+  },
+  case_submissions: {
+    pk: 'id',
+    columns: ['id', 'season_id', 'city', 'title', 'description', 'tools', 'demo_url',
+      'owner_name', 'owner_email', 'team_members', 'next_step', 'status', 'review_notes',
+      'reviewed_at', 'case_id', 'submitted_at']
+  },
+  event_feedback: {
+    pk: 'id',
+    columns: ['id', 'season_id', 'city', 'rating_experience', 'rating_mentor', 'will_participate',
+      'has_demo', 'feedback_text', 'submitted_at']
   }
 };
 
