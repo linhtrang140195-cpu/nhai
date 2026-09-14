@@ -194,14 +194,16 @@ async function loadAll(){
     sb("event_feedback?order=submitted_at.desc").catch(()=>[]),
     sb("news_posts?order=published_at.desc").catch(()=>[])
   ]);
+  const prevSeason=state.currentSeason;
   state.seasons=s;state.events=e;state.mentors=m;state.faqs=f;
   state.registrations=r;state.awards=a;state.awardCats=ac;state.cases=c;
   state.campaigns=camp;state.votes=v;state.seasonStats=ss||[];state.submissions=subs||[];state.feedbacks=fbs||[];state.newsPosts=np||[];
   const cfg2={};(cfg||[]).forEach(row=>{try{cfg2[row.key]=row.value}catch{}});state.config=cfg2;
   if(s.length){
-    // Always land on the latest season on load so overrides/analytics use the correct key
     const sorted=[...s].sort((a,b)=>(a.display_order||0)-(b.display_order||0));
-    state.currentSeason=sorted[sorted.length-1].id;
+    // Keep current season if still valid; only auto-select latest on first load
+    const validIds=new Set(s.map(x=>x.id));
+    state.currentSeason=(prevSeason&&validIds.has(prevSeason))?prevSeason:sorted[sorted.length-1].id;
   }
   state.loading=false;render();
   autoBackupToSheet();
