@@ -4080,12 +4080,15 @@ async function loadEditionFromDB(idx,seasonId){
     const avgMn=pOrO('avg_mentor');if(avgMn!=null)setEl('ek-mn-'+idx,(+avgMn).toFixed(2)+'★');
     const pct1=pOrO('pct_will_participate');if(pct1!=null)setEl('ek-ct-'+idx,(pct1*1).toFixed(2)+'%');
     const pct2=pOrO('pct_has_demo');if(pct2!=null)setEl('ek-dm-'+idx,(pct2*1).toFixed(2)+'%');
-    const masterHN=awards.find(a=>a.category_id==='master-chef'&&a.city==='Hà Nội');
-    const masterHCM=awards.find(a=>a.category_id==='master-chef'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
-    const earlyHN=awards.filter(a=>a.category_id==='early-bird'&&a.city==='Hà Nội');
-    const earlyHCM=awards.filter(a=>a.category_id==='early-bird'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
-    const demoHN=awards.filter(a=>a.category_id==='complete-1730'&&a.city==='Hà Nội');
-    const demoHCM=awards.filter(a=>a.category_id==='complete-1730'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
+    const isHN=c=>c==='Hà Nội'||c==='HN';
+    const isHCM=c=>c==='Hồ Chí Minh'||c==='TP.HCM'||c==='HCM';
+    const noCity=c=>!c||(!isHN(c)&&!isHCM(c));
+    const masterHN=awards.find(a=>a.category_id==='master-chef'&&(isHN(a.city)||noCity(a.city)));
+    const masterHCM=awards.find(a=>a.category_id==='master-chef'&&isHCM(a.city));
+    const earlyHN=awards.filter(a=>a.category_id==='early-bird'&&(isHN(a.city)||noCity(a.city)));
+    const earlyHCM=awards.filter(a=>a.category_id==='early-bird'&&isHCM(a.city));
+    const demoHN=awards.filter(a=>a.category_id==='complete-1730'&&(isHN(a.city)||noCity(a.city)));
+    const demoHCM=awards.filter(a=>a.category_id==='complete-1730'&&isHCM(a.city));
     const mkMc=a=>a?`<div class="winner-card" onclick="toggleWinnerDetail(this)">
       <div class="wc-front">
         <div class="wc-bg" style="background:${a.city==='Hà Nội'?'linear-gradient(135deg,#7c2d12,#c2410c,#ea580c,#f97316)':'linear-gradient(135deg,#1e3a5f,#1d4ed8,#3b82f6,#60a5fa)'}"></div>
@@ -5703,6 +5706,7 @@ try{ renderFaq(); }catch(e){}
 
 try{ renderEvents(); renderResultsTopPickWinners(); updateEditionTopPick(); }catch(e){}
 try{ loadEditionFromDB(1,'nhai-day-02'); }catch(e){}
+try{ loadEditionFromDB(2,'nhai-day-03'); }catch(e){}
 
 
 try{ initVoteState(); }catch(e){}
