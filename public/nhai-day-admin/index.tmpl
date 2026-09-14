@@ -1000,6 +1000,24 @@ function exportSubCSV(){
   toast("Đã export "+approved.length+" submissions!");
 }
 
+function exportFbCSV(seasonId){
+  const fbs=(state.feedbacks||[]).filter(f=>f.season_id===seasonId);
+  if(!fbs.length){toast("Không có dữ liệu để export","danger");return;}
+  const cols=["season_id","city","participation_type","output_status","no_output_reason","mentor_rating","mentor_comment","continue_dev","recommend","overall_rating","suggestions","submitted_at"];
+  const header=cols.join(",");
+  const rows=fbs.map(r=>cols.map(c=>{
+    const v=r[c]!=null?String(r[c]):"";
+    return v.includes(",")||v.includes('"')||v.includes("\n")?'"'+v.replace(/"/g,'""')+'"':v;
+  }).join(","));
+  const csv=[header,...rows].join("\n");
+  const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download="feedback_"+seasonId+".csv";
+  a.click();URL.revokeObjectURL(url);
+  toast("Đã export "+fbs.length+" feedbacks!");
+}
+
 function getFilteredRegs(){
   let regs=state.registrations;
   if(regFilter.season==='current')regs=regs.filter(r=>r.season_id===state.currentSeason);
@@ -1963,6 +1981,7 @@ function renderFeedback(){
   <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
     ${seasons.map(s=>`<button class="btn ${s===selectedSeason?'btn-primary':''}" onclick="window._fbSeasonFilter='${s}';render()">${s}</button>`).join('')}
     <button class="btn" onclick="loadAll()" style="margin-left:auto">🔄 Refresh</button>
+    ${shown.length?`<button class="btn btn-success" onclick="exportFbCSV('${selectedSeason}')">↓ Export (${shown.length})</button>`:''}
   </div>
 
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">

@@ -58,8 +58,8 @@ const TABLES = {
   },
   event_feedback: {
     pk: 'id',
-    columns: ['id', 'season_id', 'city', 'rating_experience', 'rating_mentor', 'will_participate',
-      'has_demo', 'feedback_text', 'submitted_at']
+    columns: ['id', 'season_id', 'city', 'participation_type', 'output_status', 'no_output_reason',
+      'mentor_rating', 'mentor_comment', 'continue_dev', 'recommend', 'overall_rating', 'suggestions', 'submitted_at']
   }
 };
 
