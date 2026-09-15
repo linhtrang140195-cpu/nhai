@@ -2039,6 +2039,7 @@ function renderSubmissions(){
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Demo</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Ngày</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Vote</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600">Edit</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600"></th>
       </tr></thead>
       <tbody>
@@ -2052,6 +2053,7 @@ function renderSubmissions(){
           <td style="padding:8px 10px">${s.demo_url?`<a href="${e(s.demo_url)}" target="_blank" style="color:var(--gold);text-decoration:none;font-size:11px">▶ Xem</a>`:''}</td>
           <td style="padding:8px 10px;white-space:nowrap;color:var(--textM)">${s.submitted_at?new Date(s.submitted_at).toLocaleDateString('vi-VN'):''}</td>
           <td style="padding:8px 10px">${s.case_id?`<button class="btn" style="font-size:10px;padding:3px 8px;white-space:nowrap" onclick="openLinkVoteModal('${s.case_id}','${(s.city||'').replace(/'/g,"\\'")}','${(s.title||'').replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">🗳 Link vote</button>`:`<span style="color:var(--textM);font-size:10px">—</span>`}</td>
+          <td style="padding:8px 10px">${s.case_id?`<button class="btn" style="font-size:10px;padding:3px 8px;white-space:nowrap" onclick="openEditCaseModal('${s.case_id}')">✏️</button>`:`<span style="color:var(--textM);font-size:10px">—</span>`}</td>
           <td style="padding:8px 10px"><button class="btn btn-danger" style="font-size:10px;padding:3px 8px" onclick="deleteApprovedSub('${s.id}','${s.case_id||''}')">🗑</button></td>
         </tr>`).join('')}
       </tbody>
@@ -2087,6 +2089,46 @@ function renderSubmissions(){
   </div>
   <div class="card">
     ${filterTab==='approved' ? approvedTable : (shown.length===0?`<div class="empty-state">Không có submission nào</div>`:cardList)}
+  </div>
+
+  <!-- Edit case modal -->
+  <div id="editCaseModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)closeEditCaseModal()">
+    <div style="background:var(--bg2);border-radius:16px;padding:24px;width:600px;max-width:95vw;max-height:90vh;overflow-y:auto;position:relative">
+      <button onclick="closeEditCaseModal()" style="position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text);font-size:18px;cursor:pointer">✕</button>
+      <div style="font-size:16px;font-weight:700;margin-bottom:16px">✏️ Chỉnh sửa case</div>
+      <input type="hidden" id="editCaseId">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <label style="font-size:12px;color:var(--textS);font-weight:600">Tên dự án *
+          <input id="editCaseTitle" type="text" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit">
+        </label>
+        <label style="font-size:12px;color:var(--textS);font-weight:600">Emoji / Sticker
+          <input id="editCaseSticker" type="text" style="width:80px;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:20px;font-family:inherit" maxlength="4">
+        </label>
+        <label style="font-size:12px;color:var(--textS);font-weight:600">Mô tả ngắn (hiện ở card vote)
+          <textarea id="editCaseShortDesc" rows="3" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;resize:vertical"></textarea>
+        </label>
+        <label style="font-size:12px;color:var(--textS);font-weight:600">Mục đích / Vấn đề giải quyết
+          <textarea id="editCasePurpose" rows="3" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;resize:vertical"></textarea>
+        </label>
+        <label style="font-size:12px;color:var(--textS);font-weight:600">Tools sử dụng (mỗi tool 1 dòng)
+          <textarea id="editCaseTools" rows="3" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;resize:vertical"></textarea>
+        </label>
+        <label style="font-size:12px;color:var(--textS);font-weight:600">Demo URL
+          <input id="editCaseDemoUrl" type="url" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit">
+        </label>
+        <label style="font-size:12px;color:var(--textS);font-weight:600">Kế hoạch tiếp theo
+          <textarea id="editCaseNextStep" rows="2" style="width:100%;margin-top:4px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;resize:vertical"></textarea>
+        </label>
+        <label style="font-size:12px;color:var(--textS);font-weight:600;display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="editCaseMasterChef" style="width:16px;height:16px"> 🏆 Master Chef
+        </label>
+      </div>
+      <div id="editCaseErr" style="display:none;margin-top:10px;padding:8px 12px;border-radius:8px;background:var(--dangerBg);color:var(--danger);font-size:12px"></div>
+      <div style="display:flex;gap:8px;margin-top:18px">
+        <button class="btn btn-primary" onclick="doEditCase()" id="editCaseSaveBtn" style="flex:1">💾 Lưu</button>
+        <button class="btn" onclick="closeEditCaseModal()">Hủy</button>
+      </div>
+    </div>
   </div>
 
   <!-- Link vote modal -->
@@ -2201,6 +2243,63 @@ async function doLinkVote(){
     errEl.textContent='Lỗi: '+(err.message||'Không thể link');
     errEl.style.display='block';
     btn.disabled=false; btn.textContent='🗳 Link vào vote';
+  }
+}
+async function openEditCaseModal(caseId){
+  const modal=document.getElementById('editCaseModal');
+  document.getElementById('editCaseErr').style.display='none';
+  document.getElementById('editCaseSaveBtn').disabled=false;
+  document.getElementById('editCaseSaveBtn').textContent='💾 Lưu';
+  modal.style.display='flex';
+  try{
+    const [c]=await sb(`cases?id=eq.${caseId}`);
+    if(!c){throw new Error('Không tìm thấy case');}
+    document.getElementById('editCaseId').value=c.id;
+    document.getElementById('editCaseTitle').value=c.title||'';
+    document.getElementById('editCaseSticker').value=c.sticker||'';
+    document.getElementById('editCaseShortDesc').value=c.short_description||'';
+    document.getElementById('editCasePurpose').value=c.purpose||'';
+    let tools=c.tools_used;
+    if(typeof tools==='string'){try{tools=JSON.parse(tools);}catch{tools=[tools];}}
+    document.getElementById('editCaseTools').value=Array.isArray(tools)?tools.join('\n'):(tools||'');
+    document.getElementById('editCaseDemoUrl').value=c.demo_url||'';
+    document.getElementById('editCaseNextStep').value=c.next_step||'';
+    document.getElementById('editCaseMasterChef').checked=!!c.is_master_chef;
+  }catch(err){
+    document.getElementById('editCaseErr').textContent='Lỗi tải: '+(err.message||'');
+    document.getElementById('editCaseErr').style.display='block';
+  }
+}
+function closeEditCaseModal(){
+  document.getElementById('editCaseModal').style.display='none';
+}
+async function doEditCase(){
+  const caseId=document.getElementById('editCaseId').value;
+  const btn=document.getElementById('editCaseSaveBtn');
+  const errEl=document.getElementById('editCaseErr');
+  errEl.style.display='none';
+  if(!caseId) return;
+  btn.disabled=true; btn.textContent='Đang lưu…';
+  try{
+    const toolsRaw=document.getElementById('editCaseTools').value;
+    const tools=toolsRaw.split('\n').map(t=>t.trim()).filter(Boolean);
+    const body={
+      title:document.getElementById('editCaseTitle').value.trim(),
+      sticker:document.getElementById('editCaseSticker').value.trim(),
+      short_description:document.getElementById('editCaseShortDesc').value.trim(),
+      purpose:document.getElementById('editCasePurpose').value.trim(),
+      tools_used:JSON.stringify(tools),
+      demo_url:document.getElementById('editCaseDemoUrl').value.trim(),
+      next_step:document.getElementById('editCaseNextStep').value.trim(),
+      is_master_chef:document.getElementById('editCaseMasterChef').checked?1:0,
+    };
+    await sb(`cases?id=eq.${caseId}`,{method:'PATCH',body:JSON.stringify(body)});
+    closeEditCaseModal();
+    toast('Đã lưu case ✓');
+  }catch(err){
+    errEl.textContent='Lỗi: '+(err.message||'Không lưu được');
+    errEl.style.display='block';
+    btn.disabled=false; btn.textContent='💾 Lưu';
   }
 }
 async function deleteApprovedSub(subId, caseId){
