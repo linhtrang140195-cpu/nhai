@@ -2263,6 +2263,7 @@ border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,
           </select>
         </div>
       </div>
+      <div id="voteMasterChef"></div>
       <div class="vote-grid" id="voteGrid"></div>
 
 
@@ -5112,8 +5113,56 @@ function renderVote(city){
   if(sortMode==='votes') sorted.sort((a,b)=>(voteCounts[b.id]||0)-(voteCounts[a.id]||0));
   else sorted.sort((a,b)=>a.title.localeCompare(b.title,'vi'));
 
+  const masterCases=sorted.filter(c=>c.is_master_chef);
+  const voteCases=sorted.filter(c=>!c.is_master_chef);
+
+  // Render master chef section
+  const mcEl=document.getElementById('voteMasterChef');
+  if(mcEl){
+    if(masterCases.length){
+      const mkMcCard=c=>{
+        const demoUrl=c.demo||'';
+        return `<div class="vc2" style="cursor:default" onclick="toggleVc2(this)">
+          <div class="vc2-thumb" style="background:linear-gradient(135deg,#3b1a08,#c2410c,#f97316)">
+            <div class="vc2-rank r1" style="background:rgba(242,185,51,.9);color:#000">🏆</div>
+            <div class="vc2-city">${cityLabel[c.city]||c.city}</div>
+            <span>${c.emoji}</span>
+            <div class="vc2-video-badge" style="background:rgba(242,185,51,.85);color:#000">Master Chef</div>
+          </div>
+          <div class="vc2-body">
+            <div class="vc2-eyebrow" style="color:var(--gold)">${editionLabel[c.event]||''} · ${cityLabel[c.city]||c.city} · 🏆 Master Chef</div>
+            <div class="vc2-title">${e(c.title)}</div>
+            <div class="vc2-summary">${e(vcSummary(c.goal||c.desc))}</div>
+            <span class="vc2-read-more" onclick="event.stopPropagation();this.closest('.vc2').classList.add('open')">Đọc tiếp →</span>
+            <div class="vc2-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
+          </div>
+          <div class="vc2-footer">
+            ${demoUrl?`<a href="${demoUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;background:rgba(242,185,51,.12);border:1px solid rgba(242,185,51,.35);color:var(--gold);text-decoration:none;font-size:12px;font-weight:700">🔗 Xem demo</a>`:'<span></span>'}
+            <span style="font-size:11px;color:var(--textM);padding:4px 8px;background:rgba(255,255,255,.05);border-radius:99px">Không tham gia vote</span>
+          </div>
+          <div class="vc2-detail">
+            <div class="vc2-det-person">👤 <b>${e(c.person||'')}</b>${c.team?' · '+e(c.team):''}</div>
+            <div class="vc2-det-block"><div class="vc2-det-label">Mục đích / Vấn đề</div><div class="vc2-det-desc">${e(c.goal||c.desc||'')}</div></div>
+            ${c.tools&&c.tools.length?`<div class="vc2-det-block"><div class="vc2-det-label">Tool sử dụng</div><div class="vc2-det-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div></div>`:''}
+            ${c.next_step?`<div class="vc2-det-block vc2-next-step"><div class="vc2-det-label">🚀 Kế hoạch tiếp theo</div><div class="vc2-det-desc">${e(c.next_step)}</div></div>`:''}
+            <div class="vc2-det-actions">
+              ${demoUrl?`<a href="${demoUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="vc2-det-demo">🔗 Xem demo</a>`:''}
+              <span class="vc2-collapse" onclick="event.stopPropagation();this.closest('.vc2').classList.remove('open')">Thu gọn ↑</span>
+            </div>
+          </div>
+        </div>`;
+      };
+      mcEl.innerHTML=`<div class="award-section" style="margin-bottom:0">
+        <div class="award-sec-label"><h3>🏆 Master Chef</h3><span class="award-badge">Không tham gia bình chọn</span></div>
+        <div class="vote-grid" style="margin-bottom:8px">${masterCases.map(mkMcCard).join('')}</div>
+      </div>`;
+    } else {
+      mcEl.innerHTML='';
+    }
+  }
+
   const countEl=document.getElementById('voteMetaCount');
-  if(countEl) countEl.textContent=sorted.length?sorted.length+' use case':'Chưa tới sự kiện';
+  if(countEl) countEl.textContent=voteCases.length?voteCases.length+' use case':'Chưa tới sự kiện';
 
   // leaderboard strip
   const hasAnyVote=sorted.some(c=>(voteCounts[c.id]||0)>0);
@@ -5142,7 +5191,7 @@ function renderVote(city){
     'linear-gradient(135deg,#1a1640,#2d1a8e)':'#1a1640',
   };
 
-  document.getElementById('voteGrid').innerHTML=sorted.map((c,i)=>{
+  document.getElementById('voteGrid').innerHTML=voteCases.map((c,i)=>{
     const cnt=voteCounts[c.id]||0;
     const isMyVote=myVote===c.id;
     const hasVoted=!!myVote;
@@ -5155,12 +5204,12 @@ function renderVote(city){
     const bg=c.grad||'linear-gradient(135deg,#1a1640,#2d1a8e)';
     const hasMedia=!!(c.gallery&&c.gallery.length);
     const accessText=(hasMedia||c.demo)?'Xem demo':(c.accessLabel||'');
+    const demoUrl=c.demo||'';
     return `<div class="vc2${isMyVote?' my-vote':''}" onclick="toggleVc2(this)">
       <div class="vc2-thumb" style="background:${bg}">
         <div class="vc2-rank ${rankClass}">${rankDisplay}</div>
         <div class="vc2-city">${ctLbl}</div>
         <span>${c.emoji}</span>
-        ${c.demo?'<div class="vc2-video-badge">Demo</div>':(c.accessLabel?`<div class="vc2-video-badge">${e(c.accessLabel)}</div>`:'')}
       </div>
       <div class="vc2-body">
         <div class="vc2-eyebrow">${e(eyebrow)}</div>
@@ -5170,10 +5219,13 @@ function renderVote(city){
         <div class="vc2-tools">${c.tools.map(t=>`<span class="vc2-tool">${e(t)}</span>`).join('')}</div>
       </div>
       <div class="vc2-footer">
-        <div class="vc2-votes">${cnt}<span>votes</span></div>
-        <button class="vc2-vote-btn${isMyVote?' voted':''}" ${hasVoted&&!isMyVote?'disabled':''}
-          onclick="event.stopPropagation();doVote('${voteKey}','${c.id}','${city}',this)"
-          title="${isMyVote?'Bỏ vote':'Vote cho case này'}">♥</button>
+        ${demoUrl?`<a href="${demoUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;background:rgba(123,77,219,.15);border:1px solid rgba(123,77,219,.3);color:#efe6ff;text-decoration:none;font-size:11px;font-weight:700;flex-shrink:0">🔗 Xem demo</a>`:'<span></span>'}
+        <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+          <div class="vc2-votes">${cnt}<span>votes</span></div>
+          <button class="vc2-vote-btn${isMyVote?' voted':''}" ${hasVoted&&!isMyVote?'disabled':''}
+            onclick="event.stopPropagation();doVote('${voteKey}','${c.id}','${city}',this)"
+            title="${isMyVote?'Bỏ vote':'Vote cho case này'}">♥</button>
+        </div>
       </div>
       <div class="vc2-detail">
         <div class="vc2-det-person">👤 <b>${e(c.person||'')}</b>${c.team?' · '+e(c.team):''}</div>
@@ -5620,6 +5672,7 @@ async function initVoteState(){
             demo:(c.demo_url||'').split(',')[0].trim(),gallery:[],
             emoji:c.sticker||'🤖',
             next_step:c.next_step||'',
+            is_master_chef:c.is_master_chef?1:0,
             grad:'linear-gradient(135deg,#1a1a2e,#16213e)'});
         }
       });
