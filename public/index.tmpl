@@ -3927,6 +3927,7 @@ function renderEvents(){
       </div>
       <div id="ed-toppick-${i}"></div>
       <div id="ed-awards-${i}" style="text-align:center;padding:48px 16px;color:var(--textM)">Đang tải kết quả…</div>
+      <div id="ed-cases-${i}"></div>
     </div>`;
 
     const mkAwardList=(list,region)=>list.map(a=>`
@@ -4062,10 +4063,11 @@ function renderEvents(){
 
 async function loadEditionFromDB(idx,seasonId){
   try{
-    const [awards,statsArr,overrideCfg]=await Promise.all([
+    const [awards,statsArr,overrideCfg,cases]=await Promise.all([
       fetch('/rest/v1/awards?season_id=eq.'+seasonId+'&order=category_id.asc,city.asc').then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[]),
       fetch('/rest/v1/season_stats?season_id=eq.'+seasonId).then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[]),
-      fetch('/rest/v1/site_config?key=eq.stat_override_'+seasonId).then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[])
+      fetch('/rest/v1/site_config?key=eq.stat_override_'+seasonId).then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[]),
+      fetch('/rest/v1/cases?season_id=eq.'+seasonId+'&is_active=eq.1&order=city.asc,title.asc').then(r=>r.json()).then(d=>Array.isArray(d)?d:[]).catch(()=>[])
     ]);
     const st=statsArr[0]||{};
     const _rawOv=overrideCfg[0]?.value;
@@ -4140,6 +4142,33 @@ async function loadEditionFromDB(idx,seasonId){
         <div class="award-sec-label"><h3>✅ Hoàn thiện trước 17:30</h3><span class="award-badge" style="color:var(--gold);background:rgba(242,185,51,.08);border-color:rgba(242,185,51,.2)">500.000đ / team</span></div>
         ${mkCitySection(demoHN,demoHCM,'500k','demo')}
       </div>`:''}`;
+    const casesEl=document.getElementById('ed-cases-'+idx);
+    if(casesEl&&cases.length){
+      const hnCases=cases.filter(c=>c.city==='Hà Nội'||c.city==='HN');
+      const hcmCases=cases.filter(c=>c.city!=='Hà Nội'&&c.city!=='HN');
+      const mkCaseRow=c=>{
+        let tools=[];try{const t=c.tools_used;if(t)tools=typeof t==='string'?JSON.parse(t):t;}catch{}
+        const demoUrl=(c.demo_url||'').split(',')[0].trim();
+        return `<div class="atl-item" style="align-items:flex-start">
+          <div class="atl-emo" style="margin-top:2px">${c.sticker||'🤖'}</div>
+          <div class="atl-info" style="flex:1;min-width:0">
+            ${tools.length?`<div class="atl-meta">${tools.slice(0,3).map(t=>`<span class="case-topic-tag">${e(t)}</span>`).join('')}</div>`:''}
+            <div class="atl-case">${e(c.title||'')}</div>
+            <div class="atl-name">${e(c.owner_name||'')}${c.owner_team?` · <span style="opacity:.7">${e(c.owner_team)}</span>`:''}</div>
+          </div>
+          ${demoUrl?`<a href="${demoUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;background:rgba(123,77,219,.15);border:1px solid rgba(123,77,219,.28);color:#efe6ff;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap">🔗 Demo</a>`:'<span style="flex-shrink:0;font-size:10px;color:var(--textM);padding:5px 0">—</span>'}
+        </div>`;
+      };
+      const bothHave=hnCases.length&&hcmCases.length;
+      casesEl.innerHTML=`<div class="award-section">
+        <div class="award-sec-label"><h3>📋 Tất cả case đã nộp</h3><span class="award-badge" style="color:var(--muted)">${cases.length} cases</span></div>
+        ${bothHave?`<div class="atl-grid">
+          <div><div class="atl-col-head"><div class="atl-dot hn"></div>Hà Nội (${hnCases.length})</div>${hnCases.map(mkCaseRow).join('')}</div>
+          <div><div class="atl-col-head"><div class="atl-dot hcm"></div>TP.HCM (${hcmCases.length})</div>${hcmCases.map(mkCaseRow).join('')}</div>
+        </div>`:hnCases.length?`<div class="atl-col-head"><div class="atl-dot hn"></div>Hà Nội (${hnCases.length})</div>${hnCases.map(mkCaseRow).join('')}`:
+        `<div class="atl-col-head"><div class="atl-dot hcm"></div>TP.HCM (${hcmCases.length})</div>${hcmCases.map(mkCaseRow).join('')}`}
+      </div>`;
+    }
   }catch(err){const el=document.getElementById('ed-awards-'+idx);if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--textM)">Không tải được kết quả</div>';}
 }
 
