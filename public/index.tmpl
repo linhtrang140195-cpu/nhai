@@ -4092,7 +4092,7 @@ async function loadEditionFromDB(idx,seasonId){
     const mkMc=a=>{
       if(!a) return '<div style="flex:1;min-height:180px;border:1px dashed rgba(255,255,255,.15);border-radius:16px;display:grid;place-items:center;color:var(--textM);font-size:12px">Chưa có</div>';
       const isHN=a.city==='Hà Nội';
-      const mcCase=cases.find(c=>c.is_master_chef==1&&(isHN?(c.city==='Hà Nội'||c.city==='HN'):(c.city!=='Hà Nội'&&c.city!=='HN')));
+      const mcCase=cases.find(c=>c.id===a.winner_case_id)||cases.find(c=>c.is_master_chef==1&&(isHN?(c.city==='Hà Nội'||c.city==='HN'):(c.city!=='Hà Nội'&&c.city!=='HN')));
       const demoUrl=(mcCase?.demo_url||a.winner_description||'').split(',')[0].trim();
       return `<div class="winner-card" onclick="toggleWinnerDetail(this)">
         <div class="wc-front">
