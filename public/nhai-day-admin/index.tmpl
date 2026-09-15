@@ -2293,7 +2293,7 @@ async function doEditCase(){
       next_step:document.getElementById('editCaseNextStep').value.trim(),
       is_master_chef:document.getElementById('editCaseMasterChef').checked?1:0,
     };
-    await sb(`cases?id=eq.${caseId}`,{method:'PATCH',body:JSON.stringify(body)});
+    await sb(`cases?id=eq.${caseId}`,{method:'PATCH',body});
     closeEditCaseModal();
     toast('Đã lưu case ✓');
   }catch(err){
