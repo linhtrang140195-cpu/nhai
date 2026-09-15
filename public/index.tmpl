@@ -3547,9 +3547,15 @@ document.getElementById('regModal').addEventListener('click',function(ev){if(ev.
   if(tabId){
     const btn=document.querySelector('.ptab[data-tab="'+tabId+'"]')||document.querySelectorAll('.ptab')[['info','cases','results','faq'].indexOf(tabId)];
     switchTab(tabId,btn,true);
-    if(tabId==='results'&&location.hash==='#vote'){
-      const vBtn=document.querySelectorAll('.rtab')[1];
-      if(typeof switchResTab==='function') switchResTab('vote',vBtn,true);
+    if(tabId==='results'){
+      if(location.hash==='#vote'){
+        const vBtn=document.querySelectorAll('.rtab')[1];
+        if(typeof switchResTab==='function') switchResTab('vote',vBtn,true);
+      } else if(location.hash&&location.hash!=='#vote'){
+        const seasonHash=location.hash.replace('#','');
+        const edIdx=EDITIONS.findIndex(ed=>ed.season_id===seasonHash);
+        if(edIdx>=0) setTimeout(()=>switchEdition(edIdx),50);
+      }
     }
   }
   // Handle back/forward navigation
@@ -4247,11 +4253,10 @@ renderResultsTopPickWinners=function(){
 };
 
 function switchEdition(i){
-
   document.querySelectorAll('.ed-tab').forEach((b,j)=>b.classList.toggle('on',j===i));
-
   document.querySelectorAll('.ed-panel').forEach((p,j)=>p.classList.toggle('on',j===i));
-
+  const sid=EDITIONS[i]?.season_id;
+  if(sid) history.replaceState(history.state,'','/ket-qua#'+sid);
 }
 
 function getRecapResultConfig(id){
