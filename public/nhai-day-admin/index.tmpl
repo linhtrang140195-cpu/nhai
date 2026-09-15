@@ -2039,6 +2039,7 @@ function renderSubmissions(){
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Demo</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Ngày</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Vote</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600"></th>
       </tr></thead>
       <tbody>
         ${approved.map((s,i)=>`<tr style="border-bottom:1px solid var(--border)">
@@ -2051,6 +2052,7 @@ function renderSubmissions(){
           <td style="padding:8px 10px">${s.demo_url?`<a href="${e(s.demo_url)}" target="_blank" style="color:var(--gold);text-decoration:none;font-size:11px">▶ Xem</a>`:''}</td>
           <td style="padding:8px 10px;white-space:nowrap;color:var(--textM)">${s.submitted_at?new Date(s.submitted_at).toLocaleDateString('vi-VN'):''}</td>
           <td style="padding:8px 10px">${s.case_id?`<button class="btn" style="font-size:10px;padding:3px 8px;white-space:nowrap" onclick="openLinkVoteModal('${s.case_id}','${(s.city||'').replace(/'/g,"\\'")}','${(s.title||'').replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">🗳 Link vote</button>`:`<span style="color:var(--textM);font-size:10px">—</span>`}</td>
+          <td style="padding:8px 10px"><button class="btn btn-danger" style="font-size:10px;padding:3px 8px" onclick="deleteApprovedSub('${s.id}','${s.case_id||''}')">🗑</button></td>
         </tr>`).join('')}
       </tbody>
     </table>
@@ -2199,6 +2201,18 @@ async function doLinkVote(){
     errEl.textContent='Lỗi: '+(err.message||'Không thể link');
     errEl.style.display='block';
     btn.disabled=false; btn.textContent='🗳 Link vào vote';
+  }
+}
+async function deleteApprovedSub(subId, caseId){
+  if(!confirm('Xóa hẳn submission này? Không thể hoàn tác.')) return;
+  try{
+    await sb(`case_submissions?id=eq.${subId}`,{method:'DELETE'});
+    if(caseId) await sb(`cases?id=eq.${caseId}`,{method:'DELETE'}).catch(()=>{});
+    state.submissions=(state.submissions||[]).filter(s=>s.id!==subId);
+    render();
+    toast('Đã xóa ✓');
+  }catch(err){
+    toast('Lỗi: '+(err.message||'Không xóa được'),'danger');
   }
 }
 async function doApprove(){
