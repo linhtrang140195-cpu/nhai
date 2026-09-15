@@ -3141,24 +3141,19 @@ function openArticleModal(src){
       history.pushState({artModal:postId},'','/bai-viet/'+postId);
     }
   };
+  const parseGallery=v=>{if(!v)return[];if(Array.isArray(v))return v;try{return JSON.parse(v);}catch{return[];}};
   if(typeof src==='string'){
     fetch('/rest/v1/news_posts?id=eq.'+encodeURIComponent(src)+'&limit=1')
       .then(r=>r.json())
       .then(rows=>{
         const p=rows&&rows[0];
         if(!p) return;
-        let gallery=[];
-        if(p.gallery_images){try{gallery=JSON.parse(p.gallery_images);}catch{}}
-        setContent(p.title, p.body||'', (p.emoji?p.emoji+' ':'')+p.published_at?.slice(0,10), gallery, p.id);
+        setContent(p.title, p.body||'', (p.emoji?p.emoji+' ':'')+p.published_at?.slice(0,10), parseGallery(p.gallery_images), p.id);
       }).catch(()=>{});
   } else if(src.id&&/^np-/.test(src.id)) {
-    let gallery=[];
-    if(src.gallery_images){try{gallery=JSON.parse(src.gallery_images);}catch{}}
-    setContent(src.title, src.text||'', (src.ico?src.ico+' ':'')+src.date, gallery, src.id);
+    setContent(src.title, src.text||'', (src.ico?src.ico+' ':'')+src.date, parseGallery(src.gallery_images), src.id);
   } else {
-    let gallery=[];
-    if(src.gallery_images){try{gallery=JSON.parse(src.gallery_images);}catch{}}
-    setContent(src.title, src.text||'', (src.ico?src.ico+' ':'')+src.date, gallery, null);
+    setContent(src.title, src.text||'', (src.ico?src.ico+' ':'')+src.date, parseGallery(src.gallery_images), null);
   }
 }
 function closeArticleModal(){
