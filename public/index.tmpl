@@ -4090,29 +4090,41 @@ async function loadEditionFromDB(idx,seasonId){
     const earlyHCM=awards.filter(a=>a.category_id==='early-bird'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
     const demoHN=awards.filter(a=>a.category_id==='complete-1730'&&a.city==='Hà Nội');
     const demoHCM=awards.filter(a=>a.category_id==='complete-1730'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
-    const mkMc=a=>a?`<div class="winner-card" onclick="toggleWinnerDetail(this)">
-      <div class="wc-front">
-        <div class="wc-bg" style="background:${a.city==='Hà Nội'?'linear-gradient(135deg,#7c2d12,#c2410c,#ea580c,#f97316)':'linear-gradient(135deg,#1e3a5f,#1d4ed8,#3b82f6,#60a5fa)'}"></div>
-        <div class="wc-overlay"></div>
-        <div class="wc-city-badge">${a.city==='Hà Nội'?'🏙️ Hà Nội':'🌆 TP.HCM'}</div>
-        <div class="wc-avatar">🏆</div>
-        <div class="wc-body">
-          <div class="wc-category">🏆 Master Chef · ${a.city==='Hà Nội'?'Hà Nội':'TP.HCM'}</div>
-          <div class="wc-person">👤 <strong>${e(a.winner_team||'')}</strong></div>
-          <div class="wc-case">${e(a.winner_name||'')}</div>
-        </div>
-      </div></div>`
-      :'<div style="flex:1;min-height:180px;border:1px dashed rgba(255,255,255,.15);border-radius:16px;display:grid;place-items:center;color:var(--textM);font-size:12px">Chưa có</div>';
+    const mkMc=a=>{
+      if(!a) return '<div style="flex:1;min-height:180px;border:1px dashed rgba(255,255,255,.15);border-radius:16px;display:grid;place-items:center;color:var(--textM);font-size:12px">Chưa có</div>';
+      const isHN=a.city==='Hà Nội';
+      const mcCase=cases.find(c=>c.is_master_chef==1&&(isHN?(c.city==='Hà Nội'||c.city==='HN'):(c.city!=='Hà Nội'&&c.city!=='HN')));
+      const demoUrl=(mcCase?.demo_url||a.winner_description||'').split(',')[0].trim();
+      return `<div class="winner-card" onclick="toggleWinnerDetail(this)">
+        <div class="wc-front">
+          <div class="wc-bg" style="background:${isHN?'linear-gradient(135deg,#7c2d12,#c2410c,#ea580c,#f97316)':'linear-gradient(135deg,#1e3a5f,#1d4ed8,#3b82f6,#60a5fa)'}"></div>
+          <div class="wc-overlay"></div>
+          <div class="wc-city-badge">${isHN?'🏙️ Hà Nội':'🌆 TP.HCM'}</div>
+          <div class="wc-avatar">🏆</div>
+          <div class="wc-body" style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+            <div style="flex:1;min-width:0">
+              <div class="wc-category">🏆 Master Chef · ${isHN?'Hà Nội':'TP.HCM'}</div>
+              <div class="wc-person">👤 <strong>${e(a.winner_team||'')}</strong></div>
+              <div class="wc-case">${e(a.winner_name||'')}</div>
+            </div>
+            ${demoUrl?`<a href="${demoUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="flex-shrink:0;align-self:center;display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap">🔗 Demo</a>`:''}
+          </div>
+        </div></div>`;
+    };
     const mkRow=(a,badge,bdgCls)=>{
       let tags=[];
       try{const raw=a.category_tags;if(raw)tags=typeof raw==='string'?JSON.parse(raw):raw;}catch{}
+      const matchCase=cases.find(c=>c.title===a.winner_name||(c.owner_name&&c.owner_name===a.winner_team));
+      const demoUrl=(matchCase?.demo_url||'').split(',')[0].trim();
       return `<div class="atl-item">
         <div class="atl-emo">🚀</div>
         <div class="atl-info">
           ${tags.length?`<div class="atl-meta">${tags.map(t=>`<span class="case-topic-tag">${t}</span>`).join('')}</div>`:''}
           <div class="atl-case">${e(a.winner_name||'')}</div>
           <div class="atl-name">${e(a.winner_team||'')}</div>
-        </div><span class="atl-badge ${bdgCls}">${badge}</span></div>`;
+        </div>
+        ${demoUrl?`<a href="${demoUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:999px;background:rgba(123,77,219,.15);border:1px solid rgba(123,77,219,.28);color:#efe6ff;text-decoration:none;font-size:11px;font-weight:700;white-space:nowrap;margin-right:8px">🔗 Demo</a>`:''}
+        <span class="atl-badge ${bdgCls}">${badge}</span></div>`;
     };
     const mkCitySection=(hnList,hcmList,badge,bdgCls)=>{
       const bothHave=hnList.length&&hcmList.length;
