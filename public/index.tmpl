@@ -4094,7 +4094,9 @@ async function loadEditionFromDB(idx,seasonId){
       const isHN=a.city==='Hà Nội';
       const mcCase=cases.find(c=>c.id===a.winner_case_id)||cases.find(c=>c.is_master_chef==1&&(isHN?(c.city==='Hà Nội'||c.city==='HN'):(c.city!=='Hà Nội'&&c.city!=='HN')));
       const demoUrl=(mcCase?.demo_url||a.winner_description||'').split(',')[0].trim();
-      return `<div class="winner-card" onclick="toggleWinnerDetail(this)">
+      const hasDetail=!!(mcCase?.purpose||mcCase?.short_description);
+      const detId=`mc-det-${isHN?'hn':'hcm'}-${idx}`;
+      return `<div class="winner-card">
         <div class="wc-front">
           <div class="wc-bg" style="background:${isHN?'linear-gradient(135deg,#7c2d12,#c2410c,#ea580c,#f97316)':'linear-gradient(135deg,#1e3a5f,#1d4ed8,#3b82f6,#60a5fa)'}"></div>
           <div class="wc-overlay"></div>
@@ -4107,17 +4109,23 @@ async function loadEditionFromDB(idx,seasonId){
                 <div class="wc-person">👤 <strong>${e(a.winner_team||'')}</strong></div>
                 <div class="wc-case">${e(a.winner_name||'')}</div>
               </div>
-              ${demoUrl?`<a href="${demoUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="flex-shrink:0;align-self:flex-start;display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;text-decoration:none;font-size:12px;font-weight:700;white-space:nowrap;margin-top:2px">🔗 Demo</a>`:''}
             </div>
-            ${mcCase?.purpose?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.12)"><span style="font-size:10px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.05em">Vấn đề</span><div style="margin-top:4px;font-size:12px;opacity:.85;line-height:1.5">${e(mcCase.purpose)}</div></div>`:''}
-            ${mcCase?.short_description?`<div style="margin-top:8px"><span style="font-size:10px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.05em">Giải pháp</span><div style="margin-top:4px;font-size:12px;opacity:.85;line-height:1.5">${e(mcCase.short_description)}</div></div>`:''}
+            ${hasDetail?`<div id="${detId}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.15)">
+              ${mcCase?.purpose?`<div style="margin-bottom:10px"><span style="font-size:10px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.05em">Mục đích / Vấn đề</span><div style="margin-top:4px;font-size:12px;opacity:.9;line-height:1.6">${e(mcCase.purpose)}</div></div>`:''}
+              ${mcCase?.short_description?`<div><span style="font-size:10px;font-weight:700;opacity:.6;text-transform:uppercase;letter-spacing:.05em">Giải pháp</span><div style="margin-top:4px;font-size:12px;opacity:.9;line-height:1.6">${e(mcCase.short_description)}</div></div>`:''}
+            </div>`:''}
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px">
+              ${demoUrl?`<a href="${demoUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;color:rgba(255,255,255,.85);text-decoration:none;font-size:13px;font-weight:600">🔗 Xem demo</a>`:'<span></span>'}
+              ${hasDetail?`<button onclick="const d=document.getElementById('${detId}');const open=d.style.display!=='none';d.style.display=open?'none':'block';this.textContent=open?'Xem thêm ↓':'Thu gọn ↑'" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:12px;font-weight:600;cursor:pointer;padding:0">Xem thêm ↓</button>`:''}
+            </div>
           </div>
         </div></div>`;
     };
     const mkRow=(a,badge,bdgCls)=>{
       let tags=[];
       try{const raw=a.category_tags;if(raw)tags=typeof raw==='string'?JSON.parse(raw):raw;}catch{}
-      const matchCase=cases.find(c=>c.title===a.winner_name||(c.owner_name&&c.owner_name===a.winner_team));
+      const normTeam=(s='')=>s.replace(/\.\.\.$/,'').trim().toLowerCase();
+      const matchCase=cases.find(c=>c.title===a.winner_name)||cases.find(c=>c.owner_name&&normTeam(c.owner_name)===normTeam(a.winner_team))||cases.find(c=>c.title&&a.winner_name&&(a.winner_name.startsWith(c.title)||c.title.startsWith(a.winner_name.replace(/\.$/,''))));
       const demoUrl=(matchCase?.demo_url||'').split(',')[0].trim();
       return `<div class="atl-item">
         <div class="atl-emo">🚀</div>
