@@ -983,23 +983,42 @@ function exportRegCSV(all){
   toast("Đã export "+regs.length+" bản ghi!");
 }
 
-function exportSubCSV(){
+async function exportSubCSV(){
   const approved=(state.submissions||[]).filter(s=>s.status==='approved'&&s.season_id===state.currentSeason);
   if(!approved.length){toast("Không có dữ liệu để export","danger");return;}
-  const cols=["season_id","city","title","owner_name","owner_email","team_members","tools","demo_url","submitted_at","reviewed_at"];
-  const header=cols.join(",");
-  const rows=approved.map(r=>cols.map(c=>{
-    const v=r[c]||"";
-    return typeof v==="string"&&(v.includes(",")||v.includes('"')||v.includes("\n"))
-      ?'"'+v.replace(/"/g,'""')+'"':v;
-  }).join(","));
-  const csv=[header,...rows].join("\n");
-  const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+  toast("Đang tải dữ liệu…");
+  let cases=[];
+  try{cases=await sb("cases?season_id=eq."+state.currentSeason+"&is_active=eq.1");}catch{}
+  const caseMap={};cases.forEach(c=>caseMap[c.id]=c);
+  const csvVal=v=>{
+    if(v===null||v===undefined)return'';
+    if(Array.isArray(v))v=v.join('; ');
+    else if(typeof v==='object')try{v=JSON.stringify(v);}catch{}
+    v=String(v);
+    return v.includes(',')||v.includes('"')||v.includes('\n')?'"'+v.replace(/"/g,'""')+'"':v;
+  };
+  const headers=["Season","City","Tên dự án","Sticker","Mô tả ngắn","Mục đích / Vấn đề","Tools sử dụng","Demo URL","Kế hoạch tiếp theo","Chủ dự án","Email","Team / Phòng ban","Thành viên","Master Chef","Ngày nộp","Ngày duyệt"];
+  const rows=approved.map(s=>{
+    const c=caseMap[s.case_id]||{};
+    let tools=c.tools_used||s.tools||'';
+    if(Array.isArray(tools))tools=tools.join('; ');
+    else if(typeof tools==='string'){try{const p=JSON.parse(tools);if(Array.isArray(p))tools=p.join('; ');}catch{}}
+    return[
+      s.season_id,s.city||c.city,c.title||s.title,c.sticker||'',
+      c.short_description||'',c.purpose||s.description||'',tools,
+      c.demo_url||s.demo_url||'',c.next_step||s.next_step||'',
+      c.owner_name||s.owner_name,s.owner_email||c.owner_email,
+      c.owner_team||'',s.team_members||c.team_members||'',
+      c.is_master_chef?'Có':'',s.submitted_at||'',s.reviewed_at||''
+    ].map(csvVal).join(',');
+  });
+  const csv=[headers.join(','),...rows].join('\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;a.download="submissions_approved_"+state.currentSeason+".csv";
+  const a=document.createElement('a');
+  a.href=url;a.download='cases_'+state.currentSeason+'.csv';
   a.click();URL.revokeObjectURL(url);
-  toast("Đã export "+approved.length+" submissions!");
+  toast('Đã export '+approved.length+' cases!');
 }
 
 function exportFbCSV(seasonId){
