@@ -957,16 +957,29 @@ function renderAudit(){
   const caseMap={};(state.cases||[]).forEach(c=>{caseMap[c.id]=c;});
   const maxPerDevice=(state.campaigns||[]).find(c=>c.is_active)?.max_votes_per_device||3;
 
+  // Votes cast before migration 008 have city=NULL — fall back to the case's city
+  const cityOf=v=>{
+    const c=(v.city||caseMap[v.case_id]?.city||'').toLowerCase();
+    if(c.includes('nội')||c==='hn')return 'hn';
+    if(c.includes('minh')||c==='hcm'||c==='tp.hcm')return 'hcm';
+    return '';
+  };
+
   // --- Suspicious activity detection ---
   // 1) Device voting more than allowed
   const deviceVotes={};
   votes.forEach(v=>{
-    if(!deviceVotes[v.device_id])deviceVotes[v.device_id]={total:0,cases:new Set(),votes:[]};
-    deviceVotes[v.device_id].total++;
-    deviceVotes[v.device_id].cases.add(v.case_id);
-    deviceVotes[v.device_id].votes.push(v);
+    if(!deviceVotes[v.device_id])deviceVotes[v.device_id]={total:0,hn:0,hcm:0,cases:new Set(),votes:[]};
+    const d=deviceVotes[v.device_id];
+    d.total++;d.cases.add(v.case_id);d.votes.push(v);
   });
-  const overLimit=Object.entries(deviceVotes).filter(([,d])=>d.total>maxPerDevice).sort((a,b)=>b[1].total-a[1].total);
+  // Limit is maxPerDevice PER CITY, so 3 HN + 3 HCM is legitimate — count per city
+  Object.values(deviceVotes).forEach(d=>{
+    d.votes.forEach(v=>{const c=cityOf(v);if(c)d[c]++;});
+  });
+  const overLimit=Object.entries(deviceVotes)
+    .filter(([,d])=>d.hn>maxPerDevice||d.hcm>maxPerDevice)
+    .sort((a,b)=>Math.max(b[1].hn,b[1].hcm)-Math.max(a[1].hn,a[1].hcm));
   // 2) Duplicate votes (same device + same case)
   const seen=new Set();const dupes=[];
   votes.forEach(v=>{
@@ -991,32 +1004,30 @@ function renderAudit(){
   const byCase={};
   votes.forEach(v=>{
     if(!byCase[v.case_id])byCase[v.case_id]={hn:0,hcm:0,total:0};
-    const city=(v.city||'').toLowerCase();
-    const isHN=city.includes('nội')||city==='hn';
-    if(isHN)byCase[v.case_id].hn++;else byCase[v.case_id].hcm++;
+    const c=cityOf(v);
+    if(c==='hn')byCase[v.case_id].hn++;else if(c==='hcm')byCase[v.case_id].hcm++;
     byCase[v.case_id].total++;
   });
   const ranked=Object.entries(byCase).sort((a,b)=>b[1].total-a[1].total);
 
   // filter log
   const filtered=votes.filter(v=>{
-    if(_auditCity==='hn'){const c=(v.city||'').toLowerCase();if(!c.includes('nội')&&c!=='hn')return false;}
-    if(_auditCity==='hcm'){const c=(v.city||'').toLowerCase();if(!c.includes('minh')&&c!=='hcm'&&c!=='tp.hcm')return false;}
-    if(_auditSearch){const q=_auditSearch.toLowerCase();const cs=caseMap[v.case_id];const title=(cs?.title||v.case_id||'').toLowerCase();if(!title.includes(q)&&!(v.device_id||'').toLowerCase().includes(q))return false;}
+    if(_auditCity!=='all'&&cityOf(v)!==_auditCity)return false;
+    if(_auditSearch){const q=_auditSearch.toLowerCase();const cs=caseMap[v.case_id];const title=(cs?.title||v.case_id||'').toLowerCase();if(!title.includes(q)&&!(v.device_id||'').toLowerCase().includes(q)&&!(v.client_ip||'').includes(q))return false;}
     return true;
   });
 
-  const hnTotal=votes.filter(v=>{const c=(v.city||'').toLowerCase();return c.includes('nội')||c==='hn';}).length;
-  const hcmTotal=votes-hnTotal;
+  const hnTotal=votes.filter(v=>cityOf(v)==='hn').length;
+  const hcmTotal=votes.filter(v=>cityOf(v)==='hcm').length;
 
   return `<div style="display:flex;flex-direction:column;gap:16px">
   ${suspicious>0?`<div class="card" style="border:1.5px solid #e53e3e">
     <div class="card-header"><div class="card-title" style="color:#fc8181">⚠️ Phát hiện ${suspicious} dấu hiệu bất thường</div></div>
     ${overLimit.length?`<div style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:700;color:var(--textM);margin-bottom:6px">🔴 Device vote vượt giới hạn (tối đa ${maxPerDevice} votes/người)</div>
+      <div style="font-size:12px;font-weight:700;color:var(--textM);margin-bottom:6px">🔴 Device vote vượt giới hạn (tối đa ${maxPerDevice} votes mỗi city)</div>
       ${overLimit.slice(0,20).map(([did,d])=>`<div class="list-row" style="font-size:11px">
         <div style="font-family:monospace;color:#fc8181;min-width:180px">${did?.slice(0,20)||'—'}</div>
-        <div style="color:var(--textM)"><b>${d.total}</b> votes · ${d.cases.size} case khác nhau</div>
+        <div style="color:var(--textM)">HN: <b style="color:${d.hn>maxPerDevice?'#fc8181':'inherit'}">${d.hn}</b> · HCM: <b style="color:${d.hcm>maxPerDevice?'#fc8181':'inherit'}">${d.hcm}</b> · ${d.cases.size} case</div>
       </div>`).join('')}
     </div>`:''}
     ${dupes.length?`<div style="margin-bottom:12px">
@@ -1044,7 +1055,7 @@ function renderAudit(){
   </div>`:'<div class="card" style="border:1.5px solid #38a169"><div style="padding:16px;color:#68d391;font-weight:600">✅ Không phát hiện dấu hiệu gian lận</div></div>'}
   <div class="card">
     <div class="card-header">
-      <div><div class="card-title">🛡️ Vote audit</div><div class="card-sub">${votes.length} tổng votes · HN: ${hnTotal} · HCM: ${votes.length-hnTotal}</div></div>
+      <div><div class="card-title">🛡️ Vote audit</div><div class="card-sub">${votes.length} tổng votes · HN: ${hnTotal} · HCM: ${hcmTotal}${votes.length-hnTotal-hcmTotal?' · chưa rõ city: '+(votes.length-hnTotal-hcmTotal):''}</div></div>
       <button class="btn" onclick="sb('top_pick_votes?order=created_at.desc&limit=2000').then(v=>{state.votes=v;render()})">🔄 Refresh</button>
     </div>
     <div style="overflow-x:auto">
@@ -1092,7 +1103,7 @@ function renderAudit(){
           return `<tr style="border-bottom:1px solid var(--border)">
             <td style="padding:6px 8px;color:var(--textS);font-family:monospace">${i+1}</td>
             <td style="padding:6px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cs?.sticker?cs.sticker+' ':''}<span title="${v.case_id}">${cs?.title||v.case_id||'—'}</span></td>
-            <td style="padding:6px 8px;color:var(--textM)">${v.city||'—'}</td>
+            <td style="padding:6px 8px;color:var(--textM)">${v.city||caseMap[v.case_id]?.city||'—'}</td>
             <td style="padding:6px 8px;font-family:monospace;color:${v.client_ip?'var(--textM)':'var(--textS)'}">${v.client_ip||'—'}</td>
             <td style="padding:6px 8px;font-family:monospace;color:var(--textS)">${v.device_id?.slice(0,14)||'—'}</td>
             <td style="padding:6px 8px;color:var(--textM);white-space:nowrap">${v.created_at?new Date(v.created_at).toLocaleString('vi-VN'):'—'}</td>
