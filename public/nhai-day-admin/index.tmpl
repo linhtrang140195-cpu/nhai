@@ -188,7 +188,7 @@ async function loadAll(){
     sb("registrations?order=created_at.desc&limit=5000"),sb("awards?order=created_at"),
     sb("award_categories?order=display_order"),sb("cases?order=display_order"),
     sb("site_config"),sb("top_pick_campaigns?order=created_at.desc"),
-    sb("top_pick_votes?order=created_at.desc&limit=100"),
+    sb("top_pick_votes?order=created_at.desc&limit=2000"),
     sb("season_stats?order=season_id").catch(()=>[]),
     sb("case_submissions?order=submitted_at.desc").catch(()=>[]),
     sb("event_feedback?order=submitted_at.desc").catch(()=>[]),
@@ -951,15 +951,146 @@ async function pushCasesToCampaign(id){
   toast(`Đã push ${added} cases vào campaign`);loadAll();
 }
 
+let _auditCity='all',_auditSearch='';
 function renderAudit(){
-  const voteCounts={};
-  state.votes.forEach(v=>{voteCounts[v.case_id]=(voteCounts[v.case_id]||0)+1;});
-  return `<div class="card"><div class="card-header"><div class="card-title">🛡️ Vote audit log</div><div class="card-sub">${state.votes.length} votes</div></div>
-  ${state.votes.slice(0,30).map(v=>`<div class="list-row" style="font-size:11px">
-    <div style="font-family:monospace;min-width:120px;color:var(--textS)">${v.device_id?.slice(0,12)||"—"}</div>
-    <div style="flex:1;color:var(--textM);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.case_id||""}</div>
-    <div style="color:var(--textM)">${v.created_at?new Date(v.created_at).toLocaleString("vi-VN"):"—"}</div>
-  </div>`).join("")||'<div class="empty-state">Chưa có vote</div>'}</div>`;
+  const votes=state.votes||[];
+  const caseMap={};(state.cases||[]).forEach(c=>{caseMap[c.id]=c;});
+  const maxPerDevice=(state.campaigns||[]).find(c=>c.is_active)?.max_votes_per_device||3;
+
+  // --- Suspicious activity detection ---
+  // 1) Device voting more than allowed
+  const deviceVotes={};
+  votes.forEach(v=>{
+    if(!deviceVotes[v.device_id])deviceVotes[v.device_id]={total:0,cases:new Set(),votes:[]};
+    deviceVotes[v.device_id].total++;
+    deviceVotes[v.device_id].cases.add(v.case_id);
+    deviceVotes[v.device_id].votes.push(v);
+  });
+  const overLimit=Object.entries(deviceVotes).filter(([,d])=>d.total>maxPerDevice).sort((a,b)=>b[1].total-a[1].total);
+  // 2) Duplicate votes (same device + same case)
+  const seen=new Set();const dupes=[];
+  votes.forEach(v=>{
+    const key=v.device_id+'|'+v.case_id;
+    if(seen.has(key))dupes.push(v);else seen.add(key);
+  });
+  // 3) Burst: >5 votes from same device within 60s
+  const bursts=[];
+  Object.entries(deviceVotes).forEach(([did,d])=>{
+    const times=d.votes.map(v=>new Date(v.created_at).getTime()).sort((a,b)=>a-b);
+    for(let i=0;i<times.length-4;i++){
+      if(times[i+4]-times[i]<60000){bursts.push({device_id:did,count:5,window:'60s',at:new Date(times[i]).toLocaleString('vi-VN')});break;}
+    }
+  });
+  const suspicious=overLimit.length+dupes.length+bursts.length;
+
+  // summary by case
+  const byCase={};
+  votes.forEach(v=>{
+    if(!byCase[v.case_id])byCase[v.case_id]={hn:0,hcm:0,total:0};
+    const city=(v.city||'').toLowerCase();
+    const isHN=city.includes('nội')||city==='hn';
+    if(isHN)byCase[v.case_id].hn++;else byCase[v.case_id].hcm++;
+    byCase[v.case_id].total++;
+  });
+  const ranked=Object.entries(byCase).sort((a,b)=>b[1].total-a[1].total);
+
+  // filter log
+  const filtered=votes.filter(v=>{
+    if(_auditCity==='hn'){const c=(v.city||'').toLowerCase();if(!c.includes('nội')&&c!=='hn')return false;}
+    if(_auditCity==='hcm'){const c=(v.city||'').toLowerCase();if(!c.includes('minh')&&c!=='hcm'&&c!=='tp.hcm')return false;}
+    if(_auditSearch){const q=_auditSearch.toLowerCase();const cs=caseMap[v.case_id];const title=(cs?.title||v.case_id||'').toLowerCase();if(!title.includes(q)&&!(v.device_id||'').toLowerCase().includes(q))return false;}
+    return true;
+  });
+
+  const hnTotal=votes.filter(v=>{const c=(v.city||'').toLowerCase();return c.includes('nội')||c==='hn';}).length;
+  const hcmTotal=votes-hnTotal;
+
+  return `<div style="display:flex;flex-direction:column;gap:16px">
+  ${suspicious>0?`<div class="card" style="border:1.5px solid #e53e3e">
+    <div class="card-header"><div class="card-title" style="color:#fc8181">⚠️ Phát hiện ${suspicious} dấu hiệu bất thường</div></div>
+    ${overLimit.length?`<div style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--textM);margin-bottom:6px">🔴 Device vote vượt giới hạn (tối đa ${maxPerDevice} votes/người)</div>
+      ${overLimit.slice(0,20).map(([did,d])=>`<div class="list-row" style="font-size:11px">
+        <div style="font-family:monospace;color:#fc8181;min-width:180px">${did?.slice(0,20)||'—'}</div>
+        <div style="color:var(--textM)"><b>${d.total}</b> votes · ${d.cases.size} case khác nhau</div>
+      </div>`).join('')}
+    </div>`:''}
+    ${dupes.length?`<div style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--textM);margin-bottom:6px">🟠 Vote trùng (cùng device + cùng case)</div>
+      ${dupes.slice(0,20).map(v=>{const cs=caseMap[v.case_id];return`<div class="list-row" style="font-size:11px">
+        <div style="font-family:monospace;color:#f6ad55;min-width:180px">${v.device_id?.slice(0,20)||'—'}</div>
+        <div style="flex:1;color:var(--textM)">${cs?.title||v.case_id}</div>
+        <div style="color:var(--textS)">${v.created_at?new Date(v.created_at).toLocaleString('vi-VN'):''}</div>
+      </div>`}).join('')}
+    </div>`:''}
+    ${bursts.length?`<div>
+      <div style="font-size:12px;font-weight:700;color:var(--textM);margin-bottom:6px">🟡 Vote dồn dập (≥5 votes trong 60 giây)</div>
+      ${bursts.slice(0,10).map(b=>`<div class="list-row" style="font-size:11px">
+        <div style="font-family:monospace;color:#f6e05e;min-width:180px">${b.device_id?.slice(0,20)||'—'}</div>
+        <div style="color:var(--textM)">bắt đầu lúc ${b.at}</div>
+      </div>`).join('')}
+    </div>`:''}
+  </div>`:'<div class="card" style="border:1.5px solid #38a169"><div style="padding:16px;color:#68d391;font-weight:600">✅ Không phát hiện dấu hiệu gian lận</div></div>'}
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">🛡️ Vote audit</div><div class="card-sub">${votes.length} tổng votes · HN: ${hnTotal} · HCM: ${votes.length-hnTotal}</div></div>
+      <button class="btn" onclick="sb('top_pick_votes?order=created_at.desc&limit=2000').then(v=>{state.votes=v;render()})">🔄 Refresh</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="padding:8px 10px;text-align:left;color:var(--textM)">Hạng</th>
+          <th style="padding:8px 10px;text-align:left;color:var(--textM)">Case</th>
+          <th style="padding:8px 10px;text-align:center;color:var(--textM)">🏙 HN</th>
+          <th style="padding:8px 10px;text-align:center;color:var(--textM)">🌆 HCM</th>
+          <th style="padding:8px 10px;text-align:center;color:var(--gold)">Tổng</th>
+        </tr></thead>
+        <tbody>${ranked.map(([cid,cnt],i)=>{
+          const cs=caseMap[cid];
+          return `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:8px 10px;font-family:monospace;color:var(--textS)">#${i+1}</td>
+            <td style="padding:8px 10px">${cs?.sticker?cs.sticker+' ':''}<span style="font-weight:600">${cs?.title||cid}</span>${cs?.city?`<span style="font-size:10px;color:var(--textS);margin-left:6px">${cs.city}</span>`:''}</td>
+            <td style="padding:8px 10px;text-align:center;font-family:monospace">${cnt.hn||'—'}</td>
+            <td style="padding:8px 10px;text-align:center;font-family:monospace">${cnt.hcm||'—'}</td>
+            <td style="padding:8px 10px;text-align:center;font-family:monospace;color:var(--gold);font-weight:700">${cnt.total}</td>
+          </tr>`;
+        }).join('')||`<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--textS)">Chưa có vote</td></tr>`}</tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">📋 Vote log chi tiết</div><div class="card-sub">${filtered.length} bản ghi</div></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn ${_auditCity==='all'?'btn-primary':''}" onclick="_auditCity='all';render()">Tất cả</button>
+      <button class="btn ${_auditCity==='hn'?'btn-primary':''}" onclick="_auditCity='hn';render()">🏙 Hà Nội</button>
+      <button class="btn ${_auditCity==='hcm'?'btn-primary':''}" onclick="_auditCity='hcm';render()">🌆 TP.HCM</button>
+      <input type="text" placeholder="Tìm case / device..." value="${_auditSearch}" oninput="_auditSearch=this.value;render()" style="flex:1;min-width:160px;margin-bottom:0"/>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="padding:6px 8px;text-align:left;color:var(--textM)">#</th>
+          <th style="padding:6px 8px;text-align:left;color:var(--textM)">Case</th>
+          <th style="padding:6px 8px;text-align:left;color:var(--textM)">City</th>
+          <th style="padding:6px 8px;text-align:left;color:var(--textM)">Device ID</th>
+          <th style="padding:6px 8px;text-align:left;color:var(--textM)">Thời gian</th>
+        </tr></thead>
+        <tbody>${filtered.slice(0,200).map((v,i)=>{
+          const cs=caseMap[v.case_id];
+          return `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:6px 8px;color:var(--textS);font-family:monospace">${i+1}</td>
+            <td style="padding:6px 8px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cs?.sticker?cs.sticker+' ':''}<span title="${v.case_id}">${cs?.title||v.case_id||'—'}</span></td>
+            <td style="padding:6px 8px;color:var(--textM)">${v.city||'—'}</td>
+            <td style="padding:6px 8px;font-family:monospace;color:var(--textS)">${v.device_id?.slice(0,16)||'—'}</td>
+            <td style="padding:6px 8px;color:var(--textM);white-space:nowrap">${v.created_at?new Date(v.created_at).toLocaleString('vi-VN'):'—'}</td>
+          </tr>`;
+        }).join('')||`<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--textS)">Không có kết quả</td></tr>`}
+        ${filtered.length>200?`<tr><td colspan="5" style="padding:8px;text-align:center;color:var(--textS);font-size:10px">Hiển thị 200/${filtered.length} bản ghi</td></tr>`:''}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  </div>`;
 }
 
 let regFilter={season:'current',city:'all',team:'all',search:'',sort:'created_at',sortDir:'desc'};
@@ -1992,17 +2123,31 @@ function renderFeedback(){
   };
 
   const selectedSeason = window._fbSeasonFilter || (seasons[0] || 'nhai-day-02');
-  const shown = bySeason[selectedSeason] || [];
+  const selectedCity = window._fbCityFilter || 'all';
+  const seasonFbs = bySeason[selectedSeason] || [];
+  const shown = selectedCity==='all' ? seasonFbs : seasonFbs.filter(f=>{
+    const c=(f.city||'').toLowerCase();
+    if(selectedCity==='hn') return c.includes('nội')||c==='hn';
+    if(selectedCity==='hcm') return c.includes('minh')||c==='hcm'||c==='hồ chí minh'||c==='tp.hcm';
+    return true;
+  });
 
   const mentorAvg = avgRating(shown, 'mentor_rating');
   const overallAvg = avgRating(shown, 'overall_rating');
   const demoCount = shown.filter(f=>f.output_status==='Có, demo được').length;
+  const hnCount = seasonFbs.filter(f=>{const c=(f.city||'').toLowerCase();return c.includes('nội')||c==='hn';}).length;
+  const hcmCount = seasonFbs.filter(f=>{const c=(f.city||'').toLowerCase();return c.includes('minh')||c==='hcm'||c==='hồ chí minh'||c==='tp.hcm';}).length;
 
   return `
-  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-    ${seasons.map(s=>`<button class="btn ${s===selectedSeason?'btn-primary':''}" onclick="window._fbSeasonFilter='${s}';render()">${s}</button>`).join('')}
+  <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
+    ${seasons.map(s=>`<button class="btn ${s===selectedSeason?'btn-primary':''}" onclick="window._fbSeasonFilter='${s}';window._fbCityFilter='all';render()">${s}</button>`).join('')}
     <button class="btn" onclick="loadAll()" style="margin-left:auto">🔄 Refresh</button>
     ${shown.length?`<button class="btn btn-success" onclick="exportFbCSV('${selectedSeason}')">↓ Export (${shown.length})</button>`:''}
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="btn ${selectedCity==='all'?'btn-primary':''}" onclick="window._fbCityFilter='all';render()">Tất cả (${seasonFbs.length})</button>
+    <button class="btn ${selectedCity==='hn'?'btn-primary':''}" onclick="window._fbCityFilter='hn';render()">🏙 Hà Nội (${hnCount})</button>
+    <button class="btn ${selectedCity==='hcm'?'btn-primary':''}" onclick="window._fbCityFilter='hcm';render()">🌆 TP.HCM (${hcmCount})</button>
   </div>
 
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
