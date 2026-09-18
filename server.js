@@ -20,13 +20,13 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // database and admin were open to the whole internet. Deny by hostname (never an
 // allowlist — a wrong value there would lock out every real user) and only for
 // data paths, so `/` still answers and the platform health check cannot flap.
-const DIRECT_HOSTS = new Set(['nhai-day.demo.ved.com.vn']);
+// LOG ONLY — blocking is off. The proxy may forward with the backend hostname in
+// Host, in which case denying that value takes the real site down too. Log what
+// actually arrives on each path, then decide what is safe to deny.
 const GUARDED_PATHS = ['/rest/v1', '/api', '/internal', '/nhai-day-admin'];
 app.use((req, res, next) => {
-  const host = String(req.headers.host || '').split(':')[0].toLowerCase();
-  if (DIRECT_HOSTS.has(host) && GUARDED_PATHS.some(p => req.path.startsWith(p))) {
-    console.log(`blocked direct-host request: ${host}${req.originalUrl}`);
-    return res.status(404).type('text/plain').send('Not found');
+  if (GUARDED_PATHS.some(p => req.path.startsWith(p))) {
+    console.log(`hostprobe host=${req.headers.host || '-'} xfh=${req.headers['x-forwarded-host'] || '-'} xff=${req.headers['x-forwarded-for'] || '-'} path=${req.path}`);
   }
   next();
 });
