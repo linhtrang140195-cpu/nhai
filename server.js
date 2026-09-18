@@ -15,6 +15,22 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// The runner answers on its own public hostname as well as through the company
+// proxy, and only the proxy restricts access by network. Reached directly, the
+// database and admin were open to the whole internet. Deny by hostname (never an
+// allowlist — a wrong value there would lock out every real user) and only for
+// data paths, so `/` still answers and the platform health check cannot flap.
+const DIRECT_HOSTS = new Set(['nhai-day.demo.ved.com.vn']);
+const GUARDED_PATHS = ['/rest/v1', '/api', '/internal', '/nhai-day-admin'];
+app.use((req, res, next) => {
+  const host = String(req.headers.host || '').split(':')[0].toLowerCase();
+  if (DIRECT_HOSTS.has(host) && GUARDED_PATHS.some(p => req.path.startsWith(p))) {
+    console.log(`blocked direct-host request: ${host}${req.originalUrl}`);
+    return res.status(404).type('text/plain').send('Not found');
+  }
+  next();
+});
+
 app.use('/rest/v1', restShim);
 app.all('/api/top-pick-vote', topPickVote);
 app.post('/api/site-analytics', siteAnalytics);
