@@ -951,11 +951,16 @@ async function pushCasesToCampaign(id){
   toast(`Đã push ${added} cases vào campaign`);loadAll();
 }
 
-let _auditCity='all',_auditSearch='';
+let _auditCity='all',_auditSearch='',_auditCampaign='';
 function renderAudit(){
-  const votes=state.votes||[];
+  const allVotes=state.votes||[];
+  const campaigns=(state.campaigns||[]).slice().sort((a,b)=>String(b.id).localeCompare(String(a.id)));
+  // Votes from every campaign share one table — clustering across seasons would be meaningless
+  const activeCamp=campaigns.find(c=>c.is_active)||campaigns[0];
+  const campId=_auditCampaign||activeCamp?.id||'';
+  const votes=campId?allVotes.filter(v=>v.campaign_id===campId):allVotes;
   const caseMap={};(state.cases||[]).forEach(c=>{caseMap[c.id]=c;});
-  const maxPerDevice=(state.campaigns||[]).find(c=>c.is_active)?.max_votes_per_device||3;
+  const maxPerDevice=(campaigns.find(c=>c.id===campId)||activeCamp)?.max_votes_per_device||3;
 
   // Votes cast before migration 008 have city=NULL — fall back to the case's city
   const cityOf=v=>{
@@ -998,7 +1003,48 @@ function renderAudit(){
   const ipDevices={};
   votes.forEach(v=>{if(!v.client_ip)return;if(!ipDevices[v.client_ip])ipDevices[v.client_ip]=new Set();ipDevices[v.client_ip].add(v.device_id);});
   const multiDeviceIps=Object.entries(ipDevices).filter(([,s])=>s.size>maxPerDevice).sort((a,b)=>b[1].size-a[1].size);
-  const suspicious=overLimit.length+dupes.length+bursts.length+multiDeviceIps.length;
+
+  // 5) Scripted runs: many DISTINCT devices voting one case at machine-regular intervals.
+  // This is the pattern a fresh-incognito-per-vote script leaves; checks 1-3 all miss it
+  // because every device looks individually compliant.
+  const autoRuns=[];
+  const votesByCase={};
+  votes.forEach(v=>{(votesByCase[v.case_id]=votesByCase[v.case_id]||[]).push(v);});
+  Object.entries(votesByCase).forEach(([cid,vs])=>{
+    const sorted=vs.slice().sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+    let cur=[];
+    const flush=()=>{
+      if(cur.length<8)return cur=[];
+      const gaps=[];
+      for(let i=1;i<cur.length;i++)gaps.push((new Date(cur[i].created_at)-new Date(cur[i-1].created_at))/1000);
+      const sortedGaps=gaps.slice().sort((a,b)=>a-b);
+      const med=sortedGaps[Math.floor(sortedGaps.length/2)];
+      const mean=gaps.reduce((s,g)=>s+g,0)/gaps.length;
+      const sd=Math.sqrt(gaps.reduce((s,g)=>s+(g-mean)**2,0)/gaps.length);
+      const devs=new Set(cur.map(v=>v.device_id)).size;
+      // Machine signature: tight regular spacing from near-all-distinct identities
+      if(med<=12&&devs>=cur.length*0.9){
+        autoRuns.push({
+          case_id:cid,n:cur.length,devices:devs,
+          start:cur[0].created_at,
+          span:Math.round((new Date(cur[cur.length-1].created_at)-new Date(cur[0].created_at))/1000),
+          med:Math.round(med*10)/10,sd:Math.round(sd*10)/10,
+          singleUse:cur.filter(v=>deviceVotes[v.device_id]?.total===1).length,
+          ids:cur.map(v=>v.id)
+        });
+      }
+      cur=[];
+    };
+    sorted.forEach(v=>{
+      if(cur.length&&(new Date(v.created_at)-new Date(cur[cur.length-1].created_at))/1000>20)flush();
+      cur.push(v);
+    });
+    flush();
+  });
+  autoRuns.sort((a,b)=>b.n-a.n);
+  const autoTotal=autoRuns.reduce((s,r)=>s+r.n,0);
+
+  const suspicious=overLimit.length+dupes.length+bursts.length+multiDeviceIps.length+autoRuns.length;
 
   // summary by case
   const byCase={};
@@ -1021,8 +1067,41 @@ function renderAudit(){
   const hcmTotal=votes.filter(v=>cityOf(v)==='hcm').length;
 
   return `<div style="display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    ${campaigns.map(c=>`<button class="btn ${c.id===campId?'btn-primary':''}" onclick="_auditCampaign='${c.id}';_auditCity='all';render()">${c.name||c.id}${c.is_active?' 🟢':''}</button>`).join('')}
+  </div>
   ${suspicious>0?`<div class="card" style="border:1.5px solid #e53e3e">
     <div class="card-header"><div class="card-title" style="color:#fc8181">⚠️ Phát hiện ${suspicious} dấu hiệu bất thường</div></div>
+    ${autoRuns.length?`<div style="margin-bottom:14px;padding:10px;background:rgba(229,62,62,.1);border-radius:6px">
+      <div style="font-size:12px;font-weight:700;color:#fc8181;margin-bottom:4px">🚨 Nghi vấn vote bằng script — ${autoRuns.length} đợt, tổng ${autoTotal} phiếu</div>
+      <div style="font-size:10px;color:var(--textS);margin-bottom:8px">Nhiều device khác nhau vote cùng 1 case với nhịp đều như máy. Độ lệch (SD) càng nhỏ càng chắc là script — người thật thường có SD trên 30 giây.</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="padding:5px 7px;text-align:left;color:var(--textM)">Bắt đầu</th>
+          <th style="padding:5px 7px;text-align:left;color:var(--textM)">Case</th>
+          <th style="padding:5px 7px;text-align:center;color:var(--textM)">Phiếu</th>
+          <th style="padding:5px 7px;text-align:center;color:var(--textM)">Device</th>
+          <th style="padding:5px 7px;text-align:center;color:var(--textM)">Kéo dài</th>
+          <th style="padding:5px 7px;text-align:center;color:var(--textM)">Cách nhau</th>
+          <th style="padding:5px 7px;text-align:center;color:#fc8181">SD</th>
+          <th style="padding:5px 7px;text-align:center;color:var(--textM)">Dùng 1 lần</th>
+        </tr></thead>
+        <tbody>${autoRuns.map(r=>{
+          const cs=caseMap[r.case_id];
+          const t=cs?.title||r.case_id;
+          return `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:5px 7px;white-space:nowrap;font-family:monospace">${new Date(r.start).toLocaleString('vi-VN')}</td>
+            <td style="padding:5px 7px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t}">${t}</td>
+            <td style="padding:5px 7px;text-align:center;font-weight:700;color:#fc8181">${r.n}</td>
+            <td style="padding:5px 7px;text-align:center">${r.devices}</td>
+            <td style="padding:5px 7px;text-align:center">${r.span}s</td>
+            <td style="padding:5px 7px;text-align:center">${r.med}s</td>
+            <td style="padding:5px 7px;text-align:center;font-weight:700;color:${r.sd<=5?'#fc8181':r.sd<=15?'#f6ad55':'var(--textM)'}">±${r.sd}s</td>
+            <td style="padding:5px 7px;text-align:center">${r.singleUse}/${r.n}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>
+    </div>`:''}
     ${overLimit.length?`<div style="margin-bottom:12px">
       <div style="font-size:12px;font-weight:700;color:var(--textM);margin-bottom:6px">🔴 Device vote vượt giới hạn (tối đa ${maxPerDevice} votes mỗi city)</div>
       ${overLimit.slice(0,20).map(([did,d])=>`<div class="list-row" style="font-size:11px">
