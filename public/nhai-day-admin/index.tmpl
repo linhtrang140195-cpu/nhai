@@ -981,7 +981,11 @@ function renderAudit(){
       if(times[i+4]-times[i]<60000){bursts.push({device_id:did,count:5,window:'60s',at:new Date(times[i]).toLocaleString('vi-VN')});break;}
     }
   });
-  const suspicious=overLimit.length+dupes.length+bursts.length;
+  // 4) Same IP voting with many different device_ids (incognito abuse)
+  const ipDevices={};
+  votes.forEach(v=>{if(!v.client_ip)return;if(!ipDevices[v.client_ip])ipDevices[v.client_ip]=new Set();ipDevices[v.client_ip].add(v.device_id);});
+  const multiDeviceIps=Object.entries(ipDevices).filter(([,s])=>s.size>maxPerDevice).sort((a,b)=>b[1].size-a[1].size);
+  const suspicious=overLimit.length+dupes.length+bursts.length+multiDeviceIps.length;
 
   // summary by case
   const byCase={};
@@ -1023,11 +1027,18 @@ function renderAudit(){
         <div style="color:var(--textS)">${v.created_at?new Date(v.created_at).toLocaleString('vi-VN'):''}</div>
       </div>`}).join('')}
     </div>`:''}
-    ${bursts.length?`<div>
+    ${bursts.length?`<div style="margin-bottom:12px">
       <div style="font-size:12px;font-weight:700;color:var(--textM);margin-bottom:6px">🟡 Vote dồn dập (≥5 votes trong 60 giây)</div>
       ${bursts.slice(0,10).map(b=>`<div class="list-row" style="font-size:11px">
         <div style="font-family:monospace;color:#f6e05e;min-width:180px">${b.device_id?.slice(0,20)||'—'}</div>
         <div style="color:var(--textM)">bắt đầu lúc ${b.at}</div>
+      </div>`).join('')}
+    </div>`:''}
+    ${multiDeviceIps.length?`<div>
+      <div style="font-size:12px;font-weight:700;color:var(--textM);margin-bottom:6px">🔵 Cùng IP dùng nhiều device (có thể tab ẩn danh)</div>
+      ${multiDeviceIps.slice(0,15).map(([ip,devs])=>`<div class="list-row" style="font-size:11px">
+        <div style="font-family:monospace;color:#90cdf4;min-width:140px">${ip}</div>
+        <div style="color:var(--textM)"><b>${devs.size}</b> device ID khác nhau</div>
       </div>`).join('')}
     </div>`:''}
   </div>`:'<div class="card" style="border:1.5px solid #38a169"><div style="padding:16px;color:#68d391;font-weight:600">✅ Không phát hiện dấu hiệu gian lận</div></div>'}
@@ -1072,6 +1083,7 @@ function renderAudit(){
           <th style="padding:6px 8px;text-align:left;color:var(--textM)">#</th>
           <th style="padding:6px 8px;text-align:left;color:var(--textM)">Case</th>
           <th style="padding:6px 8px;text-align:left;color:var(--textM)">City</th>
+          <th style="padding:6px 8px;text-align:left;color:var(--textM)">IP</th>
           <th style="padding:6px 8px;text-align:left;color:var(--textM)">Device ID</th>
           <th style="padding:6px 8px;text-align:left;color:var(--textM)">Thời gian</th>
         </tr></thead>
@@ -1079,9 +1091,10 @@ function renderAudit(){
           const cs=caseMap[v.case_id];
           return `<tr style="border-bottom:1px solid var(--border)">
             <td style="padding:6px 8px;color:var(--textS);font-family:monospace">${i+1}</td>
-            <td style="padding:6px 8px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cs?.sticker?cs.sticker+' ':''}<span title="${v.case_id}">${cs?.title||v.case_id||'—'}</span></td>
+            <td style="padding:6px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cs?.sticker?cs.sticker+' ':''}<span title="${v.case_id}">${cs?.title||v.case_id||'—'}</span></td>
             <td style="padding:6px 8px;color:var(--textM)">${v.city||'—'}</td>
-            <td style="padding:6px 8px;font-family:monospace;color:var(--textS)">${v.device_id?.slice(0,16)||'—'}</td>
+            <td style="padding:6px 8px;font-family:monospace;color:${v.client_ip?'var(--textM)':'var(--textS)'}">${v.client_ip||'—'}</td>
+            <td style="padding:6px 8px;font-family:monospace;color:var(--textS)">${v.device_id?.slice(0,14)||'—'}</td>
             <td style="padding:6px 8px;color:var(--textM);white-space:nowrap">${v.created_at?new Date(v.created_at).toLocaleString('vi-VN'):'—'}</td>
           </tr>`;
         }).join('')||`<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--textS)">Không có kết quả</td></tr>`}

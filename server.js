@@ -238,7 +238,7 @@ app.post('/api/submit-feedback', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 async function runSchemaMigration() {
-  const migrationFiles = ['001_schema.sql', '002_feedback_day2_import.sql', '003_news_posts.sql', '004_gallery_images.sql', '005_mediumtext_body.sql', '006_next_step.sql', '007_submission_next_step.sql'];
+  const migrationFiles = ['001_schema.sql', '002_feedback_day2_import.sql', '003_news_posts.sql', '004_gallery_images.sql', '005_mediumtext_body.sql', '006_next_step.sql', '007_submission_next_step.sql', '008_vote_client_ip.sql'];
   let totalApplied = 0;
   for (const fileName of migrationFiles) {
     const sqlFile = path.join(__dirname, 'migrations', fileName);

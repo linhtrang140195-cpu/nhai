@@ -55,7 +55,7 @@ async function buildSnapshot(campaignId, deviceId) {
   return { counts, deviceVotes, deviceVotesByCity };
 }
 
-async function castVote(campaignId, caseId, deviceId, maxVotes) {
+async function castVote(campaignId, caseId, deviceId, maxVotes, clientIp) {
   const [caseRows] = await pool.query(
     'SELECT case_id, city FROM top_pick_cases WHERE campaign_id = ? AND case_id = ? AND is_active = 1',
     [campaignId, caseId]
@@ -76,10 +76,23 @@ async function castVote(campaignId, caseId, deviceId, maxVotes) {
     return { ok: false, status: 409, message: `This device has used all ${maxVotes} votes for ${cityLabel}.` };
   }
 
+  // IP-based check: limit votes per IP per city (allows maxVotes * 2 to account for NAT/shared IPs)
+  if (clientIp) {
+    const ipLimit = maxVotes * 2;
+    const [ipCityVotes] = await pool.query(
+      `SELECT id FROM top_pick_votes WHERE campaign_id = ? AND client_ip = ? AND city = ?`,
+      [campaignId, clientIp, voteCase.city]
+    );
+    if (ipCityVotes.length >= ipLimit) {
+      const cityLabel = voteCase.city === 'HCM' ? 'TP.HCM' : 'Hà Nội';
+      return { ok: false, status: 409, message: `Voting limit reached for your network (${cityLabel}).` };
+    }
+  }
+
   try {
     await pool.query(
-      'INSERT INTO top_pick_votes (id, campaign_id, case_id, device_id) VALUES (?, ?, ?, ?)',
-      [crypto.randomUUID(), campaignId, caseId, deviceId]
+      'INSERT INTO top_pick_votes (id, campaign_id, case_id, device_id, client_ip, city) VALUES (?, ?, ?, ?, ?, ?)',
+      [crypto.randomUUID(), campaignId, caseId, deviceId, clientIp || null, voteCase.city || null]
     );
   } catch (e) {
     if (e.errno === 1062) {
@@ -138,7 +151,8 @@ module.exports = async function topPickVote(req, res) {
       const blockReason = getCampaignBlockReason(campaign);
       if (blockReason) return res.status(409).json({ ok: false, message: blockReason });
 
-      const result = await castVote(campaignId, caseId, deviceId, campaign.max_votes_per_device);
+      const clientIp = (req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim();
+      const result = await castVote(campaignId, caseId, deviceId, campaign.max_votes_per_device, clientIp);
       if (!result.ok) return res.status(result.status).json(result);
 
       const snapshot = await buildSnapshot(campaignId, deviceId);

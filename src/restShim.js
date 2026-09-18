@@ -37,7 +37,7 @@ const TABLES = {
   },
   top_pick_campaigns: { pk: 'id', columns: ['id', 'name', 'max_votes_per_device', 'is_active', 'opens_at', 'closes_at', 'created_at'] },
   top_pick_cases: { pk: 'case_id', columns: ['case_id', 'campaign_id', 'city', 'title', 'is_active', 'created_at'] },
-  top_pick_votes: { pk: 'id', columns: ['id', 'campaign_id', 'case_id', 'device_id', 'created_at'] },
+  top_pick_votes: { pk: 'id', columns: ['id', 'campaign_id', 'case_id', 'device_id', 'client_ip', 'city', 'created_at'] },
   page_sessions: {
     pk: 'session_id',
     columns: ['session_id', 'device_id', 'entry_path', 'page_title', 'user_agent', 'started_at', 'ended_at', 'duration_seconds', 'last_event_at']
