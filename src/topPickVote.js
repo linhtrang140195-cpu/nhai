@@ -76,11 +76,11 @@ async function castVote(campaignId, caseId, deviceId, maxVotes, clientIp) {
     return { ok: false, status: 409, message: `This device has used all ${maxVotes} votes for ${cityLabel}.` };
   }
 
-  // IP-based check: limit votes per IP per city (allows maxVotes * 2 to account for NAT/shared IPs)
+  // Incognito tabs get a fresh device_id, so also cap by IP (x2 for shared office NAT)
   if (clientIp) {
     const ipLimit = maxVotes * 2;
     const [ipCityVotes] = await pool.query(
-      `SELECT id FROM top_pick_votes WHERE campaign_id = ? AND client_ip = ? AND city = ?`,
+      'SELECT id FROM top_pick_votes WHERE campaign_id = ? AND client_ip = ? AND city = ?',
       [campaignId, clientIp, voteCase.city]
     );
     if (ipCityVotes.length >= ipLimit) {
