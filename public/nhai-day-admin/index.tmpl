@@ -2045,6 +2045,8 @@ function renderSubmissions(){
   const filterTab = window._subFilterTab || 'pending';
   const shown = filterTab==='pending'?pending:filterTab==='approved'?approved:rejected;
 
+  const caseMap={};(state.cases||[]).forEach(c=>{caseMap[c.id]=c;});
+  const fmtTools=v=>{if(!v)return'';if(Array.isArray(v))return v.join(', ');try{const p=JSON.parse(v);return Array.isArray(p)?p.join(', '):v;}catch{return v;}};
   const approvedTable = `
     <div style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse;font-size:12px">
@@ -2054,7 +2056,10 @@ function renderSubmissions(){
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Người submit</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Email</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">TP</th>
-        <th style="padding:8px 10px;color:var(--textM);font-weight:600">Tools</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600;min-width:180px">Mô tả ngắn</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600;min-width:180px">Vấn đề</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600;min-width:120px">Tools</th>
+        <th style="padding:8px 10px;color:var(--textM);font-weight:600;min-width:180px">Kế hoạch</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Demo</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Ngày</th>
         <th style="padding:8px 10px;color:var(--textM);font-weight:600">Vote</th>
@@ -2062,19 +2067,22 @@ function renderSubmissions(){
         <th style="padding:8px 10px;color:var(--textM);font-weight:600"></th>
       </tr></thead>
       <tbody>
-        ${approved.map((s,i)=>`<tr style="border-bottom:1px solid var(--border)">
+        ${approved.map((s,i)=>{const c=caseMap[s.case_id]||{};return`<tr style="border-bottom:1px solid var(--border)">
           <td style="padding:8px 10px;color:var(--textM)">${i+1}</td>
-          <td style="padding:8px 10px;font-weight:600;max-width:200px">${e(s.title)}</td>
+          <td style="padding:8px 10px;font-weight:600;min-width:160px">${c.sticker?c.sticker+' ':''}${e(c.title||s.title)}</td>
           <td style="padding:8px 10px;white-space:nowrap">${e(s.owner_name)}</td>
           <td style="padding:8px 10px;color:var(--textM);white-space:nowrap">${e(s.owner_email)}</td>
           <td style="padding:8px 10px"><span class="badge ${s.city==='HN'?'badge-hn':'badge-hcm'}">${s.city}</span></td>
-          <td style="padding:8px 10px;color:var(--textM);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e(s.tools||'')}</td>
-          <td style="padding:8px 10px">${s.demo_url?`<a href="${e(s.demo_url)}" target="_blank" style="color:var(--gold);text-decoration:none;font-size:11px">▶ Xem</a>`:''}</td>
+          <td style="padding:8px 10px;color:var(--textM);max-width:220px;font-size:11px;line-height:1.4">${e(c.short_description||'')}</td>
+          <td style="padding:8px 10px;color:var(--textM);max-width:220px;font-size:11px;line-height:1.4">${e(c.purpose||s.description||'')}</td>
+          <td style="padding:8px 10px;color:var(--textM);white-space:nowrap;font-size:11px">${e(fmtTools(c.tools_used||s.tools))}</td>
+          <td style="padding:8px 10px;color:var(--textM);max-width:200px;font-size:11px;line-height:1.4">${e(c.next_step||s.next_step||'')}</td>
+          <td style="padding:8px 10px">${(c.demo_url||s.demo_url)?`<a href="${e(c.demo_url||s.demo_url)}" target="_blank" style="color:var(--gold);text-decoration:none;font-size:11px">▶ Xem</a>`:''}</td>
           <td style="padding:8px 10px;white-space:nowrap;color:var(--textM)">${s.submitted_at?new Date(s.submitted_at).toLocaleDateString('vi-VN'):''}</td>
           <td style="padding:8px 10px">${s.case_id?`<button class="btn" style="font-size:10px;padding:3px 8px;white-space:nowrap" onclick="openLinkVoteModal('${s.case_id}','${(s.city||'').replace(/'/g,"\\'")}','${(s.title||'').replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">🗳 Link vote</button>`:`<span style="color:var(--textM);font-size:10px">—</span>`}</td>
           <td style="padding:8px 10px">${s.case_id?`<button class="btn" style="font-size:10px;padding:3px 8px;white-space:nowrap" onclick="openEditCaseModal('${s.case_id}')">✏️</button>`:`<span style="color:var(--textM);font-size:10px">—</span>`}</td>
           <td style="padding:8px 10px"><button class="btn btn-danger" style="font-size:10px;padding:3px 8px" onclick="deleteApprovedSub('${s.id}','${s.case_id||''}')">🗑</button></td>
-        </tr>`).join('')}
+        </tr>`;}).join('')}
       </tbody>
     </table>
     ${approved.length===0?`<div class="empty-state">Không có submission nào</div>`:''}
