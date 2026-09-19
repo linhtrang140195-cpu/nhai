@@ -118,10 +118,21 @@ function parseQuery(table, query) {
   return { filters, orderBy, limit, projection };
 }
 
+// Ballots may only be cast through /api/top-pick-vote, which enforces the per-device
+// cap, the campaign window and the rate limits. A direct write here would skip all of
+// it — that is how 69 scripted votes could have been inserted in one second instead of
+// two minutes. Reads stay open; the admin audit needs them.
+const READ_ONLY_TABLES = new Set(['top_pick_votes']);
+
 router.all('/:table', async (req, res) => {
   const { table } = req.params;
   const def = TABLES[table];
   if (!def) return res.status(400).json({ message: `Unknown table: ${table}` });
+
+  if (READ_ONLY_TABLES.has(table) && req.method !== 'GET') {
+    console.log(`rest write denied: ${req.method} ${table} from ${req.headers['x-forwarded-for'] || req.ip || '-'}`);
+    return res.status(405).json({ message: `${table} is read-only here; use /api/top-pick-vote.` });
+  }
 
   try {
     const { filters, orderBy, limit, projection } = parseQuery(table, req.query);

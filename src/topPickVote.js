@@ -1,6 +1,46 @@
 const crypto = require('crypto');
 const pool = require('./db');
 
+// A script that opens a fresh identity per vote passes every per-device check: each
+// id casts one ballot and never returns, so nothing looks over the limit. What gives
+// it away is cadence — 28 ballots arrived 5.0s apart (sd 1.4s) while real voting that
+// week averaged 48s apart with a spread of 111s. Counting ballots per IP cannot
+// separate a script from an office full of colleagues voting at once; the spread can.
+// Held in memory: a restart clears it, and the audit page still catches what slips by.
+const RECENT_WINDOW_MS = 5 * 60 * 1000;
+const RECENT_MIN_SAMPLES = 8;
+const RECENT_MAX_SD_SECONDS = 3;
+const RECENT_MAX_MEDIAN_GAP_SECONDS = 12;
+const recentVotesByIp = new Map();
+
+function looksScripted(clientIp, now) {
+  const stamps = (recentVotesByIp.get(clientIp) || []).filter(t => now - t < RECENT_WINDOW_MS);
+  if (stamps.length < RECENT_MIN_SAMPLES) return null;
+
+  const gaps = [];
+  for (let i = 1; i < stamps.length; i++) gaps.push((stamps[i] - stamps[i - 1]) / 1000);
+  const median = gaps.slice().sort((a, b) => a - b)[Math.floor(gaps.length / 2)];
+  if (median > RECENT_MAX_MEDIAN_GAP_SECONDS) return null;
+
+  const mean = gaps.reduce((s, g) => s + g, 0) / gaps.length;
+  const sd = Math.sqrt(gaps.reduce((s, g) => s + (g - mean) ** 2, 0) / gaps.length);
+  if (sd > RECENT_MAX_SD_SECONDS) return null;
+
+  return { samples: stamps.length, median: Math.round(median * 10) / 10, sd: Math.round(sd * 10) / 10 };
+}
+
+function recordVote(clientIp, now) {
+  if (!clientIp) return;
+  const stamps = (recentVotesByIp.get(clientIp) || []).filter(t => now - t < RECENT_WINDOW_MS);
+  stamps.push(now);
+  recentVotesByIp.set(clientIp, stamps);
+  if (recentVotesByIp.size > 5000) {
+    for (const [ip, ts] of recentVotesByIp) {
+      if (!ts.some(t => now - t < RECENT_WINDOW_MS)) recentVotesByIp.delete(ip);
+    }
+  }
+}
+
 async function readCampaign(campaignId) {
   const [rows] = await pool.query(
     'SELECT id, name, max_votes_per_device, is_active, opens_at, closes_at FROM top_pick_campaigns WHERE id = ?',
@@ -76,16 +116,12 @@ async function castVote(campaignId, caseId, deviceId, maxVotes, clientIp) {
     return { ok: false, status: 409, message: `This device has used all ${maxVotes} votes for ${cityLabel}.` };
   }
 
-  // Incognito tabs get a fresh device_id, so also cap by IP (x2 for shared office NAT)
   if (clientIp) {
-    const ipLimit = maxVotes * 2;
-    const [ipCityVotes] = await pool.query(
-      'SELECT id FROM top_pick_votes WHERE campaign_id = ? AND client_ip = ? AND city = ?',
-      [campaignId, clientIp, voteCase.city]
-    );
-    if (ipCityVotes.length >= ipLimit) {
-      const cityLabel = voteCase.city === 'HCM' ? 'TP.HCM' : 'Hà Nội';
-      return { ok: false, status: 409, message: `Voting limit reached for your network (${cityLabel}).` };
+    const now = Date.now();
+    const scripted = looksScripted(clientIp, now);
+    if (scripted) {
+      console.log(`vote rejected as scripted: ip=${clientIp} samples=${scripted.samples} median=${scripted.median}s sd=${scripted.sd}s case=${caseId}`);
+      return { ok: false, status: 429, message: 'Quá nhiều lượt bình chọn liên tiếp từ mạng của bạn. Vui lòng thử lại sau vài phút.' };
     }
   }
 
@@ -101,6 +137,7 @@ async function castVote(campaignId, caseId, deviceId, maxVotes, clientIp) {
     throw e;
   }
 
+  recordVote(clientIp, Date.now());
   return { ok: true, status: 200 };
 }
 
