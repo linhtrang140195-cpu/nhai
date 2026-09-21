@@ -8,6 +8,7 @@ const restShim = require('./src/restShim');
 const topPickVote = require('./src/topPickVote');
 const siteAnalytics = require('./src/siteAnalytics');
 const { runSeed } = require('./src/seedCore');
+const adminAuth = require('./src/adminAuth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,6 +46,36 @@ app.use((req, res, next) => {
   }
   console.log(`hostprobe host=${host || '-'} xff=${req.headers['x-forwarded-for'] || '-'} path=${req.path}`);
   next();
+});
+
+app.post('/api/admin-login', async (req, res) => {
+  const password = String(req.body?.password || '');
+  if (!password) return res.status(400).json({ ok: false, message: 'Thiếu mật khẩu.' });
+
+  // First run has no password stored: whoever reaches this sets it. Only the company
+  // proxy can reach /api at all, so that is a colleague, not the internet.
+  if (!(await adminAuth.passwordIsSet())) {
+    if (password.length < 8) return res.status(400).json({ ok: false, message: 'Mật khẩu phải từ 8 ký tự.' });
+    await adminAuth.writeConfig(adminAuth.PASSWORD_KEY, adminAuth.hashPassword(password));
+    adminAuth.setSessionCookie(res, await adminAuth.issueToken());
+    return res.json({ ok: true, created: true });
+  }
+
+  if (!adminAuth.verifyPassword(password, await adminAuth.readConfig(adminAuth.PASSWORD_KEY))) {
+    console.log(`admin login failed from ${req.headers['x-forwarded-for'] || '-'}`);
+    return res.status(401).json({ ok: false, message: 'Mật khẩu không đúng.' });
+  }
+  adminAuth.setSessionCookie(res, await adminAuth.issueToken());
+  res.json({ ok: true });
+});
+
+app.post('/api/admin-logout', (req, res) => {
+  adminAuth.clearSessionCookie(res);
+  res.json({ ok: true });
+});
+
+app.get('/api/admin-session', async (req, res) => {
+  res.json({ ok: true, authed: await adminAuth.isAuthed(req), passwordSet: await adminAuth.passwordIsSet() });
 });
 
 app.use('/rest/v1', restShim);
@@ -155,9 +186,17 @@ app.get(['/submit-usecase', '/submit-usecase/'], servePage('index.tmpl'));
 app.get(['/dang-ky', '/dang-ky/'], servePage('index.tmpl'));
 app.get(['/feedback', '/feedback/'], servePage('index.tmpl'));
 app.get('/bai-viet/:postId', servePage('index.tmpl'));
-app.get(['/nhai-day-admin', '/nhai-day-admin/'], servePage('nhai-day-admin/index.tmpl'));
-app.get('/nhai-day-admin/:tab', servePage('nhai-day-admin/index.tmpl'));
-app.get('/nhai-day-admin.html', servePage('nhai-day-admin.tmpl'));
+// Without a session the admin markup is never sent, so there is nothing to unhide.
+function serveAdmin(relPath) {
+  const page = servePage(relPath);
+  return async (req, res) => {
+    if (await adminAuth.isAuthed(req)) return page(req, res);
+    res.type('html').sendFile(path.join(__dirname, 'public', 'nhai-day-admin/login.html'));
+  };
+}
+app.get(['/nhai-day-admin', '/nhai-day-admin/'], serveAdmin('nhai-day-admin/index.tmpl'));
+app.get('/nhai-day-admin/:tab', serveAdmin('nhai-day-admin/index.tmpl'));
+app.get('/nhai-day-admin.html', serveAdmin('nhai-day-admin.tmpl'));
 app.get('/nhai-day.html', servePage('nhai-day.tmpl'));
 
 // Case submission endpoints

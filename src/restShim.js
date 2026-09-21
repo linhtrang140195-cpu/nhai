@@ -1,6 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const pool = require('./db');
+const adminAuth = require('./adminAuth');
 
 const router = express.Router();
 
@@ -121,8 +122,16 @@ function parseQuery(table, query) {
 // Ballots may only be cast through /api/top-pick-vote, which enforces the per-device
 // cap, the campaign window and the rate limits. A direct write here would skip all of
 // it — that is how 69 scripted votes could have been inserted in one second instead of
-// two minutes. Reads stay open; the admin audit needs them.
+// two minutes.
 const READ_ONLY_TABLES = new Set(['top_pick_votes']);
+
+// Everything here was world-readable and world-writable. Narrow it to exactly what the
+// public pages were measured to use: these six tables for GET, and a registration POST.
+// Anything else — feedback, submissions, ballots, analytics, and every update or
+// delete — now needs an admin session. Registration rows hold names and emails, so
+// they are writable but not readable without one.
+const PUBLIC_READ = new Set(['site_config', 'news_posts', 'awards', 'award_categories', 'season_stats', 'cases']);
+const PUBLIC_CREATE = new Set(['registrations']);
 
 router.all('/:table', async (req, res) => {
   const { table } = req.params;
@@ -132,6 +141,13 @@ router.all('/:table', async (req, res) => {
   if (READ_ONLY_TABLES.has(table) && req.method !== 'GET') {
     console.log(`rest write denied: ${req.method} ${table} from ${req.headers['x-forwarded-for'] || req.ip || '-'}`);
     return res.status(405).json({ message: `${table} is read-only here; use /api/top-pick-vote.` });
+  }
+
+  const publicOk = (req.method === 'GET' && PUBLIC_READ.has(table))
+    || (req.method === 'POST' && PUBLIC_CREATE.has(table));
+  if (!publicOk && !(await adminAuth.isAuthed(req))) {
+    console.log(`rest denied (no session): ${req.method} ${table} from ${req.headers['x-forwarded-for'] || req.ip || '-'}`);
+    return res.status(401).json({ message: 'Cần đăng nhập quản trị.' });
   }
 
   try {
@@ -144,6 +160,11 @@ router.all('/:table', async (req, res) => {
     if (req.method === 'GET') {
       const sql = `SELECT ${projection} FROM \`${table}\` ${whereSql} ${orderBy} ${limit}`.trim();
       const [rows] = await pool.query(sql, whereParams);
+      // site_config is public, and the admin password hash and cookie signing key live
+      // in it. Neither may ever leave the server.
+      if (table === 'site_config') {
+        return res.json(rows.filter(r => !adminAuth.SECRET_CONFIG_KEYS.has(r.key)));
+      }
       return res.json(rows);
     }
 

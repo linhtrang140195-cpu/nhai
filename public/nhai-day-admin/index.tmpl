@@ -113,23 +113,12 @@ label{font-size:11px;color:var(--textM);display:block;margin-bottom:4px}
 </style>
 </head>
 <body>
-<div id="gate">
-  <div class="gate-box">
-    <h2>🔐 NHAI DAY Admin</h2>
-    <p>Nhập mật khẩu để tiếp tục</p>
-    <input class="gate-inp" id="gatePwd" type="password" placeholder="Mật khẩu" onkeydown="if(event.key==='Enter')checkGate()">
-    <button class="gate-btn" onclick="checkGate()">Đăng nhập</button>
-    <div class="gate-err" id="gateErr">Mật khẩu không đúng</div>
-  </div>
-</div>
 <script>
-(function(){
-  if(sessionStorage.getItem('nhai_admin_ok')==='1') document.getElementById('gate').classList.add('hidden');
-})();
-function checkGate(){
-  const v=document.getElementById('gatePwd').value;
-  if(v==='nhainhai2026'){sessionStorage.setItem('nhai_admin_ok','1');document.getElementById('gate').classList.add('hidden');}
-  else{const e=document.getElementById('gateErr');e.style.display='block';setTimeout(()=>e.style.display='none',2000);}
+// The gate that used to sit here compared the password in the browser, so the password
+// shipped inside this page. The server now checks it and will not send this markup at
+// all without a session cookie.
+function adminLogout(){
+  fetch('/api/admin-logout',{method:'POST'}).then(function(){location.reload()});
 }
 </script>
 <div class="shell">
@@ -140,6 +129,7 @@ function checkGate(){
       <div style="display:flex;gap:8px;align-items:center">
         <div id="seasonPick" onclick="cycleSeason()" style="display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 12px;border:1px solid var(--goldBd);border-radius:8px;background:var(--goldBg);color:var(--gold);cursor:pointer;font-weight:500">📅 — ▾</div>
         <button class="btn" onclick="loadAll()" style="font-size:11px">🔄 Refresh</button>
+        <button class="btn" onclick="adminLogout()" style="font-size:11px">Đăng xuất</button>
       </div>
     </div>
     <div class="content" id="content"></div>
@@ -175,6 +165,7 @@ async function sb(path,opts={}){
       headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,"Content-Type":"application/json",Prefer:opts.prefer||"return=representation",...opts.headers},
       method:opts.method||"GET",body:opts.body?JSON.stringify(opts.body):undefined
     });
+    if(res.status===401){location.reload();return[];}
     if(!res.ok){console.error("SB error:",res.status,await res.text());return[];}
     const t=await res.text();return t?JSON.parse(t):[];
   }catch(e){console.error(e);return[];}
