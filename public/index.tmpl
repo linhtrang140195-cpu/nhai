@@ -4084,16 +4084,17 @@ async function loadEditionFromDB(idx,seasonId){
     const avgMn=pOrO('avg_mentor');if(avgMn!=null)setEl('ek-mn-'+idx,(+avgMn).toFixed(2)+'★');
     const pct1=pOrO('pct_will_participate');if(pct1!=null)setEl('ek-ct-'+idx,(pct1*1).toFixed(2)+'%');
     const pct2=pOrO('pct_has_demo');if(pct2!=null)setEl('ek-dm-'+idx,(pct2*1).toFixed(2)+'%');
-    const masterHN=awards.find(a=>a.category_id==='master-chef'&&a.city==='Hà Nội');
-    const masterHCM=awards.find(a=>a.category_id==='master-chef'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
-    const earlyHN=awards.filter(a=>a.category_id==='early-bird'&&a.city==='Hà Nội');
-    const earlyHCM=awards.filter(a=>a.category_id==='early-bird'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
-    const demoHN=awards.filter(a=>a.category_id==='complete-1730'&&a.city==='Hà Nội');
-    const demoHCM=awards.filter(a=>a.category_id==='complete-1730'&&(a.city==='Hồ Chí Minh'||a.city==='TP.HCM'));
+    const inCity=(a,cat,city)=>a.category_id===cat&&normalizeVoteCity(a.city)===city;
+    const masterHN=awards.find(a=>inCity(a,'master-chef','HN'));
+    const masterHCM=awards.find(a=>inCity(a,'master-chef','HCM'));
+    const earlyHN=awards.filter(a=>inCity(a,'early-bird','HN'));
+    const earlyHCM=awards.filter(a=>inCity(a,'early-bird','HCM'));
+    const demoHN=awards.filter(a=>inCity(a,'complete-1730','HN'));
+    const demoHCM=awards.filter(a=>inCity(a,'complete-1730','HCM'));
     const mkMc=a=>{
       if(!a) return '<div style="flex:1;min-height:180px;border:1px dashed rgba(255,255,255,.15);border-radius:16px;display:grid;place-items:center;color:var(--textM);font-size:12px">Chưa có</div>';
-      const isHN=a.city==='Hà Nội';
-      const mcCase=cases.find(c=>c.id===a.winner_case_id)||cases.find(c=>c.is_master_chef==1&&(isHN?(c.city==='Hà Nội'||c.city==='HN'):(c.city!=='Hà Nội'&&c.city!=='HN')));
+      const isHN=normalizeVoteCity(a.city)==='HN';
+      const mcCase=cases.find(c=>c.id===a.winner_case_id)||cases.find(c=>c.is_master_chef==1&&normalizeVoteCity(c.city)===(isHN?'HN':'HCM'));
       const demoUrl=(mcCase?.demo_url||a.winner_description||'').split(',')[0].trim();
       const hasDetail=!!(mcCase?.purpose||mcCase?.short_description);
       const detId=`mc-det-${isHN?'hn':'hcm'}-${idx}`;
@@ -4856,8 +4857,14 @@ function endAnalyticsSession(){
 function getMyVoteIds(){
   return Array.isArray(voteState.myVotes)?voteState.myVotes:[];
 }
+// City arrives written several ways: cases use "Hà Nội"/"Hồ Chí Minh", season 3 rows
+// use "HN", top_pick_cases use "HN"/"HCM", and awards have carried "TP.HCM". Every
+// comparison here used to test one spelling and fall through to HN, so an HCM case
+// written any other way was silently grouped under Hà Nội.
 function normalizeVoteCity(city){
-  return city==='HCM'?'HCM':'HN';
+  const s=String(city==null?'':city).trim().toLowerCase();
+  if(s==='hcm'||s==='tp.hcm'||s==='tphcm'||s.includes('minh'))return 'HCM';
+  return 'HN';
 }
 function getCaseVoteCity(caseId){
   const found=TOP_PICK.find(c=>c.id===caseId);
@@ -5650,7 +5657,7 @@ async function initVoteState(){
       const topPickIds=new Set(TOP_PICK.map(c=>c.id));
       const eventIds=new Set();
       campCases.forEach(c=>{
-        const city=c.city==='Hồ Chí Minh'?'HCM':'HN';
+        const city=normalizeVoteCity(c.city);
         const sn=(c.season_id||'').match(/(\d+)$/);
         const num=sn?String(parseInt(sn[1])).padStart(2,'0'):'02';
         const evId=(city==='HCM'?'hcm':'hn')+num;
