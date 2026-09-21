@@ -21,31 +21,17 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // database and admin were open to the whole internet. Deny by hostname (never an
 // allowlist — a wrong value there would lock out every real user) and only for
 // data paths, so `/` still answers and the platform health check cannot flap.
-// The runner answers on its own public hostname as well as through the company
-// proxy, and only the proxy restricts access by network. Reached directly, the
-// database served every table to the internet — registration names and emails
-// included — and the admin page rendered in full.
+// Blocking the runner's own hostname was the wrong tool: people reach the site on
+// both that hostname and the company proxy, so denying one locked real users out of
+// a working site. What protects the data is the session check on /rest/v1 and on the
+// admin page — that holds on whichever hostname the request arrives through.
 //
-// Measured over 165 requests: traffic through the proxy arrives as
-// Host: aihelp_garena_vn_app (the proxy's upstream label), while direct traffic
-// carries the real hostname. Deny that one value rather than allowlisting the
-// proxy label, so an unrecognised value fails open instead of locking everyone
-// out. `/` is left unguarded so the platform health check cannot flap.
-//
-// This is a speed bump, not an authorization boundary: Host is client-supplied,
-// so anyone who learns the proxy's label can send it and walk past. Real auth is
-// the fix; this closes the accidental exposure until then.
-const DIRECT_HOSTS = new Set(['nhai-day.demo.ved.com.vn']);
-const GUARDED_PATHS = ['/rest/v1', '/api', '/internal', '/nhai-day-admin'];
-app.use((req, res, next) => {
-  if (!GUARDED_PATHS.some(p => req.path.startsWith(p))) return next();
-  const host = String(req.headers.host || '').split(':')[0].toLowerCase();
-  if (DIRECT_HOSTS.has(host)) {
-    console.log(`blocked direct-host: host=${host} xff=${req.headers['x-forwarded-for'] || '-'} path=${req.path}`);
-    return res.status(404).type('text/plain').send('Not found');
-  }
-  console.log(`hostprobe host=${host || '-'} xff=${req.headers['x-forwarded-for'] || '-'} path=${req.path}`);
-  next();
+// The one thing left that has no session check of its own is /internal, so guard it
+// here rather than leaving unauthenticated write endpoints open.
+app.use('/internal', async (req, res, next) => {
+  if (await adminAuth.isAuthed(req)) return next();
+  console.log(`internal denied: ${req.method} ${req.path} from ${req.headers['x-forwarded-for'] || '-'}`);
+  res.status(401).json({ ok: false, message: 'Cần đăng nhập quản trị.' });
 });
 
 app.post('/api/admin-login', async (req, res) => {
