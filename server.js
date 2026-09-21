@@ -191,7 +191,7 @@ function serveAdmin(relPath) {
   const page = servePage(relPath);
   return async (req, res) => {
     if (await adminAuth.isAuthed(req)) return page(req, res);
-    res.type('html').sendFile(path.join(__dirname, 'public', 'nhai-day-admin/login.html'));
+    res.type('html').sendFile(path.join(__dirname, 'public', 'nhai-day-admin/login.tmpl'));
   };
 }
 app.get(['/nhai-day-admin', '/nhai-day-admin/'], serveAdmin('nhai-day-admin/index.tmpl'));
