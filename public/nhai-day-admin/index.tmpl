@@ -2264,9 +2264,12 @@ function renderFeedback(){
   return `
   <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
     ${seasons.map(s=>`<button class="btn ${s===selectedSeason?'btn-primary':''}" onclick="window._fbSeasonFilter='${s}';window._fbCityFilter='all';render()">${s}</button>`).join('')}
-    <button class="btn" onclick="loadAll()" style="margin-left:auto">🔄 Refresh</button>
+    <button class="btn" onclick="document.getElementById('fbCsvInput').click()" style="margin-left:auto">📥 Import CSV</button>
+    <input type="file" id="fbCsvInput" accept=".csv" style="display:none" onchange="importFeedbackFromCSVFile(this)">
+    <button class="btn" onclick="loadAll()">🔄 Refresh</button>
     ${shown.length?`<button class="btn btn-success" onclick="exportFbCSV('${selectedSeason}')">↓ Export (${shown.length})</button>`:''}
   </div>
+  <div id="fbImportZone"></div>
   <div style="display:flex;gap:8px;margin-bottom:14px">
     <button class="btn ${selectedCity==='all'?'btn-primary':''}" onclick="window._fbCityFilter='all';render()">Tất cả (${seasonFbs.length})</button>
     <button class="btn ${selectedCity==='hn'?'btn-primary':''}" onclick="window._fbCityFilter='hn';render()">🏙 Hà Nội (${hnCount})</button>
@@ -2387,6 +2390,178 @@ async function deleteFeedback(id){
   if(!confirm('Xoá feedback này?\n\n'+who+'\n\nKhông thể hoàn lại.'))return;
   await sb('event_feedback?id=eq.'+encodeURIComponent(id),{method:'DELETE'});
   toast('Đã xoá feedback');
+  await loadAll();
+}
+
+// ===== FEEDBACK CSV IMPORT =====
+// Exported CSVs from Google Forms have shown up with the header block duplicated
+// (24 columns holding the same 12 twice) and every row repeated 13-14x — an artifact
+// of how the sheet was copied, not real duplicate responses. Rather than trust any
+// particular layout, this lets the admin map each column by hand from a preview, then
+// collapses exact-duplicate rows and skips anything that matches a submitted_at
+// already stored before writing.
+let _fbCsvRows=null;
+function importFeedbackFromCSVFile(input){
+  const file=input.files[0];if(!file)return;input.value='';
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const rows=parseCSV(e.target.result);
+      if(rows.length<2){toast("File trống","danger");return;}
+      _fbCsvRows=rows;
+      showFeedbackCsvMappingUI(rows);
+    }catch(err){toast("Lỗi đọc file: "+err.message,"danger");}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function showFeedbackCsvMappingUI(rows){
+  const ncols=rows[0].length;
+  const norm=s=>(s||'').toLowerCase();
+  const findCol=(kws)=>{
+    for(let ci=0;ci<ncols;ci++){const h=norm(rows[0][ci]);if(kws.some(k=>h.includes(k)))return ci;}
+    return -1;
+  };
+  const sTimestamp=findCol(['timestamp']);
+  const sCity=findCol(['đâu','thành phố','city']);
+  const sPart=findCol(['hình thức']);
+  const sOutput=findCol(['hoàn thiện được output','output/demo']);
+  const sNoReason=findCol(['chưa hoàn thiện','lý do chính']);
+  const sMentor=findCol(['mentor support']);
+  const sMentorComment=findCol(['lý do nếu có']);
+  const sContinue=findCol(['tiếp tục phát triển','sau event']);
+  const sRecommend=findCol(['rủ rê','sẵn sàng tiếp tục tham gia']);
+  const sOverall=findCol(['đánh giá tổng thể']);
+  const sSuggest=findCol(['góp ý']);
+  const sSeason=findCol(['mùa mấy']);
+  const firstIsHeader=!/^\d/.test((rows[0][sTimestamp>=0?sTimestamp:0]||'').trim());
+  const preview=rows.slice(firstIsHeader?1:0,firstIsHeader?4:3);
+  const selOf=(name,def)=>`<select id="fbMap_${name}" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:12px">
+    <option value="-1">— Bỏ qua —</option>
+    ${Array.from({length:ncols},(_,i)=>`<option value="${i}"${i===def?' selected':''}>${i}: ${e((rows[0][i]||'').slice(0,42))}</option>`).join('')}
+  </select>`;
+  const previewHtml=preview.map(r=>`<tr>${r.slice(0,12).map(c=>`<td style="padding:3px 6px;border:1px solid var(--border);font-size:10px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e((c||'').slice(0,40))}</td>`).join('')}</tr>`).join('');
+  const el=document.getElementById('fbImportZone');
+  if(!el)return;
+  el.innerHTML=`
+  <div class="card" style="margin-top:10px;border:1px solid var(--goldBd)">
+    <div style="font-weight:700;color:var(--gold);margin-bottom:10px">📋 Chọn cột tương ứng (${rows.length} dòng, ${ncols} cột)</div>
+    <div style="overflow-x:auto;margin-bottom:12px"><table style="border-collapse:collapse">${previewHtml}</table></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <label style="font-size:11px;color:var(--textM)">Timestamp *${selOf('timestamp',sTimestamp)}</label>
+      <label style="font-size:11px;color:var(--textM)">Thành phố *${selOf('city',sCity)}</label>
+      <label style="font-size:11px;color:var(--textM)">Hình thức tham gia${selOf('part',sPart)}</label>
+      <label style="font-size:11px;color:var(--textM)">Output/demo${selOf('output',sOutput)}</label>
+      <label style="font-size:11px;color:var(--textM)">Lý do chưa hoàn thiện${selOf('noreason',sNoReason)}</label>
+      <label style="font-size:11px;color:var(--textM)">Điểm hữu ích mentor (1-5)${selOf('mentor',sMentor)}</label>
+      <label style="font-size:11px;color:var(--textM)">Lý do/nhận xét mentor${selOf('mentorcomment',sMentorComment)}</label>
+      <label style="font-size:11px;color:var(--textM)">Muốn tiếp tục phát triển${selOf('continue',sContinue)}</label>
+      <label style="font-size:11px;color:var(--textM)">Sẽ tham gia lại${selOf('recommend',sRecommend)}</label>
+      <label style="font-size:11px;color:var(--textM)">Điểm trải nghiệm tổng thể (1-5)${selOf('overall',sOverall)}</label>
+      <label style="font-size:11px;color:var(--textM)">Góp ý${selOf('suggest',sSuggest)}</label>
+      <label style="font-size:11px;color:var(--textM)">Mùa (VD: "NHAI DAY #3")${selOf('season',sSeason)}</label>
+      <label style="font-size:11px;color:var(--textM)">Row đầu là header?
+        <select id="fbMap_hasHeader" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:12px">
+          <option value="1" ${firstIsHeader?'selected':''}>Có (bỏ qua row 1)</option>
+          <option value="0" ${!firstIsHeader?'selected':''}>Không (import từ row 1)</option>
+        </select></label>
+    </div>
+    <button class="btn btn-primary" onclick="previewFeedbackCsvImport()">Xem trước →</button>
+    <button class="btn" onclick="_fbCsvRows=null;document.getElementById('fbImportZone').innerHTML=''" style="margin-left:8px">Hủy</button>
+    <div id="fbImportPreview" style="margin-top:12px"></div>
+  </div>`;
+}
+
+// Google Forms exports "M/D/YYYY H:mm:ss" (no leading zeros, no timezone). Parsed by
+// hand rather than new Date(), which resolves that shape differently across engines.
+// Returns a MySQL DATETIME string, or null if the value doesn't match.
+function parseFormTimestamp(s){
+  const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/.exec((s||'').trim());
+  if(!m)return null;
+  const [,mo,d,y,h,mi,se]=m;
+  const p=n=>String(n).padStart(2,'0');
+  return `${y}-${p(mo)}-${p(d)} ${p(h)}:${p(mi)}:${p(se||'0')}`;
+}
+
+// Reads the current column-mapping selects and turns the raw rows into feedback
+// objects ready to POST. Shared by the preview step and the actual import so they
+// can never disagree about what would be written.
+function buildFeedbackRowsFromMapping(){
+  const g=name=>parseInt(document.getElementById('fbMap_'+name)?.value ?? '-1',10);
+  const map={timestamp:g('timestamp'),city:g('city'),part:g('part'),output:g('output'),
+    noreason:g('noreason'),mentor:g('mentor'),mentorcomment:g('mentorcomment'),
+    continue:g('continue'),recommend:g('recommend'),overall:g('overall'),
+    suggest:g('suggest'),season:g('season')};
+  if(map.timestamp<0||map.city<0){toast('Cần chọn cột Timestamp và Thành phố','danger');return null;}
+  const hasHeader=document.getElementById('fbMap_hasHeader')?.value==='1';
+  const rows=_fbCsvRows.slice(hasHeader?1:0);
+  const val=(row,idx)=>idx>=0?(row[idx]||'').trim():'';
+  const num=v=>{const n=parseInt(v,10);return Number.isFinite(n)&&n>0?n:null;};
+  const normCity=c=>/minh|hcm/i.test(c)?'Hồ Chí Minh':'Hà Nội';
+  const seasonIdOf=s=>{const m=/#?\s*(\d+)/.exec(s||'');return m?'nhai-day-'+String(parseInt(m[1],10)).padStart(2,'0'):null;};
+
+  const seen=new Set(); // collapses exact repeats within the file itself
+  const out=[];
+  for(const row of rows){
+    const rawTs=val(row,map.timestamp);
+    const cityRaw=val(row,map.city);
+    if(!rawTs||!cityRaw)continue;
+    const submitted_at=parseFormTimestamp(rawTs);
+    if(!submitted_at)continue; // unparseable timestamp — skip rather than guess
+    const city=normCity(cityRaw);
+    const key=submitted_at+'|'+city;
+    if(seen.has(key))continue;
+    seen.add(key);
+    out.push({
+      submitted_at,
+      season_id:seasonIdOf(val(row,map.season))||state.currentSeason,
+      city,
+      participation_type:val(row,map.part)||null,
+      output_status:val(row,map.output)||null,
+      no_output_reason:val(row,map.noreason)||null,
+      mentor_rating:num(val(row,map.mentor)),
+      mentor_comment:val(row,map.mentorcomment)||null,
+      continue_dev:val(row,map.continue)||null,
+      recommend:val(row,map.recommend)||null,
+      overall_rating:num(val(row,map.overall)),
+      suggestions:val(row,map.suggest)||null
+    });
+  }
+  return out;
+}
+
+function previewFeedbackCsvImport(){
+  const rows=buildFeedbackRowsFromMapping();
+  if(!rows)return;
+  // src/db.js reads DATETIME columns back as plain "YYYY-MM-DD HH:mm:ss" strings, the
+  // same shape submitted_at is built in above, so this is a plain string compare —
+  // no date parsing needed to detect what is already in the system.
+  const existing=new Set((state.feedbacks||[]).map(f=>String(f.submitted_at||'').slice(0,19)+'|'+f.city));
+  const toImport=rows.filter(r=>!existing.has(r.submitted_at+'|'+r.city));
+  const skipped=rows.length-toImport.length;
+  const el=document.getElementById('fbImportPreview');
+  if(!el)return;
+  window._fbImportPending=toImport;
+  el.innerHTML=`
+    <div style="font-size:12px;color:var(--textM);margin-bottom:8px">
+      ${rows.length} bản ghi duy nhất tìm được trong file.
+      ${skipped>0?`<b style="color:var(--gold)">${skipped}</b> đã có trong hệ thống (bỏ qua). `:''}
+      Sẽ import <b style="color:var(--gold)">${toImport.length}</b> feedback mới.
+    </div>
+    ${toImport.length?`<button class="btn btn-primary" onclick="doFeedbackCsvImport()">Import ${toImport.length} feedback →</button>`:'<div class="empty-state">Không có gì mới để import</div>'}
+  `;
+}
+
+async function doFeedbackCsvImport(){
+  const rows=window._fbImportPending||[];
+  let n=0;
+  for(const r of rows){
+    const id='fb-import-'+Date.now()+'-'+(n++);
+    await sb('event_feedback',{method:'POST',body:{id,...r},headers:{Prefer:'return=minimal'}}).catch(()=>{});
+  }
+  toast(`Đã import ${n} feedback`);
+  _fbCsvRows=null;window._fbImportPending=null;
+  document.getElementById('fbImportZone').innerHTML='';
   await loadAll();
 }
 
