@@ -2228,7 +2228,10 @@ function renderFeedback(){
 
   const mentorAvg = avgRating(shown, 'mentor_rating');
   const overallAvg = avgRating(shown, 'overall_rating');
-  const demoCount = shown.filter(f=>f.output_status==='Có, demo được').length;
+  // A draft that cannot be demoed yet still counts as having an output — the same rule
+  // the public stats use (anything whose answer is not a "không").
+  const hasOutput = f => !!f.output_status && !/không/i.test(f.output_status);
+  const demoCount = shown.filter(hasOutput).length;
   const hnCount = seasonFbs.filter(f=>{const c=(f.city||'').toLowerCase();return c.includes('nội')||c==='hn';}).length;
   const hcmCount = seasonFbs.filter(f=>{const c=(f.city||'').toLowerCase();return c.includes('minh')||c==='hcm'||c==='hồ chí minh'||c==='tp.hcm';}).length;
 
@@ -2258,8 +2261,10 @@ function renderFeedback(){
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
           <span class="badge ${f.city==='Hà Nội'?'badge-hn':'badge-hcm'}">${f.city}</span>
           <span style="font-size:11px;color:var(--textM)">${f.participation_type}</span>
-          <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${f.output_status==='Có, demo được'?'#22c55e22':'#f9731622'};color:${f.output_status==='Có, demo được'?'#22c55e':'#f97316'}">${f.output_status}</span>
+          <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${hasOutput(f)?'#22c55e22':'#f9731622'};color:${hasOutput(f)?'#22c55e':'#f97316'}">${f.output_status}</span>
           <span style="margin-left:auto;font-size:11px;color:var(--textM)">${new Date(f.submitted_at).toLocaleDateString('vi-VN')}</span>
+          <button class="btn" style="font-size:10px;padding:3px 8px" onclick="openEditFeedback('${f.id}')">✏️</button>
+          <button class="btn btn-danger" style="font-size:10px;padding:3px 8px" onclick="deleteFeedback('${f.id}')">🗑</button>
         </div>
         ${f.no_output_reason?`<div style="font-size:11px;color:var(--textM);margin-bottom:4px">Lý do: ${e(f.no_output_reason)}</div>`:''}
         <div style="display:flex;gap:16px;margin-bottom:6px">
@@ -2271,7 +2276,92 @@ function renderFeedback(){
         ${f.mentor_comment?`<div style="font-size:12px;color:var(--text);margin-bottom:4px;font-style:italic">"${e(f.mentor_comment)}"</div>`:''}
         ${f.suggestions?`<div style="font-size:12px;color:var(--text);padding:8px 10px;background:var(--surfaceAlt,var(--bg3));border-radius:6px;margin-top:4px">${e(f.suggestions)}</div>`:''}
       </div>`).join('')}
+  </div>
+
+  <div id="fbEditModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;overflow-y:auto" onclick="if(event.target===this)closeEditFeedback()">
+    <div class="card" style="max-width:560px;width:92%;margin:40px auto;padding:22px;position:relative">
+      <button onclick="closeEditFeedback()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text);font-size:18px;cursor:pointer">✕</button>
+      <div style="font-size:16px;font-weight:700;margin-bottom:14px">Sửa feedback</div>
+      <div style="display:grid;gap:10px">
+        <label style="font-size:11px;color:var(--textM)">Thành phố
+          <select id="fbe_city"><option value="Hà Nội">Hà Nội</option><option value="Hồ Chí Minh">Hồ Chí Minh</option></select></label>
+        <label style="font-size:11px;color:var(--textM)">Hình thức tham gia
+          <input type="text" id="fbe_participation"></label>
+        <label style="font-size:11px;color:var(--textM)">Kết quả output
+          <select id="fbe_output">
+            <option value="Có, demo được">Có, demo được</option>
+            <option value="Có bản nháp nhưng chưa demo được">Có bản nháp nhưng chưa demo được</option>
+            <option value="Không có output">Không có output</option>
+          </select></label>
+        <label style="font-size:11px;color:var(--textM)">Lý do chưa có output
+          <input type="text" id="fbe_noreason"></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label style="font-size:11px;color:var(--textM)">Điểm hữu ích (1-5)
+            <input type="number" id="fbe_mentor" min="1" max="5"></label>
+          <label style="font-size:11px;color:var(--textM)">Điểm trải nghiệm (1-5)
+            <input type="number" id="fbe_overall" min="1" max="5"></label>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label style="font-size:11px;color:var(--textM)">Tiếp tục phát triển
+            <input type="text" id="fbe_continue"></label>
+          <label style="font-size:11px;color:var(--textM)">Sẽ tham gia lại
+            <input type="text" id="fbe_recommend"></label>
+        </div>
+        <label style="font-size:11px;color:var(--textM)">Nhận xét mentor
+          <textarea id="fbe_comment" rows="2"></textarea></label>
+        <label style="font-size:11px;color:var(--textM)">Góp ý
+          <textarea id="fbe_suggestions" rows="3"></textarea></label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-primary" style="flex:1" id="fbeSave" onclick="saveEditFeedback()">Lưu</button>
+        <button class="btn" onclick="closeEditFeedback()">Hủy</button>
+      </div>
+    </div>
   </div>`;
+}
+
+let _fbEditId=null;
+function openEditFeedback(id){
+  const f=(state.feedbacks||[]).find(x=>x.id===id);
+  if(!f){toast('Không tìm thấy feedback','danger');return;}
+  _fbEditId=id;
+  const set=(el,v)=>{const n=document.getElementById(el);if(n)n.value=v==null?'':v;};
+  set('fbe_city',f.city);set('fbe_participation',f.participation_type);set('fbe_output',f.output_status);
+  set('fbe_noreason',f.no_output_reason);set('fbe_mentor',f.mentor_rating);set('fbe_overall',f.overall_rating);
+  set('fbe_continue',f.continue_dev);set('fbe_recommend',f.recommend);
+  set('fbe_comment',f.mentor_comment);set('fbe_suggestions',f.suggestions);
+  const m=document.getElementById('fbEditModal');m.style.display='flex';
+}
+function closeEditFeedback(){
+  _fbEditId=null;
+  const m=document.getElementById('fbEditModal');if(m)m.style.display='none';
+}
+async function saveEditFeedback(){
+  if(!_fbEditId)return;
+  const g=el=>{const n=document.getElementById(el);return n?n.value.trim():'';};
+  const num=el=>{const v=g(el);const n=parseInt(v,10);return v&&Number.isFinite(n)?n:null;};
+  const btn=document.getElementById('fbeSave');
+  btn.disabled=true;btn.textContent='Đang lưu…';
+  const id=_fbEditId;
+  await sb('event_feedback?id=eq.'+encodeURIComponent(id),{method:'PATCH',body:{
+    city:g('fbe_city')||null, participation_type:g('fbe_participation')||null,
+    output_status:g('fbe_output')||null, no_output_reason:g('fbe_noreason')||null,
+    mentor_rating:num('fbe_mentor'), overall_rating:num('fbe_overall'),
+    continue_dev:g('fbe_continue')||null, recommend:g('fbe_recommend')||null,
+    mentor_comment:g('fbe_comment')||null, suggestions:g('fbe_suggestions')||null
+  }});
+  btn.disabled=false;btn.textContent='Lưu';
+  closeEditFeedback();
+  toast('Đã lưu feedback ✓');
+  await loadAll();
+}
+async function deleteFeedback(id){
+  const f=(state.feedbacks||[]).find(x=>x.id===id);
+  const who=f?(f.city+' · '+new Date(f.submitted_at).toLocaleDateString('vi-VN')):id;
+  if(!confirm('Xoá feedback này?\n\n'+who+'\n\nKhông thể hoàn lại.'))return;
+  await sb('event_feedback?id=eq.'+encodeURIComponent(id),{method:'DELETE'});
+  toast('Đã xoá feedback');
+  await loadAll();
 }
 
 // ===== SUBMISSIONS =====
