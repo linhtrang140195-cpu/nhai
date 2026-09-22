@@ -157,7 +157,7 @@ let seasonGids = JSON.parse(localStorage.getItem("nhai_gids") || JSON.stringify(
 function saveGids(){localStorage.setItem("nhai_gids",JSON.stringify(seasonGids));}
 function getUrl(type){const g=seasonGids[state.currentSeason]?.[type];return g?`/api/proxy-sheet?url=${encodeURIComponent(SHEETS[type]+'&gid='+g)}`:null;}
 
-let state={tab:"dashboard",seasons:[],events:[],mentors:[],faqs:[],registrations:[],awards:[],awardCats:[],cases:[],config:{},campaigns:[],votes:[],seasonStats:[],submissions:[],feedbacks:[],newsPosts:[],editingPost:null,currentSeason:"nhai-day-01",loading:true,cityFilter:"all"};
+let state={tab:"dashboard",seasons:[],events:[],mentors:[],faqs:[],registrations:[],awards:[],awardCats:[],cases:[],config:{},campaigns:[],votes:[],seasonStats:[],submissions:[],feedbacks:[],newsPosts:[],topPickCases:[],editingPost:null,currentSeason:"nhai-day-01",loading:true,cityFilter:"all"};
 
 async function sb(path,opts={}){
   try{
@@ -173,7 +173,7 @@ async function sb(path,opts={}){
 
 async function loadAll(){
   state.loading=true;render();
-  const[s,e,m,f,r,a,ac,c,cfg,camp,v,ss,subs,fbs,np]=await Promise.all([
+  const[s,e,m,f,r,a,ac,c,cfg,camp,v,ss,subs,fbs,np,tpc]=await Promise.all([
     sb("seasons?order=display_order"),sb("events?order=display_order"),
     sb("mentors?order=display_order"),sb("faqs?order=display_order"),
     sb("registrations?order=created_at.desc&limit=5000"),sb("awards?order=created_at"),
@@ -183,12 +183,13 @@ async function loadAll(){
     sb("season_stats?order=season_id").catch(()=>[]),
     sb("case_submissions?order=submitted_at.desc").catch(()=>[]),
     sb("event_feedback?order=submitted_at.desc").catch(()=>[]),
-    sb("news_posts?order=published_at.desc").catch(()=>[])
+    sb("news_posts?order=published_at.desc").catch(()=>[]),
+    sb("top_pick_cases").catch(()=>[])
   ]);
   const prevSeason=state.currentSeason;
   state.seasons=s;state.events=e;state.mentors=m;state.faqs=f;
   state.registrations=r;state.awards=a;state.awardCats=ac;state.cases=c;
-  state.campaigns=camp;state.votes=v;state.seasonStats=ss||[];state.submissions=subs||[];state.feedbacks=fbs||[];state.newsPosts=np||[];
+  state.campaigns=camp;state.votes=v;state.seasonStats=ss||[];state.submissions=subs||[];state.feedbacks=fbs||[];state.newsPosts=np||[];state.topPickCases=tpc||[];
   const cfg2={};(cfg||[]).forEach(row=>{try{cfg2[row.key]=row.value}catch{}});state.config=cfg2;
   if(s.length){
     const sorted=[...s].sort((a,b)=>(a.display_order||0)-(b.display_order||0));
@@ -692,17 +693,25 @@ function renderVoting(){
       const status=!c.is_active?"inactive":close&&close<now?"closed":open&&open>now?"scheduled":"active";
       const statusLabel={inactive:"Tắt",closed:"Đã đóng",scheduled:"Sắp mở",active:"Đang mở"}[status];
       const statusCls={inactive:"badge-muted",closed:"badge-danger",scheduled:"badge-muted",active:"badge-success"}[status];
+      const already=(state.topPickCases||[]).filter(x=>x.campaign_id===c.id);
+      const alreadyIds=new Set(already.map(x=>x.case_id));
+      const cities=new Set(already.map(x=>x.city));
+      const scopeCity=cities.size===1?[...cities][0]:null; // null = mixed or empty, i.e. not scoped to one city
+      let eligible=state.cases.filter(cs=>cs.is_active&&cs.season_id===state.currentSeason&&cs.is_master_chef!=1);
+      if(scopeCity)eligible=eligible.filter(cs=>cityKey(cs.city)===scopeCity);
+      const missingCount=eligible.filter(cs=>!alreadyIds.has(cs.id)).length;
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
         <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:600">${c.name}</div>
+          <div style="font-size:12px;font-weight:600">${c.name}${scopeCity?` <span class="badge ${scopeCity==='HN'?'badge-hn':'badge-hcm'}" style="font-size:9px">${scopeCity}</span>`:""}</div>
           <div style="font-size:10px;color:var(--textM);margin-top:2px">
             ${c.opens_at?`Mở: ${new Date(c.opens_at).toLocaleString("vi-VN")}`:"Chưa đặt giờ"}
             ${c.closes_at?` → Đóng: ${new Date(c.closes_at).toLocaleString("vi-VN")}`:""}
+            · ${already.length} case đã vào vote${missingCount?` · <span style="color:var(--gold)">còn thiếu ${missingCount}</span>`:""}
           </div>
         </div>
         <span class="badge ${statusCls}">${statusLabel}</span>
         <button class="btn btn-primary" style="font-size:10px;padding:3px 8px" onclick="editCampaign('${c.id}')">Sửa</button>
-        ${!c.is_active?`<button class="btn btn-success" style="font-size:10px;padding:3px 8px" onclick="activateCampaign('${c.id}')">Activate →</button>`:`<button class="btn" style="font-size:10px;padding:3px 8px" onclick="pushCasesToCampaign('${c.id}')">Push cases</button>`}
+        ${!c.is_active?`<button class="btn btn-success" style="font-size:10px;padding:3px 8px" onclick="activateCampaign('${c.id}')">Activate →</button>`:`<button class="btn ${missingCount?'btn-success':''}" style="font-size:10px;padding:3px 8px" onclick="pushCasesToCampaign('${c.id}')">${missingCount?`Push ${missingCount} case còn thiếu`:"Push cases"}</button>`}
       </div>`;
     }).join(""):`<div class="empty-state" style="padding:12px">Chưa có campaign</div>`}
     <div style="padding:14px;border-top:1px solid var(--border)">
@@ -952,20 +961,30 @@ function cityKey(v){
   return 'HN';
 }
 
-// onlyCity: 'HN' | 'HCM' | null for both. A campaign for one city must not pull the
-// other city's cases in, or voting reopens for a city whose result is already final.
+// onlyCity: 'HN' | 'HCM' | null. When null and the campaign already holds cases,
+// infer the scope from what is already there instead of defaulting to both — a
+// campaign built for one city must not pull the other city's cases in, or voting
+// reopens for a city whose result is already final. Only null with an EMPTY
+// campaign means "both" (a brand-new campaign with no scope chosen yet).
 async function pushCasesToCampaign(id,onlyCity){
+  const already=(state.topPickCases||[]).filter(x=>x.campaign_id===id);
+  if(!onlyCity&&already.length){
+    const cities=new Set(already.map(x=>x.city));
+    if(cities.size===1)onlyCity=[...cities][0];
+  }
   let activeCases=state.cases.filter(c=>c.is_active&&c.season_id===state.currentSeason);
   // The Master Chef does not take part in the vote.
   activeCases=activeCases.filter(c=>c.is_master_chef!=1);
   if(onlyCity)activeCases=activeCases.filter(c=>cityKey(c.city)===onlyCity);
-  if(!activeCases.length){toast("Không có case nào phù hợp để push","danger");return;}
+  const alreadyIds=new Set(already.map(x=>x.case_id));
+  const missing=activeCases.filter(c=>!alreadyIds.has(c.id));
+  if(!missing.length){toast("Không có case nào còn thiếu để push","danger");return;}
   let added=0;
-  for(const c of activeCases){
+  for(const c of missing){
     await sb("top_pick_cases",{method:"POST",body:{case_id:c.id,campaign_id:id,city:cityKey(c.city),title:c.title,is_active:1},headers:{Prefer:"return=minimal"}}).catch(()=>{});
     added++;
   }
-  toast(`Đã push ${added} case vào campaign`);loadAll();
+  toast(`Đã push ${added} case còn thiếu vào campaign`);loadAll();
 }
 
 let _auditCity='all',_auditSearch='',_auditCampaign='';
