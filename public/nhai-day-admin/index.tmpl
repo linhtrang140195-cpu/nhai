@@ -712,6 +712,16 @@ function renderVoting(){
         <label style="font-size:11px">Mở lúc<input type="datetime-local" id="campOpens" style="margin-bottom:0"/></label>
         <label style="font-size:11px">Đóng lúc<input type="datetime-local" id="campCloses" style="margin-bottom:0"/></label>
         <label style="font-size:11px">Max votes/người/city<input type="number" id="campMaxVotes" value="3" min="1" max="10" style="margin-bottom:0"/></label>
+        <label style="font-size:11px">Đưa case của miền nào vào
+          <select id="campCity" style="margin-bottom:0">
+            <option value="">Cả hai miền</option>
+            <option value="HN">Chỉ Hà Nội</option>
+            <option value="HCM">Chỉ TP.HCM</option>
+          </select></label>
+        <div style="grid-column:1/-1;font-size:11px;color:var(--gold);background:var(--goldBg);border:1px solid var(--goldBd);border-radius:6px;padding:8px 10px;line-height:1.5">
+          ⚠️ Giờ mở/đóng nhập theo <b>giờ Việt Nam</b>. Case Master Chef không được đưa vào vote.
+          Chọn một miền nếu miền kia đã chốt kết quả — nếu chọn "Cả hai miền" thì miền đã đóng sẽ mở lại cho vote tiếp.
+        </div>
         <div style="display:flex;align-items:flex-end"><button class="btn btn-primary" onclick="createCampaignForSeason()" style="width:100%">Tạo & Activate →</button></div>
       </div>
     </div>
@@ -887,10 +897,11 @@ async function createCampaignForSeason(){
   const closesAt=document.getElementById('campCloses')?.value;
   const maxVotes=parseInt(document.getElementById('campMaxVotes')?.value)||3;
   if(!name||!opensAt||!closesAt){toast("Điền đủ Tên, Giờ mở, Giờ đóng","danger");return;}
+  const onlyCity=document.getElementById('campCity')?.value||'';
   const id='top-pick-'+state.currentSeason+'-'+Date.now();
   await sb("top_pick_campaigns",{method:"POST",body:{id,name,opens_at:opensAt.replace('T',' '),closes_at:closesAt.replace('T',' '),max_votes_per_device:maxVotes,is_active:0},headers:{Prefer:"return=minimal"}});
   toast("Đã tạo campaign, đang activate...");
-  await activateCampaign(id);
+  await activateCampaign(id,onlyCity||null);
 }
 
 function editCampaign(id){
@@ -922,24 +933,39 @@ async function saveCampaignEdit(id){
   toast("Đã lưu campaign");closeModal();loadAll();
 }
 
-async function activateCampaign(id){
+async function activateCampaign(id,onlyCity){
   for(const c of state.campaigns){
     if(c.id!==id&&c.is_active)await sb(`top_pick_campaigns?id=eq.${c.id}`,{method:"PATCH",body:{is_active:0}});
   }
   await sb(`top_pick_campaigns?id=eq.${id}`,{method:"PATCH",body:{is_active:1}});
-  await pushCasesToCampaign(id);
+  await pushCasesToCampaign(id,onlyCity||null);
 }
 
-async function pushCasesToCampaign(id){
-  const activeCases=state.cases.filter(c=>c.is_active&&c.season_id===state.currentSeason);
-  if(!activeCases.length){toast("Không có active case nào trong season này để push","danger");return;}
+// City is written several ways across the data — "Hà Nội"/"HN" and
+// "Hồ Chí Minh"/"HCM"/"TP.HCM". This used to test for "Hồ Chí Minh" alone and send
+// everything else to HN, so the season-3 cases stored as "HCM" would have been
+// pushed into the campaign labelled Hà Nội, and the per-region vote cap would have
+// counted them against the wrong city.
+function cityKey(v){
+  const s=String(v==null?'':v).trim().toLowerCase();
+  if(s==='hcm'||s==='tp.hcm'||s==='tphcm'||s.includes('minh'))return 'HCM';
+  return 'HN';
+}
+
+// onlyCity: 'HN' | 'HCM' | null for both. A campaign for one city must not pull the
+// other city's cases in, or voting reopens for a city whose result is already final.
+async function pushCasesToCampaign(id,onlyCity){
+  let activeCases=state.cases.filter(c=>c.is_active&&c.season_id===state.currentSeason);
+  // The Master Chef does not take part in the vote.
+  activeCases=activeCases.filter(c=>c.is_master_chef!=1);
+  if(onlyCity)activeCases=activeCases.filter(c=>cityKey(c.city)===onlyCity);
+  if(!activeCases.length){toast("Không có case nào phù hợp để push","danger");return;}
   let added=0;
   for(const c of activeCases){
-    const city=c.city==="Hồ Chí Minh"?"HCM":"HN";
-    await sb("top_pick_cases",{method:"POST",body:{case_id:c.id,campaign_id:id,city,title:c.title,is_active:1},headers:{Prefer:"return=minimal"}}).catch(()=>{});
+    await sb("top_pick_cases",{method:"POST",body:{case_id:c.id,campaign_id:id,city:cityKey(c.city),title:c.title,is_active:1},headers:{Prefer:"return=minimal"}}).catch(()=>{});
     added++;
   }
-  toast(`Đã push ${added} cases vào campaign`);loadAll();
+  toast(`Đã push ${added} case vào campaign`);loadAll();
 }
 
 let _auditCity='all',_auditSearch='',_auditCampaign='';

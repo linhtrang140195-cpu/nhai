@@ -49,11 +49,23 @@ async function readCampaign(campaignId) {
   return rows[0] || null;
 }
 
+// Campaign times are wall-clock Vietnam time — that is what the admin form asks for
+// and what the organisers mean. The container runs in UTC, so letting Date assume the
+// server's zone read "23:59" as 23:59 UTC and kept voting open until 06:59 the next
+// morning in Hanoi, seven hours past the announced close.
+function vnTime(value) {
+  if (!value) return null;
+  const s = String(value).trim().replace(' ', 'T');
+  return new Date(/(?:[+-]\d\d:?\d\d|Z)$/.test(s) ? s : `${s}+07:00`);
+}
+
 function getCampaignBlockReason(campaign) {
   if (!campaign.is_active) return 'Voting has already closed.';
   const now = new Date();
-  if (campaign.opens_at && new Date(campaign.opens_at) > now) return 'Voting has not opened yet.';
-  if (campaign.closes_at && new Date(campaign.closes_at) < now) return 'Voting has already closed.';
+  const opens = vnTime(campaign.opens_at);
+  const closes = vnTime(campaign.closes_at);
+  if (opens && opens > now) return 'Voting has not opened yet.';
+  if (closes && closes < now) return 'Voting has already closed.';
   return '';
 }
 
