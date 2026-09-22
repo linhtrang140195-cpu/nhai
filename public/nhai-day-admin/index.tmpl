@@ -967,7 +967,8 @@ function cityKey(v){
 // reopens for a city whose result is already final. Only null with an EMPTY
 // campaign means "both" (a brand-new campaign with no scope chosen yet).
 async function pushCasesToCampaign(id,onlyCity){
-  const already=(state.topPickCases||[]).filter(x=>x.campaign_id===id);
+  const all=state.topPickCases||[];
+  const already=all.filter(x=>x.campaign_id===id);
   if(!onlyCity&&already.length){
     const cities=new Set(already.map(x=>x.city));
     if(cities.size===1)onlyCity=[...cities][0];
@@ -979,12 +980,37 @@ async function pushCasesToCampaign(id,onlyCity){
   const alreadyIds=new Set(already.map(x=>x.case_id));
   const missing=activeCases.filter(c=>!alreadyIds.has(c.id));
   if(!missing.length){toast("Không có case nào còn thiếu để push","danger");return;}
-  let added=0;
+
+  // case_id is the PRIMARY KEY of top_pick_cases — a case can only ever have one row,
+  // across every campaign that has existed. A case pushed into an earlier campaign
+  // (including one later closed) still owns that row, so INSERTing it again for a new
+  // campaign fails with a duplicate-key error. Reassign the existing row with PATCH
+  // instead of inserting a second one.
+  const existingElsewhere={};
+  all.forEach(x=>{existingElsewhere[x.case_id]=x;});
+
+  let inserted=0,reassigned=0;const failed=[];
   for(const c of missing){
-    await sb("top_pick_cases",{method:"POST",body:{case_id:c.id,campaign_id:id,city:cityKey(c.city),title:c.title,is_active:1},headers:{Prefer:"return=minimal"}}).catch(()=>{});
-    added++;
+    const body={campaign_id:id,city:cityKey(c.city),title:c.title,is_active:1};
+    let r;
+    if(existingElsewhere[c.id]){
+      r=await sb(`top_pick_cases?case_id=eq.${encodeURIComponent(c.id)}`,{method:"PATCH",body});
+      if(Array.isArray(r)&&r.length)reassigned++;else failed.push(c.title);
+    }else{
+      r=await sb("top_pick_cases",{method:"POST",body:{case_id:c.id,...body}});
+      if(Array.isArray(r)&&r.length)inserted++;else failed.push(c.title);
+    }
   }
-  toast(`Đã push ${added} case còn thiếu vào campaign`);loadAll();
+  const parts=[];
+  if(inserted)parts.push(`thêm ${inserted} case mới`);
+  if(reassigned)parts.push(`chuyển ${reassigned} case từ campaign khác`);
+  const summary=parts.length?`Đã ${parts.join(', ')}`:'';
+  if(failed.length){
+    toast(`${summary}${summary?'. ':''}Lỗi với ${failed.length} case: ${failed.slice(0,3).join(', ')}${failed.length>3?'…':''}`,"danger");
+  }else{
+    toast(summary||"Không có gì để push");
+  }
+  loadAll();
 }
 
 let _auditCity='all',_auditSearch='',_auditCampaign='';
