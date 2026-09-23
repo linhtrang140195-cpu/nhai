@@ -3552,8 +3552,16 @@ document.getElementById('regModal').addEventListener('click',function(ev){if(ev.
         }
       } else if(location.hash&&location.hash!=='#vote'){
         const seasonHash=location.hash.replace('#','');
-        const edIdx=EDITIONS.findIndex(ed=>ed.season_id===seasonHash);
-        if(edIdx>=0) setTimeout(()=>switchEdition(edIdx),50);
+        // EDITIONS is declared later in this same script (const, further down the
+        // file) — reading it here synchronously threw an uncaught ReferenceError
+        // before it existed, which aborted the rest of the script's top-to-bottom
+        // execution mid-file, so everything declared after this point (VOTE_CONFIG
+        // included) never ran. Deferring the read past this script's own execution
+        // fixes it the same way switchEdition's call was already deferred.
+        setTimeout(()=>{
+          const edIdx=EDITIONS.findIndex(ed=>ed.season_id===seasonHash);
+          if(edIdx>=0) switchEdition(edIdx);
+        },50);
       }
     }
   }
