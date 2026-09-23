@@ -3543,9 +3543,13 @@ document.getElementById('regModal').addEventListener('click',function(ev){if(ev.
     const btn=document.querySelector('.ptab[data-tab="'+tabId+'"]')||document.querySelectorAll('.ptab')[['info','cases','results','faq'].indexOf(tabId)];
     switchTab(tabId,btn,true);
     if(tabId==='results'){
-      if(location.hash==='#vote'){
+      if(location.hash==='#vote'||location.hash==='#vote-hn'||location.hash==='#vote-hcm'){
         const vBtn=document.querySelectorAll('.rtab')[1];
         if(typeof switchResTab==='function') switchResTab('vote',vBtn,true);
+        if(location.hash==='#vote-hn'||location.hash==='#vote-hcm'){
+          const city=location.hash==='#vote-hcm'?'HCM':'HN';
+          setTimeout(()=>{if(typeof filterVote==='function')filterVote(city,document.querySelectorAll('.vf-btn')[city==='HCM'?1:0]);},60);
+        }
       } else if(location.hash&&location.hash!=='#vote'){
         const seasonHash=location.hash.replace('#','');
         const edIdx=EDITIONS.findIndex(ed=>ed.season_id===seasonHash);
