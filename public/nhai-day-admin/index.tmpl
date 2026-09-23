@@ -695,23 +695,29 @@ function renderVoting(){
       const statusCls={inactive:"badge-muted",closed:"badge-danger",scheduled:"badge-muted",active:"badge-success"}[status];
       const already=(state.topPickCases||[]).filter(x=>x.campaign_id===c.id);
       const alreadyIds=new Set(already.map(x=>x.case_id));
-      const cities=new Set(already.map(x=>x.city));
-      const scopeCity=cities.size===1?[...cities][0]:null; // null = mixed or empty, i.e. not scoped to one city
-      let eligible=state.cases.filter(cs=>cs.is_active&&cs.season_id===state.currentSeason&&cs.is_master_chef!=1);
-      if(scopeCity)eligible=eligible.filter(cs=>cityKey(cs.city)===scopeCity);
-      const missingCount=eligible.filter(cs=>!alreadyIds.has(cs.id)).length;
+      const campSeason=campaignSeasonId(c.id);
+      const eligibleBase=state.cases.filter(cs=>cs.is_active&&cs.season_id===campSeason&&cs.is_master_chef!=1);
+      const missingByCity={};["HN","HCM"].forEach(city=>{
+        missingByCity[city]=eligibleBase.filter(cs=>cityKey(cs.city)===city&&!alreadyIds.has(cs.id)).length;
+      });
+      const missingTotal=missingByCity.HN+missingByCity.HCM;
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
         <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:600">${c.name}${scopeCity?` <span class="badge ${scopeCity==='HN'?'badge-hn':'badge-hcm'}" style="font-size:9px">${scopeCity}</span>`:""}</div>
+          <div style="font-size:12px;font-weight:600">${c.name} <span class="badge badge-muted" style="font-size:9px" title="Mùa suy ra từ ID campaign">${campSeason}</span></div>
           <div style="font-size:10px;color:var(--textM);margin-top:2px">
             ${c.opens_at?`Mở: ${new Date(c.opens_at).toLocaleString("vi-VN")}`:"Chưa đặt giờ"}
             ${c.closes_at?` → Đóng: ${new Date(c.closes_at).toLocaleString("vi-VN")}`:""}
-            · ${already.length} case đã vào vote${missingCount?` · <span style="color:var(--gold)">còn thiếu ${missingCount}</span>`:""}
+            · ${already.length} case đã vào vote
+            ${missingByCity.HN?` · <span style="color:var(--gold)">HN thiếu ${missingByCity.HN}</span>`:""}
+            ${missingByCity.HCM?` · <span style="color:var(--gold)">HCM thiếu ${missingByCity.HCM}</span>`:""}
           </div>
         </div>
         <span class="badge ${statusCls}">${statusLabel}</span>
         <button class="btn btn-primary" style="font-size:10px;padding:3px 8px" onclick="editCampaign('${c.id}')">Sửa</button>
-        ${!c.is_active?`<button class="btn btn-success" style="font-size:10px;padding:3px 8px" onclick="activateCampaign('${c.id}')">Activate →</button>`:`<button class="btn ${missingCount?'btn-success':''}" style="font-size:10px;padding:3px 8px" onclick="pushCasesToCampaign('${c.id}')">${missingCount?`Push ${missingCount} case còn thiếu`:"Push cases"}</button>`}
+        ${!c.is_active?`<button class="btn btn-success" style="font-size:10px;padding:3px 8px" onclick="activateCampaign('${c.id}')">Activate →</button>`:""}
+        ${missingByCity.HN?`<button class="btn btn-success" style="font-size:10px;padding:3px 8px" onclick="pushCasesToCampaign('${c.id}','HN')">Push ${missingByCity.HN} HN</button>`:""}
+        ${missingByCity.HCM?`<button class="btn btn-success" style="font-size:10px;padding:3px 8px" onclick="pushCasesToCampaign('${c.id}','HCM')">Push ${missingByCity.HCM} HCM</button>`:""}
+        ${!missingTotal&&c.is_active?`<span style="font-size:10px;color:var(--textM)">Đủ case</span>`:""}
       </div>`;
     }).join(""):`<div class="empty-state" style="padding:12px">Chưa có campaign</div>`}
     <div style="padding:14px;border-top:1px solid var(--border)">
@@ -961,19 +967,29 @@ function cityKey(v){
   return 'HN';
 }
 
-// onlyCity: 'HN' | 'HCM' | null. When null and the campaign already holds cases,
-// infer the scope from what is already there instead of defaulting to both — a
-// campaign built for one city must not pull the other city's cases in, or voting
-// reopens for a city whose result is already final. Only null with an EMPTY
-// campaign means "both" (a brand-new campaign with no scope chosen yet).
+// A campaign's season used to be taken from whichever season happened to be selected
+// in the sidebar picker at click time — so clicking "Push cases" while the picker sat
+// on an unrelated season pushed THAT season's cases in instead. Because case_id is the
+// primary key of top_pick_cases, each wrongly-pushed case is also silently stolen from
+// whatever campaign it used to belong to. Derive the season from the campaign's own id
+// instead, so the result no longer depends on what the picker happens to show.
+const LEGACY_CAMPAIGN_SEASON={'top-pick-day01-2026':'nhai-day-01','top-pick-day02-2026':'nhai-day-02','top-pick-day03-2026':'nhai-day-03'};
+function campaignSeasonId(campaignId){
+  if(LEGACY_CAMPAIGN_SEASON[campaignId])return LEGACY_CAMPAIGN_SEASON[campaignId];
+  const m=/^top-pick-(.+)-\d{10,}$/.exec(campaignId||'');
+  return m?m[1]:state.currentSeason;
+}
+
+// onlyCity is required ('HN' | 'HCM') — no auto-inference from what's already in the
+// campaign. That inference used to seem convenient, but it fails exactly when it is
+// needed most: repairing a campaign whose contents are already wrong (as happened
+// here) reads the wrong signal from the very corruption being fixed.
 async function pushCasesToCampaign(id,onlyCity){
+  if(onlyCity!=='HN'&&onlyCity!=='HCM'){toast('Cần chọn miền HN hoặc HCM','danger');return;}
   const all=state.topPickCases||[];
   const already=all.filter(x=>x.campaign_id===id);
-  if(!onlyCity&&already.length){
-    const cities=new Set(already.map(x=>x.city));
-    if(cities.size===1)onlyCity=[...cities][0];
-  }
-  let activeCases=state.cases.filter(c=>c.is_active&&c.season_id===state.currentSeason);
+  const targetSeason=campaignSeasonId(id);
+  let activeCases=state.cases.filter(c=>c.is_active&&c.season_id===targetSeason);
   // The Master Chef does not take part in the vote.
   activeCases=activeCases.filter(c=>c.is_master_chef!=1);
   if(onlyCity)activeCases=activeCases.filter(c=>cityKey(c.city)===onlyCity);
