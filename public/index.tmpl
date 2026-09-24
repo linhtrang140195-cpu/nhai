@@ -4275,8 +4275,13 @@ renderResultsTopPickWinners=function(){
 function switchEdition(i){
   document.querySelectorAll('.ed-tab').forEach((b,j)=>b.classList.toggle('on',j===i));
   document.querySelectorAll('.ed-panel').forEach((p,j)=>p.classList.toggle('on',j===i));
-  const sid=EDITIONS[i]?.season_id;
+  const ed=EDITIONS[i];
+  const sid=ed?.season_id;
   if(sid) history.replaceState(history.state,'','/ket-qua#'+sid);
+  // Record which edition was viewed so the admin can measure traffic per NHAI DAY
+  // season — the SPA switches editions in-page, so without this event nothing
+  // distinguishes a Day 3 view from a Day 1 view. Recorded from this release on.
+  if(ed&&typeof trackAnalyticsEvent==='function') trackAnalyticsEvent('edition_view',{label:ed.label,season_id:sid||''});
 }
 
 function getRecapResultConfig(id){

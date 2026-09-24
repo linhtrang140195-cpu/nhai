@@ -276,6 +276,7 @@ function render(){
   const fn={dashboard:renderDashboard,analytics:renderAnalytics,schedule:renderSchedule,results:renderResults,voting:renderVoting,audit:renderAudit,registrations:renderRegistrations,mentors:renderMentors,faq:renderFAQ,news:renderNews,media:renderMedia,settings:renderSettings,criteria:renderCriteria,roadmap:renderRoadmapAdmin,submissions:renderSubmissions,feedback:renderFeedback};
   document.getElementById("content").innerHTML=(fn[state.tab]||renderDashboard)();
   if(state.tab==='criteria') setTimeout(loadCriteriaPanel,0);
+  if(state.tab==='analytics') setTimeout(loadMediaStats,0);
 }
 
 function renderSidebar(){
@@ -1688,7 +1689,75 @@ function renderAnalytics(){
         }).join("")}
       </div>`}
     </div>
+  </div>
+  <div id="mediaStatsPanel" style="margin-top:16px"></div>`;
+}
+
+window._mediaDays='30';
+async function loadMediaStats(){
+  const el=document.getElementById('mediaStatsPanel');
+  if(!el)return;
+  const days=window._mediaDays||'30';
+  const rangeBtns=[['7','7 ngày'],['30','30 ngày'],['90','90 ngày'],['all','Tất cả']].map(([v,l])=>
+    `<button class="btn ${String(days)===v?'btn-primary':''}" style="font-size:11px" onclick="window._mediaDays='${v}';loadMediaStats()">${l}</button>`).join('');
+  const header=`<div class="card-header"><div class="card-title">📣 Hiệu quả truyền thông</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${rangeBtns}</div></div>`;
+  el.innerHTML=`<div class="card">${header}<div style="padding:20px;text-align:center;color:var(--textM)">Đang tải…</div></div>`;
+  let d;
+  try{ d=await fetch('/api/media-stats?days='+encodeURIComponent(days)).then(r=>r.json()); }
+  catch(err){ el.innerHTML=`<div class="card">${header}<div class="empty-state">Lỗi tải dữ liệu</div></div>`; return; }
+  if(!d||!d.ok){ el.innerHTML=`<div class="card">${header}<div class="empty-state">${e(d&&d.message||'Không tải được')}</div></div>`; return; }
+
+  const t=d.totals||{};
+  const kpis=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    <div class="stat"><div class="stat-num">${(t.sessions||0).toLocaleString('vi-VN')}</div><div class="stat-label">Lượt truy cập</div></div>
+    <div class="stat"><div class="stat-num">${(t.devices||0).toLocaleString('vi-VN')}</div><div class="stat-label">Thiết bị khác nhau</div></div>
+    <div class="stat"><div class="stat-num">${t.avg_dwell!=null?t.avg_dwell+'s':'—'}</div><div class="stat-label">Thời gian ở lại TB</div></div>
+    <div class="stat"><div class="stat-num">${t.bounce_pct!=null?t.bounce_pct+'%':'—'}</div><div class="stat-label">Thoát nhanh (&lt;10s)</div></div>
   </div>`;
+
+  const rankTable=(title,rows,cols)=>{
+    if(!rows||!rows.length)return `<div class="card" style="padding:14px"><div style="font-size:12px;font-weight:600;margin-bottom:8px">${title}</div><div style="color:var(--textM);font-size:12px">Chưa có dữ liệu</div></div>`;
+    const max=Math.max(...rows.map(r=>r[cols[0].k]||0))||1;
+    return `<div class="card" style="padding:14px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:10px">${title}</div>
+      ${rows.map(r=>{
+        const v=r[cols[0].k]||0;const w=Math.round(v/max*100);
+        return `<div style="margin-bottom:9px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+            <span style="max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e(r.label||'(không rõ)')}</span>
+            <span style="color:var(--textM)">${cols.map(c=>`${(r[c.k]||0).toLocaleString('vi-VN')} ${c.unit}`).join(' · ')}</span>
+          </div>
+          <div style="background:rgba(255,255,255,.04);border-radius:99px;height:6px;overflow:hidden"><div style="height:100%;border-radius:99px;background:var(--gold);width:${w}%"></div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  };
+
+  const grid=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    ${rankTable('📄 Lượt xem theo trang',d.tabs,[{k:'views',unit:'lượt'},{k:'devices',unit:'thiết bị'}])}
+    ${rankTable('🏆 Lượt xem theo mùa',d.editions,[{k:'views',unit:'lượt'},{k:'devices',unit:'thiết bị'}])}
+    ${rankTable('📖 Bài recap được mở',d.recaps,[{k:'opens',unit:'lần'},{k:'devices',unit:'thiết bị'}])}
+    ${rankTable('🚪 Trang vào đầu tiên',d.landing,[{k:'sessions',unit:'phiên'},{k:'devices',unit:'thiết bị'}])}
+  </div>`;
+
+  const dailyRows=(d.daily||[]).slice().reverse();
+  const dmax=Math.max(...dailyRows.map(x=>x.sessions||0))||1;
+  const daily=dailyRows.length?`<div class="card" style="padding:14px;margin-top:12px">
+    <div style="font-size:12px;font-weight:600;margin-bottom:10px">📈 Lượt truy cập theo ngày</div>
+    <div style="display:flex;align-items:flex-end;gap:3px;height:90px">
+      ${dailyRows.map(x=>{const h=Math.round((x.sessions||0)/dmax*80)+2;const day=String(x.day).slice(5);
+        return `<div title="${day}: ${x.sessions} lượt" style="flex:1;min-width:3px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center">
+          <div style="width:100%;background:var(--teal);border-radius:2px 2px 0 0;height:${h}px"></div></div>`;}).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--textM);margin-top:4px">
+      <span>${String(dailyRows[0].day).slice(5)}</span><span>${String(dailyRows[dailyRows.length-1].day).slice(5)}</span>
+    </div>
+  </div>`:'';
+
+  const note=(!d.editions||!d.editions.length)?`<div style="font-size:10px;color:var(--textM);margin-top:8px">💡 "Lượt xem theo mùa" chỉ ghi từ khi tính năng này lên; dữ liệu trước đó không có.</div>`:'';
+
+  el.innerHTML=`<div class="card">${header}${kpis}${grid}${daily}${note}</div>`;
 }
 
 async function calcFeedbackStats(){

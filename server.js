@@ -156,6 +156,65 @@ app.get('/api/active-campaign', async (req, res) => {
   }
 });
 
+// Media-effectiveness aggregates for the admin dashboard. Rolled up in SQL so the
+// browser never pulls the raw session/event rows. Admin-only: this reads traffic data.
+// `days` is a trailing window in whole days (0 or 'all' = no lower bound). The site is
+// a single-page app — most visits land on '/' and move between pages via in-page tabs
+// with no new page load — so page popularity comes from tab_view events, not entry_path
+// (which only records the landing page). Season popularity comes from edition_view
+// events, recorded only from the release that added that tracking; older traffic
+// predates it and cannot be back-filled.
+app.get('/api/media-stats', async (req, res) => {
+  try {
+    if (!(await adminAuth.isAuthed(req))) return res.status(401).json({ ok: false, message: 'Cần đăng nhập quản trị.' });
+    const daysRaw = String(req.query.days || '30').toLowerCase();
+    const days = (daysRaw === 'all' || daysRaw === '0') ? 0 : Math.min(Math.max(parseInt(daysRaw, 10) || 30, 1), 3650);
+    // Build a shared WHERE fragment + params for each table's own timestamp column.
+    const since = days ? new Date(Date.now() - days * 86400000).toISOString().slice(0, 19).replace('T', ' ') : null;
+    const sCond = since ? 'WHERE started_at >= ?' : '';
+    const sArgs = since ? [since] : [];
+    const eCond = since ? 'AND created_at >= ?' : '';
+    const eArgs = since ? [since] : [];
+
+    const [[totals]] = await pool.query(
+      `SELECT COUNT(*) AS sessions, COUNT(DISTINCT device_id) AS devices,
+              ROUND(AVG(duration_seconds)) AS avg_dwell,
+              ROUND(SUM(CASE WHEN duration_seconds < 10 THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(*),0)) AS bounce_pct
+       FROM page_sessions ${sCond}`, sArgs);
+
+    const [landing] = await pool.query(
+      `SELECT entry_path AS label, COUNT(*) AS sessions, COUNT(DISTINCT device_id) AS devices,
+              ROUND(AVG(duration_seconds)) AS avg_dwell
+       FROM page_sessions ${sCond} GROUP BY entry_path ORDER BY sessions DESC LIMIT 30`, sArgs);
+
+    const [tabs] = await pool.query(
+      `SELECT JSON_UNQUOTE(JSON_EXTRACT(meta,'$.tab')) AS label,
+              COUNT(*) AS views, COUNT(DISTINCT device_id) AS devices
+       FROM page_events WHERE event_name = 'tab_view' ${eCond}
+       GROUP BY label ORDER BY views DESC`, eArgs);
+
+    const [recaps] = await pool.query(
+      `SELECT JSON_UNQUOTE(JSON_EXTRACT(meta,'$.event_name')) AS label,
+              COUNT(*) AS opens, COUNT(DISTINCT device_id) AS devices
+       FROM page_events WHERE event_name = 'recap_open' ${eCond}
+       GROUP BY label ORDER BY opens DESC`, eArgs);
+
+    const [editions] = await pool.query(
+      `SELECT JSON_UNQUOTE(JSON_EXTRACT(meta,'$.label')) AS label,
+              COUNT(*) AS views, COUNT(DISTINCT device_id) AS devices
+       FROM page_events WHERE event_name = 'edition_view' ${eCond}
+       GROUP BY label ORDER BY views DESC`, eArgs);
+
+    const [daily] = await pool.query(
+      `SELECT DATE(started_at) AS day, COUNT(*) AS sessions, COUNT(DISTINCT device_id) AS devices
+       FROM page_sessions ${sCond} GROUP BY DATE(started_at) ORDER BY day DESC LIMIT 60`, sArgs);
+
+    res.json({ ok: true, days, totals, landing, tabs, recaps, editions, daily });
+  } catch (e) {
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
 function normSeasonCity(v) {
   const s = String(v || '').trim().toLowerCase();
   if (s === 'hcm' || s === 'tp.hcm' || s === 'tphcm' || s.includes('minh')) return 'HCM';
