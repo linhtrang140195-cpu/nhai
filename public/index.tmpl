@@ -3918,8 +3918,20 @@ const EDITIONS=[
     {label:'TP.HCM',title:'Hỗ trợ kiểm tra hàng loạt phiếu yêu cầu tài khoản',person:'Vưu Khai Triển · Minh Tuấn · Sỹ Giáp'}
   ]},
   {label:'NHAI DAY #2',ids:['hn02','hcm02'],done:true,season_id:'nhai-day-02'},
-  {label:'NHAI DAY #3',ids:['hn03','hcm03'],done:true,season_id:'nhai-day-03',articleUrl:'np-1789452214182'},
+  {label:'NHAI DAY #3',ids:['hn03','hcm03'],done:true,season_id:'nhai-day-03',
+    articleUrls:{'Hà Nội':'np-1789452214182','TP.HCM':'np-1790162292715'}},
 ];
+function recapButtonsHtml(ed){
+  // Some editions have one shared recap article (articleUrl); NHAI DAY #3 has a
+  // separate one per city (articleUrls), so both must show instead of only whichever
+  // was hardcoded first.
+  const urls=ed.articleUrls||(ed.articleUrl?{'':ed.articleUrl}:null);
+  if(!urls) return '';
+  const btns=Object.entries(urls).map(([city,url])=>
+    `<a href="javascript:openArticleModal('${url}')" style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:999px;background:rgba(123,77,219,.14);border:1px solid rgba(123,77,219,.3);color:#efe6ff;text-decoration:none;font-size:13px;font-weight:700">📖 Xem bài recap${city?' '+e(city):''}</a>`
+  ).join('');
+  return `<div style="margin:0 0 16px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap">${btns}</div>`;
+}
 function renderEvents(){
   document.getElementById('edTabs').innerHTML=EDITIONS.map((ed,i)=>
     `<button class="ed-tab ${i===0?'on':''}" onclick="switchEdition(${i})">${ed.label}</button>`
@@ -3940,7 +3952,7 @@ function renderEvents(){
         <div class="ed-kpi"><span class="ek-n" id="ek-dm-${i}">—</span><div class="ek-l">Có output/demo phát triển tiếp</div></div>
       </div>
       <div id="ed-toppick-${i}"></div>
-      ${ed.articleUrl?`<div style="margin:0 0 16px;display:flex;justify-content:flex-end"><a href="javascript:openArticleModal('${ed.articleUrl}')" style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:999px;background:rgba(123,77,219,.14);border:1px solid rgba(123,77,219,.3);color:#efe6ff;text-decoration:none;font-size:13px;font-weight:700">📖 Xem bài recap</a></div>`:''}
+      ${recapButtonsHtml(ed)}
       <div id="ed-awards-${i}" style="text-align:center;padding:48px 16px;color:var(--textM)">Đang tải kết quả…</div>
     </div>`;
 
@@ -5741,7 +5753,7 @@ const ROADMAP=[
   {status:'done',name:'NHAI DAY 02 — HCM',date:'07/08/2026'},
   {status:'active',name:'Top Pick Dish Day 02 — Đang mở vote',date:'12/08 – 19/08/2026',voteCity:'HN'},
   {status:'done',name:'NHAI DAY 03 — Hà Nội',date:'28/08/2026',articleUrl:'np-1789452214182'},
-  {status:'done',name:'NHAI DAY 03 — HCM',date:'11/09/2026',articleUrl:'np-1789452214182'},
+  {status:'done',name:'NHAI DAY 03 — HCM',date:'11/09/2026',articleUrl:'np-1790162292715'},
   {status:'tbd',name:'NHAI DAY 04 — Hà Nội',date:'02/10/2026 (dự kiến)'},
   {status:'tbd',name:'NHAI DAY 04 — HCM',date:'02/10/2026 (dự kiến)'},
 ];
@@ -5818,7 +5830,7 @@ const ROADMAP_DISPLAY=[
   {status:'done',name:'NHAI DAY 02 — HCM',date:'07/08/2026'},
   {status:'active',name:'Top Pick Dish Day 02 — Đang mở vote',date:'12/08 – 19/08/2026',voteCity:'HN'},
   {status:'done',name:'NHAI DAY 03 — Hà Nội',date:'28/08/2026',articleUrl:'np-1789452214182'},
-  {status:'done',name:'NHAI DAY 03 — HCM',date:'11/09/2026',articleUrl:'np-1789452214182'},
+  {status:'done',name:'NHAI DAY 03 — HCM',date:'11/09/2026',articleUrl:'np-1790162292715'},
   {status:'tbd',name:'NHAI DAY 04 — Hà Nội',date:'02/10/2026 (dự kiến)'},
   {status:'tbd',name:'NHAI DAY 04 — HCM',date:'02/10/2026 (dự kiến)'},
 ];
