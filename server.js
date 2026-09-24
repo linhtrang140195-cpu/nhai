@@ -172,11 +172,17 @@ app.get('/api/media-stats', async (req, res) => {
     const from = dateOnly.test(String(req.query.from || '')) ? String(req.query.from) : null;
     const to = dateOnly.test(String(req.query.to || '')) ? String(req.query.to) : null;
 
-    // Bounds shared by both tables (each applied to its own timestamp column below).
+    // Timestamps are stored in UTC (siteAnalytics writes new Date().toISOString()),
+    // but the admin picks dates in Vietnam time — like the rest of the app. A from/to
+    // day is a Vietnam wall-clock day, so convert its VN midnight boundaries to the
+    // matching UTC instants before comparing, or "Hôm nay" (24/9 VN) would query the
+    // wrong 24 hours of UTC and miss the day's traffic.
+    const vnToUtc = (dateStr, endOfDay) =>
+      new Date(`${dateStr}T${endOfDay ? '23:59:59' : '00:00:00'}+07:00`).toISOString().slice(0, 19).replace('T', ' ');
     const lower = [], upper = [];
     if (from || to) {
-      if (from) { lower.push(`${from} 00:00:00`); }
-      if (to) { upper.push(`${to} 23:59:59`); }
+      if (from) { lower.push(vnToUtc(from, false)); }
+      if (to) { upper.push(vnToUtc(to, true)); }
     } else {
       const daysRaw = String(req.query.days || '30').toLowerCase();
       const days = (daysRaw === 'all' || daysRaw === '0') ? 0 : Math.min(Math.max(parseInt(daysRaw, 10) || 30, 1), 3650);
@@ -222,9 +228,11 @@ app.get('/api/media-stats', async (req, res) => {
        FROM page_events WHERE event_name = 'edition_view' ${eCond}
        GROUP BY label ORDER BY views DESC`, eArgs);
 
+    // Group by the Vietnam calendar day (+7h), so a bar labelled 24/9 holds the traffic
+    // people would call "the 24th" — not the UTC day, which would split a VN day in two.
     const [daily] = await pool.query(
-      `SELECT DATE(started_at) AS day, COUNT(*) AS sessions, COUNT(DISTINCT device_id) AS devices
-       FROM page_sessions ${sCond} GROUP BY DATE(started_at) ORDER BY day DESC LIMIT 60`, sArgs);
+      `SELECT DATE(started_at + INTERVAL 7 HOUR) AS day, COUNT(*) AS sessions, COUNT(DISTINCT device_id) AS devices
+       FROM page_sessions ${sCond} GROUP BY DATE(started_at + INTERVAL 7 HOUR) ORDER BY day DESC LIMIT 60`, sArgs);
 
     res.json({ ok: true, from, to, totals, landing, tabs, recaps, editions, daily });
   } catch (e) {
