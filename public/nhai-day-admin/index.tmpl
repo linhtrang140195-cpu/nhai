@@ -1693,20 +1693,37 @@ function renderAnalytics(){
   <div id="mediaStatsPanel" style="margin-top:16px"></div>`;
 }
 
-window._mediaDays='30';
+window._mediaDays='30';       // active preset, or '' when a custom date range is set
+window._mediaFrom='';window._mediaTo='';
+function setMediaRange(from,to){
+  window._mediaFrom=from||'';window._mediaTo=to||'';
+  window._mediaDays=(from||to)?'':window._mediaDays; // a range clears the preset highlight
+  loadMediaStats();
+}
+function setMediaDays(v){ window._mediaFrom='';window._mediaTo='';window._mediaDays=v; loadMediaStats(); }
 async function loadMediaStats(){
   const el=document.getElementById('mediaStatsPanel');
   if(!el)return;
-  const days=window._mediaDays||'30';
+  const days=window._mediaDays||'';
+  const from=window._mediaFrom||'',to=window._mediaTo||'';
+  const usingRange=!!(from||to);
   const rangeBtns=[['7','7 ngày'],['30','30 ngày'],['90','90 ngày'],['all','Tất cả']].map(([v,l])=>
-    `<button class="btn ${String(days)===v?'btn-primary':''}" style="font-size:11px" onclick="window._mediaDays='${v}';loadMediaStats()">${l}</button>`).join('');
+    `<button class="btn ${!usingRange&&String(days)===v?'btn-primary':''}" style="font-size:11px" onclick="setMediaDays('${v}')">${l}</button>`).join('');
+  const dateInputs=`<div style="display:flex;gap:5px;align-items:center;font-size:11px;color:var(--textM)">
+    <span>Từ</span><input type="date" id="mediaFrom" value="${from}" style="margin:0;padding:4px 6px;font-size:11px">
+    <span>đến</span><input type="date" id="mediaTo" value="${to}" style="margin:0;padding:4px 6px;font-size:11px">
+    <button class="btn ${usingRange?'btn-primary':''}" style="font-size:11px" onclick="setMediaRange(document.getElementById('mediaFrom').value,document.getElementById('mediaTo').value)">Lọc</button>
+  </div>`;
+  const exportBtn=`<button class="btn btn-success" style="font-size:11px" onclick="exportMediaCsv()">↓ Export CSV</button>`;
   const header=`<div class="card-header"><div class="card-title">📣 Hiệu quả truyền thông</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">${rangeBtns}</div></div>`;
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><div style="display:flex;gap:6px;flex-wrap:wrap">${rangeBtns}</div>${dateInputs}${exportBtn}</div></div>`;
   el.innerHTML=`<div class="card">${header}<div style="padding:20px;text-align:center;color:var(--textM)">Đang tải…</div></div>`;
+  const qs=usingRange?('from='+encodeURIComponent(from)+'&to='+encodeURIComponent(to)):('days='+encodeURIComponent(days||'30'));
   let d;
-  try{ d=await fetch('/api/media-stats?days='+encodeURIComponent(days)).then(r=>r.json()); }
+  try{ d=await fetch('/api/media-stats?'+qs).then(r=>r.json()); }
   catch(err){ el.innerHTML=`<div class="card">${header}<div class="empty-state">Lỗi tải dữ liệu</div></div>`; return; }
   if(!d||!d.ok){ el.innerHTML=`<div class="card">${header}<div class="empty-state">${e(d&&d.message||'Không tải được')}</div></div>`; return; }
+  window._mediaData=d; // kept so Export CSV works on exactly what is shown
 
   const t=d.totals||{};
   const kpis=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
@@ -1743,21 +1760,52 @@ async function loadMediaStats(){
 
   const dailyRows=(d.daily||[]).slice().reverse();
   const dmax=Math.max(...dailyRows.map(x=>x.sessions||0))||1;
+  const dvn=iso=>{const p=String(iso).slice(0,10).split('-');return p.length===3?p[2]+'/'+p[1]:String(iso).slice(5);};
+  // A date label under every bar would collide once there are more than a couple of
+  // weeks; show one roughly every ~7 bars (and always the last) so the axis stays legible.
+  const step=Math.max(1,Math.ceil(dailyRows.length/9));
   const daily=dailyRows.length?`<div class="card" style="padding:14px;margin-top:12px">
     <div style="font-size:12px;font-weight:600;margin-bottom:10px">📈 Lượt truy cập theo ngày</div>
     <div style="display:flex;align-items:flex-end;gap:3px;height:90px">
-      ${dailyRows.map(x=>{const h=Math.round((x.sessions||0)/dmax*80)+2;const day=String(x.day).slice(5);
-        return `<div title="${day}: ${x.sessions} lượt" style="flex:1;min-width:3px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center">
+      ${dailyRows.map(x=>{const h=Math.round((x.sessions||0)/dmax*80)+2;
+        return `<div title="${dvn(x.day)}: ${x.sessions} lượt · ${x.devices} thiết bị" style="flex:1;min-width:3px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center">
           <div style="width:100%;background:var(--teal);border-radius:2px 2px 0 0;height:${h}px"></div></div>`;}).join('')}
     </div>
-    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--textM);margin-top:4px">
-      <span>${String(dailyRows[0].day).slice(5)}</span><span>${String(dailyRows[dailyRows.length-1].day).slice(5)}</span>
+    <div style="display:flex;gap:3px;font-size:9px;color:var(--textM);margin-top:4px">
+      ${dailyRows.map((x,i)=>`<div style="flex:1;min-width:3px;text-align:center;white-space:nowrap;overflow:visible">${(i%step===0||i===dailyRows.length-1)?dvn(x.day):''}</div>`).join('')}
     </div>
   </div>`:'';
 
   const note=(!d.editions||!d.editions.length)?`<div style="font-size:10px;color:var(--textM);margin-top:8px">💡 "Lượt xem theo mùa" chỉ ghi từ khi tính năng này lên; dữ liệu trước đó không có.</div>`:'';
 
   el.innerHTML=`<div class="card">${header}${kpis}${grid}${daily}${note}</div>`;
+}
+
+// Exports the currently loaded dashboard slice as one CSV, each block labelled by a
+// leading "section" column so a single file covers totals, every ranking and the daily
+// series — enough to pivot in a spreadsheet without hitting the DB.
+function exportMediaCsv(){
+  const d=window._mediaData;
+  if(!d||!d.ok){toast('Chưa có dữ liệu để export','danger');return;}
+  const q=v=>{const s=String(v==null?'':v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const rows=[['section','label','metric1_name','metric1','metric2_name','metric2']];
+  const t=d.totals||{};
+  rows.push(['tong','Lượt truy cập','sessions',t.sessions||0,'','']);
+  rows.push(['tong','Thiết bị khác nhau','devices',t.devices||0,'','']);
+  rows.push(['tong','Thời gian ở lại TB (giây)','avg_dwell',t.avg_dwell||0,'','']);
+  rows.push(['tong','Thoát nhanh (%)','bounce_pct',t.bounce_pct||0,'','']);
+  (d.tabs||[]).forEach(r=>rows.push(['trang',r.label,'views',r.views||0,'devices',r.devices||0]));
+  (d.editions||[]).forEach(r=>rows.push(['mua',r.label,'views',r.views||0,'devices',r.devices||0]));
+  (d.recaps||[]).forEach(r=>rows.push(['recap',r.label,'opens',r.opens||0,'devices',r.devices||0]));
+  (d.landing||[]).forEach(r=>rows.push(['trang_vao',r.label,'sessions',r.sessions||0,'devices',r.devices||0]));
+  (d.daily||[]).slice().reverse().forEach(r=>rows.push(['theo_ngay',String(r.day).slice(0,10),'sessions',r.sessions||0,'devices',r.devices||0]));
+  const csv='﻿'+rows.map(r=>r.map(q).join(',')).join('\n');
+  const label=(d.from||d.to)?((d.from||'')+'_'+(d.to||'')):((window._mediaDays||'30')+'d');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='media_stats_'+label+'.csv';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},100);
+  toast('Đã export CSV');
 }
 
 async function calcFeedbackStats(){

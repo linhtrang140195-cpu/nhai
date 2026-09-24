@@ -158,23 +158,40 @@ app.get('/api/active-campaign', async (req, res) => {
 
 // Media-effectiveness aggregates for the admin dashboard. Rolled up in SQL so the
 // browser never pulls the raw session/event rows. Admin-only: this reads traffic data.
-// `days` is a trailing window in whole days (0 or 'all' = no lower bound). The site is
-// a single-page app — most visits land on '/' and move between pages via in-page tabs
-// with no new page load — so page popularity comes from tab_view events, not entry_path
-// (which only records the landing page). Season popularity comes from edition_view
-// events, recorded only from the release that added that tracking; older traffic
-// predates it and cannot be back-filled.
+// Time window is either an explicit date range (from / to, YYYY-MM-DD, inclusive of the
+// whole `to` day) or a trailing `days` window (0 or 'all' = no lower bound); the range
+// wins when given. The site is a single-page app — most visits land on '/' and move
+// between pages via in-page tabs with no new page load — so page popularity comes from
+// tab_view events, not entry_path (which only records the landing page). Season
+// popularity comes from edition_view events, recorded only from the release that added
+// that tracking; older traffic predates it and cannot be back-filled.
 app.get('/api/media-stats', async (req, res) => {
   try {
     if (!(await adminAuth.isAuthed(req))) return res.status(401).json({ ok: false, message: 'Cần đăng nhập quản trị.' });
-    const daysRaw = String(req.query.days || '30').toLowerCase();
-    const days = (daysRaw === 'all' || daysRaw === '0') ? 0 : Math.min(Math.max(parseInt(daysRaw, 10) || 30, 1), 3650);
-    // Build a shared WHERE fragment + params for each table's own timestamp column.
-    const since = days ? new Date(Date.now() - days * 86400000).toISOString().slice(0, 19).replace('T', ' ') : null;
-    const sCond = since ? 'WHERE started_at >= ?' : '';
-    const sArgs = since ? [since] : [];
-    const eCond = since ? 'AND created_at >= ?' : '';
-    const eArgs = since ? [since] : [];
+    const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
+    const from = dateOnly.test(String(req.query.from || '')) ? String(req.query.from) : null;
+    const to = dateOnly.test(String(req.query.to || '')) ? String(req.query.to) : null;
+
+    // Bounds shared by both tables (each applied to its own timestamp column below).
+    const lower = [], upper = [];
+    if (from || to) {
+      if (from) { lower.push(`${from} 00:00:00`); }
+      if (to) { upper.push(`${to} 23:59:59`); }
+    } else {
+      const daysRaw = String(req.query.days || '30').toLowerCase();
+      const days = (daysRaw === 'all' || daysRaw === '0') ? 0 : Math.min(Math.max(parseInt(daysRaw, 10) || 30, 1), 3650);
+      if (days) lower.push(new Date(Date.now() - days * 86400000).toISOString().slice(0, 19).replace('T', ' '));
+    }
+    // Compose "col >= ? AND col <= ?" for whichever bounds exist.
+    const boundSql = (col, prefix) => {
+      const parts = [];
+      if (lower.length) parts.push(`${col} >= ?`);
+      if (upper.length) parts.push(`${col} <= ?`);
+      if (!parts.length) return { clause: '', args: [] };
+      return { clause: `${prefix} ${parts.join(' AND ')}`, args: [...lower, ...upper] };
+    };
+    const sBound = boundSql('started_at', 'WHERE'), sCond = sBound.clause, sArgs = sBound.args;
+    const eBound = boundSql('created_at', 'AND'), eCond = eBound.clause, eArgs = eBound.args;
 
     const [[totals]] = await pool.query(
       `SELECT COUNT(*) AS sessions, COUNT(DISTINCT device_id) AS devices,
@@ -209,7 +226,7 @@ app.get('/api/media-stats', async (req, res) => {
       `SELECT DATE(started_at) AS day, COUNT(*) AS sessions, COUNT(DISTINCT device_id) AS devices
        FROM page_sessions ${sCond} GROUP BY DATE(started_at) ORDER BY day DESC LIMIT 60`, sArgs);
 
-    res.json({ ok: true, days, totals, landing, tabs, recaps, editions, daily });
+    res.json({ ok: true, from, to, totals, landing, tabs, recaps, editions, daily });
   } catch (e) {
     res.status(500).json({ ok: false, message: e.message });
   }
