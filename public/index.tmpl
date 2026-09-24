@@ -5739,7 +5739,11 @@ async function initVoteState(){
       banner.innerHTML=`<span class="vob-badge" style="background:#22c55e;color:#000;border-color:#16a34a">ĐANG MỞ</span><span class="vob-text"><b>Top Pick Dish</b> — Bình chọn 3 vấn đề bạn quan tâm / ấn tượng nhất</span>${dateSpan}`;
     }
   })();
-  renderVote('HN');
+  // Campaign cases arrive after the page (and after a #vote-hcm deep link or an HCM
+  // click may have already selected a city), so re-render the CURRENTLY selected city
+  // rather than forcing HN — forcing HN here wiped the just-loaded HCM list, which is
+  // why HCM voting could show an empty grid until the user clicked the tab again.
+  renderVote();
   updateEditionTopPick();
 }
 
