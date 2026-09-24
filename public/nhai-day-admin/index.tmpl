@@ -1707,7 +1707,10 @@ async function loadMediaStats(){
   const days=window._mediaDays||'';
   const from=window._mediaFrom||'',to=window._mediaTo||'';
   const usingRange=!!(from||to);
-  const rangeBtns=[['7','7 ngày'],['30','30 ngày'],['90','90 ngày'],['all','Tất cả']].map(([v,l])=>
+  const todayStr=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const isToday=usingRange&&from===todayStr&&to===todayStr;
+  const todayBtn=`<button class="btn ${isToday?'btn-primary':''}" style="font-size:11px" onclick="setMediaRange('${todayStr}','${todayStr}')">Hôm nay</button>`;
+  const rangeBtns=todayBtn+[['7','7 ngày'],['30','30 ngày'],['90','90 ngày'],['all','Tất cả']].map(([v,l])=>
     `<button class="btn ${!usingRange&&String(days)===v?'btn-primary':''}" style="font-size:11px" onclick="setMediaDays('${v}')">${l}</button>`).join('');
   const dateInputs=`<div style="display:flex;gap:5px;align-items:center;font-size:11px;color:var(--textM)">
     <span>Từ</span><input type="date" id="mediaFrom" value="${from}" style="margin:0;padding:4px 6px;font-size:11px">
@@ -1765,10 +1768,16 @@ async function loadMediaStats(){
   // weeks; show one roughly every ~7 bars (and always the last) so the axis stays legible.
   const step=Math.max(1,Math.ceil(dailyRows.length/9));
   const daily=dailyRows.length?`<div class="card" style="padding:14px;margin-top:12px">
-    <div style="font-size:12px;font-weight:600;margin-bottom:10px">📈 Lượt truy cập theo ngày</div>
-    <div style="display:flex;align-items:flex-end;gap:3px;height:90px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+      <span style="font-size:12px;font-weight:600">📈 Lượt truy cập theo ngày</span>
+      <span id="mediaDailyReadout" style="font-size:11px;color:var(--textM)">Rê chuột vào cột để xem chi tiết</span>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:3px;height:90px"
+      onmouseleave="var r=document.getElementById('mediaDailyReadout');if(r)r.textContent='Rê chuột vào cột để xem chi tiết'">
       ${dailyRows.map(x=>{const h=Math.round((x.sessions||0)/dmax*80)+2;
-        return `<div title="${dvn(x.day)}: ${x.sessions} lượt · ${x.devices} thiết bị" style="flex:1;min-width:3px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center">
+        const info=e(dvn(x.day)+':  '+(x.sessions||0)+' lượt · '+(x.devices||0)+' thiết bị').replace(/'/g,"\\'");
+        return `<div onmouseover="var r=document.getElementById('mediaDailyReadout');if(r){r.textContent='${info}';r.style.color='var(--gold)'}"
+          style="flex:1;min-width:3px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;cursor:pointer;padding-top:4px">
           <div style="width:100%;background:var(--teal);border-radius:2px 2px 0 0;height:${h}px"></div></div>`;}).join('')}
     </div>
     <div style="display:flex;gap:3px;font-size:9px;color:var(--textM);margin-top:4px">
