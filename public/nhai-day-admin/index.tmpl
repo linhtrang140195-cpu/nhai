@@ -697,8 +697,16 @@ function renderVoting(){
       const alreadyIds=new Set(already.map(x=>x.case_id));
       const campSeason=campaignSeasonId(c.id);
       const eligibleBase=state.cases.filter(cs=>cs.is_active&&cs.season_id===campSeason&&cs.is_master_chef!=1);
+      // Two campaigns can share the same season (e.g. an HN-only one and a separate
+      // HCM-only one for the same nhai-day-03) — season alone doesn't say which city a
+      // given campaign is FOR. A campaign that already holds one city's cases must not
+      // be offered the other city at all, or "missing" reads as "steal from the sibling
+      // campaign" exactly like the earlier incident. Only an empty campaign (no
+      // signal yet) leaves both cities selectable.
+      const existingCities=new Set(already.map(x=>x.city));
+      const scopeCity=existingCities.size===1?[...existingCities][0]:null;
       const missingByCity={};["HN","HCM"].forEach(city=>{
-        missingByCity[city]=eligibleBase.filter(cs=>cityKey(cs.city)===city&&!alreadyIds.has(cs.id)).length;
+        missingByCity[city]=(scopeCity&&scopeCity!==city)?0:eligibleBase.filter(cs=>cityKey(cs.city)===city&&!alreadyIds.has(cs.id)).length;
       });
       const missingTotal=missingByCity.HN+missingByCity.HCM;
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
@@ -980,14 +988,23 @@ function campaignSeasonId(campaignId){
   return m?m[1]:state.currentSeason;
 }
 
-// onlyCity is required ('HN' | 'HCM') — no auto-inference from what's already in the
-// campaign. That inference used to seem convenient, but it fails exactly when it is
-// needed most: repairing a campaign whose contents are already wrong (as happened
-// here) reads the wrong signal from the very corruption being fixed.
+// onlyCity is required ('HN' | 'HCM') — never auto-inferred as the SOURCE of what to
+// push (that seems convenient but fails during a repair, when a campaign's contents
+// are already wrong and inference just reads back the corruption). It IS checked as a
+// guard below: two campaigns can share one season (an HN-only one and a separate
+// HCM-only one for the same nhai-day-03), so a campaign already holding one city's
+// cases must refuse the other city outright, or "push" means "steal from the sibling
+// campaign" — exactly the earlier incident, just via a different door.
 async function pushCasesToCampaign(id,onlyCity){
   if(onlyCity!=='HN'&&onlyCity!=='HCM'){toast('Cần chọn miền HN hoặc HCM','danger');return;}
   const all=state.topPickCases||[];
   const already=all.filter(x=>x.campaign_id===id);
+  const existingCities=new Set(already.map(x=>x.city));
+  const scopeCity=existingCities.size===1?[...existingCities][0]:null;
+  if(scopeCity&&scopeCity!==onlyCity){
+    toast(`Campaign này đã dùng cho miền ${scopeCity}, không thể push miền ${onlyCity} vào.`,"danger");
+    return;
+  }
   const targetSeason=campaignSeasonId(id);
   let activeCases=state.cases.filter(c=>c.is_active&&c.season_id===targetSeason);
   // The Master Chef does not take part in the vote.
