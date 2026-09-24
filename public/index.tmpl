@@ -5841,13 +5841,25 @@ renderRoadmap=function(){
   if(!track) return;
   track.innerHTML=ROADMAP_DISPLAY.map((r,i)=>{
     const lbl=lblMap[r.status]||r.status;
-    let cta='';
-    if(r.articleUrl&&/^np-/.test(r.articleUrl)) cta=`<button class="rm-cta-link" onclick="openArticleModal('${r.articleUrl.replace(/'/g,'\\x27')}')">Xem recap →</button>`;
-    else if(r.articleUrl) cta=`<a href="${r.articleUrl}" target="_blank" rel="noopener" class="rm-cta-link" style="text-decoration:none;display:inline-block">Xem bài viết →</a>`;
-    else if(r.recapId) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>openRecap('${r.recapId}'),60)">Xem recap →</button>`;
-    else if(r.status==='result'||r.status==='done') cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2])">Xem kết quả →</button>`;
-    else if(r.voteCity) cta=`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>{switchResTab('vote',document.querySelectorAll('.rtab')[1],true);history.replaceState(history.state,'','/ket-qua#vote');filterVote('${r.voteCity}',document.querySelectorAll('.vf-btn')[0]);},60)">Bình chọn ngay →</button>`;
-    else if(r.register) cta=`<button class="rm-cta-link" onclick="openReg()">Đăng ký ngay →</button>`;
+    // A finished edition with its own recap article used to show ONLY the recap
+    // button (else-if chain picked one), hiding "Xem kết quả" entirely. Build the
+    // list of buttons that apply instead of picking a single one, so a done season
+    // with a recap gets both.
+    const ctas=[];
+    if(r.status==='result'||r.status==='done'){
+      ctas.push(`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2])">Xem kết quả →</button>`);
+    }
+    if(r.articleUrl&&/^np-/.test(r.articleUrl)) ctas.push(`<button class="rm-cta-link" onclick="openArticleModal('${r.articleUrl.replace(/'/g,'\\x27')}')">Xem recap →</button>`);
+    else if(r.articleUrl) ctas.push(`<a href="${r.articleUrl}" target="_blank" rel="noopener" class="rm-cta-link" style="text-decoration:none;display:inline-block">Xem bài viết →</a>`);
+    else if(r.recapId) ctas.push(`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>openRecap('${r.recapId}'),60)">Xem recap →</button>`);
+    if(!ctas.length){
+      if(r.voteCity) ctas.push(`<button class="rm-cta-link" onclick="switchTab('results',document.querySelectorAll('.ptab')[2]);setTimeout(()=>{switchResTab('vote',document.querySelectorAll('.rtab')[1],true);history.replaceState(history.state,'','/ket-qua#vote');filterVote('${r.voteCity}',document.querySelectorAll('.vf-btn')[0]);},60)">Bình chọn ngay →</button>`);
+      else if(r.register) ctas.push(`<button class="rm-cta-link" onclick="openReg()">Đăng ký ngay →</button>`);
+    }
+    // .rm-shell has a fixed height with overflow:hidden, and .rm-cta-link relies on
+    // margin-top:auto to sit at the bottom of a column flex container — stacking two
+    // buttons vertically there would overflow. Put multiple buttons in one row instead.
+    const cta=ctas.length>1?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto">${ctas.join('')}</div>`:ctas.join('');
     return `<div class="rm-card ${r.status} ${i===0?'first':''} ${i===ROADMAP_DISPLAY.length-1?'last':''}">
       <div class="rm-pipe">
         <div class="rm-pipe-main"></div>
