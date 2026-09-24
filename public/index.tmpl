@@ -5585,18 +5585,12 @@ function parseCaseDesc(raw){
   }
   return{goal,desc:'',tools:[...new Set(tools)].filter(s=>s&&s.length>1&&s.length<40)};
 }
-function updateEditionTopPick(){
-  EDITIONS.forEach((ed,i)=>{
+async function updateEditionTopPick(){
+  for(let i=0;i<EDITIONS.length;i++){
+    const ed=EDITIONS[i];
     const slot=document.getElementById('ed-toppick-'+i);
-    if(!slot) return;
-    // Hide vote tab button for this edition when done
-    if(ed.topPickDone||voteState.votingClosed){
-      document.querySelectorAll('.vf-ed-btn').forEach(b=>{
-        const bEd=b.dataset.ed||'';
-        if(ed.ids.some(id=>bEd.includes(id))) b.style.display='none';
-      });
-    }
-    if(slot.innerHTML.trim()) return; // already rendered
+    if(!slot) continue;
+    if(slot.innerHTML.trim()) continue; // already rendered
     // Static winners (e.g. NHAI #1 — results known, no live vote data needed)
     if(ed.topPickWinners){
       const cards=ed.topPickWinners.map(w=>`<div class="result-top-pick-card">
@@ -5611,27 +5605,32 @@ function updateEditionTopPick(){
         <div class="award-sec-label"><h3>💡 Top Pick Dish</h3><span class="award-badge" style="color:#bdf3ce;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.25)">1.000.000đ · Đã công bố</span></div>
         <div class="result-top-pick-grid">${cards}</div>
       </div>`;
-      return;
+      continue;
     }
-    // Dynamic winners from vote data (e.g. NHAI #2 — render when campaign closes)
-    if(!ed.season_id||!voteState.votingClosed) return;
-    const groups=[
-      {label:'Hà Nội',ids:ed.ids.filter(id=>id.startsWith('hn'))},
-      {label:'TP.HCM',ids:ed.ids.filter(id=>id.startsWith('hcm'))}
-    ];
+    if(!ed.season_id) continue;
+    // Each season's own Top Pick result must not depend on whether some OTHER
+    // city/season's vote happens to be open right now — that used to be read off a
+    // single global voteState.votingClosed, so opening HCM's Day 3 vote hid Day 2's
+    // and Day 3 HN's already-announced winners. Ask the server per season instead;
+    // it resolves open/closed per city straight from case_id, independent of
+    // whichever campaign the client currently has active.
+    let data;
+    try{ data=await fetch('/api/season-top-pick?season_id='+encodeURIComponent(ed.season_id)).then(r=>r.json()); }
+    catch(err){ continue; }
+    if(!data||!data.ok) continue;
+    const groups=[{label:'Hà Nội',city:'HN'},{label:'TP.HCM',city:'HCM'}];
     const cards=groups.map(group=>{
-      const winner=getResultsTopPickWinner(group.ids);
-      if(!winner) return '';
-      const votes=getDisplayVoteCount(winner.id);
+      const info=data.cities[group.city];
+      if(!info||!info.closed||!info.winner) return '';
       return `<div class="result-top-pick-card">
         <div class="rtp-medal">🏆</div>
         <div>
           <div class="rtp-kicker">Top Pick Dish Winner <span class="rtp-badge">Đã công bố</span></div>
-          <div class="rtp-title">${e(winner.title)}</div>
-          <div class="rtp-meta"><b>${e(group.label)}</b>${winner.person?' · '+e(winner.person):''}</div>
+          <div class="rtp-title">${e(info.winner.title)}</div>
+          <div class="rtp-meta"><b>${e(group.label)}</b>${info.winner.person?' · '+e(info.winner.person):''}</div>
         </div>
         <div class="rtp-side">
-          <div class="rtp-votes"><strong>${votes}</strong><span>votes</span></div>
+          <div class="rtp-votes"><strong>${info.winner.votes}</strong><span>votes</span></div>
         </div>
       </div>`;
     }).filter(Boolean).join('');
@@ -5641,7 +5640,15 @@ function updateEditionTopPick(){
         <div class="result-top-pick-grid">${cards}</div>
       </div>`;
     }
-  });
+    // Hide this edition's vote-tab button once every city it covers has closed
+    const allClosed=Object.values(data.cities).every(info=>info.closed);
+    if(ed.topPickDone||allClosed){
+      document.querySelectorAll('.vf-ed-btn').forEach(b=>{
+        const bEd=b.dataset.ed||'';
+        if(ed.ids.some(id=>bEd.includes(id))) b.style.display='none';
+      });
+    }
+  }
 }
 async function initVoteState(){
   voteState.deviceId=getVoteDeviceId();

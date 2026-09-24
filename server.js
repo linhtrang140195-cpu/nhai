@@ -156,6 +156,76 @@ app.get('/api/active-campaign', async (req, res) => {
   }
 });
 
+function normSeasonCity(v) {
+  const s = String(v || '').trim().toLowerCase();
+  if (s === 'hcm' || s === 'tp.hcm' || s === 'tphcm' || s.includes('minh')) return 'HCM';
+  return 'HN';
+}
+
+// The results page used to decide "has this season's Top Pick Dish winner been
+// announced?" from a single global voteState tied to whichever campaign the client
+// currently has active — so once ANY city's vote opened elsewhere, every OTHER
+// season's already-closed winner card vanished, because the shared flag read "not
+// closed" for all of them. A season's own result must not depend on what else is
+// open. Compute it here straight from case_id, which votes are permanently tied to
+// regardless of which campaign currently owns that case row.
+app.get('/api/season-top-pick', async (req, res) => {
+  try {
+    const seasonId = String(req.query.season_id || '');
+    if (!seasonId) return res.status(400).json({ ok: false, message: 'season_id is required.' });
+
+    const emptyResult = { ok: true, cities: { HN: { closed: true, winner: null }, HCM: { closed: true, winner: null } } };
+    const [cases] = await pool.query(
+      "SELECT id, city, title, owner_name FROM cases WHERE season_id = ? AND is_active = 1 AND (is_master_chef IS NULL OR is_master_chef = 0)",
+      [seasonId]
+    );
+    if (!cases.length) return res.json(emptyResult);
+
+    const ids = cases.map(c => c.id);
+    const placeholders = ids.map(() => '?').join(',');
+    const [voteRows] = await pool.query(
+      `SELECT case_id, COUNT(*) AS n FROM top_pick_votes WHERE case_id IN (${placeholders}) GROUP BY case_id`,
+      ids
+    );
+    const votesByCase = {};
+    voteRows.forEach(r => { votesByCase[r.case_id] = r.n; });
+
+    const [campRows] = await pool.query(
+      `SELECT tc.case_id, camp.opens_at, camp.closes_at, camp.is_active
+       FROM top_pick_cases tc JOIN top_pick_campaigns camp ON camp.id = tc.campaign_id
+       WHERE tc.case_id IN (${placeholders})`,
+      ids
+    );
+
+    const now = new Date();
+    const isOpenNow = camp => {
+      if (!camp.is_active) return false;
+      if (camp.opens_at && new Date(camp.opens_at) > now) return false;
+      if (camp.closes_at && new Date(camp.closes_at) < now) return false;
+      return true;
+    };
+
+    const result = { ok: true, cities: {} };
+    ['HN', 'HCM'].forEach(cityBucket => {
+      const casesForCity = cases.filter(c => normSeasonCity(c.city) === cityBucket);
+      if (!casesForCity.length) { result.cities[cityBucket] = { closed: true, winner: null }; return; }
+      const idsForCity = new Set(casesForCity.map(c => c.id));
+      const anyOpen = campRows.some(r => idsForCity.has(r.case_id) && isOpenNow(r));
+      let winner = null;
+      if (!anyOpen) {
+        const ranked = casesForCity
+          .map(c => ({ id: c.id, title: c.title, person: c.owner_name, votes: votesByCase[c.id] || 0 }))
+          .sort((a, b) => b.votes - a.votes || a.title.localeCompare(b.title, 'vi'));
+        if (ranked.length && ranked[0].votes > 0) winner = ranked[0];
+      }
+      result.cities[cityBucket] = { closed: !anyOpen, winner };
+    });
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
 // Pretty routes for the HTML pages. Source files are named .tmpl (not .html) so the
 // deploy platform's project-type detector — which unconditionally classifies any repo
 // containing an .html file as a static site, ignoring package.json entirely — picks up
