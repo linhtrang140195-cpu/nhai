@@ -4207,6 +4207,10 @@ async function loadEditionFromDB(idx,seasonId){
     const hasEarly=earlyHN.length||earlyHCM.length;
     const hasDemo=demoHN.length||demoHCM.length;
     if(!hasMc&&!hasEarly&&!hasDemo){el.innerHTML='<div style="text-align:center;padding:48px;color:var(--textM)">Chưa có kết quả</div>';return;}
+    const anyDemoBtn=list=>list.some(a=>{const mc=matchCase(a);return mc&&(mc.demo_url||'').split(',')[0].trim();});
+    const clickHint='<div style="font-size:12px;color:var(--textM);margin:-4px 0 10px">💡 Bấm vào use case để xem mục đích, tool sử dụng & demo</div>';
+    const earlyHint=anyDemoBtn(earlyHN)||anyDemoBtn(earlyHCM)?clickHint:'';
+    const demoHint=anyDemoBtn(demoHN)||anyDemoBtn(demoHCM)?clickHint:'';
     el.innerHTML=`
       ${hasMc?`<div class="award-section">
         <div class="award-sec-label"><h3>🏆 Master Chef</h3><span class="award-badge">2.000.000đ</span></div>
@@ -4214,10 +4218,12 @@ async function loadEditionFromDB(idx,seasonId){
       </div>`:''}
       ${hasEarly?`<div class="award-section">
         <div class="award-sec-label"><h3>🚀 Early Bird & Demo Ready</h3><span class="award-badge" style="color:var(--green);background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.2)">1.000.000đ / team</span></div>
+        ${earlyHint}
         ${mkCitySection(earlyHN,earlyHCM,'Early Bird','eb')}
       </div>`:''}
       ${hasDemo?`<div class="award-section">
         <div class="award-sec-label"><h3>✅ Hoàn thiện trước 17:30</h3><span class="award-badge" style="color:var(--gold);background:rgba(242,185,51,.08);border-color:rgba(242,185,51,.2)">500.000đ / team</span></div>
+        ${demoHint}
         ${mkCitySection(demoHN,demoHCM,'500k','demo')}
       </div>`:''}`;
   }catch(err){const el=document.getElementById('ed-awards-'+idx);if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--textM)">Không tải được kết quả</div>';}
