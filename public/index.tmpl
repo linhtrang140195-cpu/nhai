@@ -5102,10 +5102,11 @@ function renderVoteWinnerAnnouncement(sorted, city){
     return;
   }
   const winner=valid[0];
-  const cnt=getDisplayVoteCount(winner.id);
   const cityLabel=city==='HCM'?'TP.HCM':'Hà Nội';
   const editionLabel={'hn01':'NHAI DAY #1','hcm01':'NHAI DAY #1','hn02':'NHAI DAY #2','hcm02':'NHAI DAY #2','hn03':'NHAI DAY #3','hcm03':'NHAI DAY #3','hn04':'NHAI DAY #4','hcm04':'NHAI DAY #4'};
   const announcedBadge=voteState.votingClosed?'<span class="winner-badge">Đã công bố</span>':'<span class="winner-badge">Đang dẫn đầu</span>';
+  // Once announced, show which case won without the vote count — the tally stays
+  // internal (Vote audit tab), same as the results-tab winner card.
   winnerEl.innerHTML=`<div class="winner-announce">
     <div class="winner-medal">🏆</div>
     <div>
@@ -5113,7 +5114,6 @@ function renderVoteWinnerAnnouncement(sorted, city){
       <div class="winner-title">${e(winner.title)}</div>
       <div class="winner-meta"><b>${e(editionLabel[winner.event]||'NHAI DAY')}</b> · ${e(cityLabel)}${winner.person?' · '+e(winner.person):''}</div>
     </div>
-    <div class="winner-score"><strong>${cnt}</strong><span>votes</span></div>
   </div>`;
   winnerEl.classList.add('show');
 }
@@ -5348,12 +5348,28 @@ function renderVote(city){
     sorted.sort((a,b)=>a.title.localeCompare(b.title,'vi'));
   }
 
+  // Once the campaign is closed, stop showing per-case content (grid cards, tools,
+  // detail panels) and the leaderboard — only the winner announcement above stays,
+  // itself already stripped of its vote count. This is the voting tab's own closed
+  // state, distinct from the results-tab winner card handled in updateEditionTopPick.
+  if(isVoteBackendReady()&&!voteState.loading&&voteState.votingClosed){
+    const countEl=document.getElementById('voteMetaCount');
+    if(countEl) countEl.textContent=(sorted.length?sorted.length+' use case · ':'')+'Đã đóng bình chọn';
+    renderVoteRuntimeNote(city);
+    const leadEl=document.getElementById('voteLead');
+    if(leadEl){ leadEl.innerHTML=''; leadEl.style.display='none'; }
+    renderVoteWinnerAnnouncement(sorted, city);
+    const grid=document.getElementById('voteGrid');
+    if(grid) grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px 16px;color:var(--textM);font-size:13px">Bình chọn đã đóng. Xem đầy đủ kết quả ở tab <b>📊 Kết quả</b>.</div>`;
+    return;
+  }
+
   const countEl=document.getElementById('voteMetaCount');
   if(countEl){
     const parts=[sorted.length?sorted.length+' use case':'Chưa tới sự kiện'];
     if(isVoteBackendReady()){
       const cityLabel=city==='HCM'?'TP.HCM':'Hà Nội';
-      parts.push(voteState.loading?'Đang tải vote':(voteState.votingClosed?'Đã đóng bình chọn':`${cityLabel}: còn ${getRemainingVotes(city)}/${voteState.maxVotes} lượt bình chọn`));
+      parts.push(voteState.loading?'Đang tải vote':`${cityLabel}: còn ${getRemainingVotes(city)}/${voteState.maxVotes} lượt bình chọn`);
     }
     countEl.textContent=parts.join(' · ');
   }
@@ -5639,15 +5655,14 @@ async function updateEditionTopPick(){
     const cards=groups.map(group=>{
       const info=data.cities[group.city];
       if(!info||!info.closed||!info.winner) return '';
+      // Announced winner shows which case won, not the vote count — the tally itself
+      // stays private to admin (Vote audit tab), same treatment as the recap articles.
       return `<div class="result-top-pick-card">
         <div class="rtp-medal">🏆</div>
         <div>
           <div class="rtp-kicker">Top Pick Dish Winner <span class="rtp-badge">Đã công bố</span></div>
           <div class="rtp-title">${e(info.winner.title)}</div>
           <div class="rtp-meta"><b>${e(group.label)}</b>${info.winner.person?' · '+e(info.winner.person):''}</div>
-        </div>
-        <div class="rtp-side">
-          <div class="rtp-votes"><strong>${info.winner.votes}</strong><span>votes</span></div>
         </div>
       </div>`;
     }).filter(Boolean).join('');
