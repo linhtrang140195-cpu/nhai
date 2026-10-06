@@ -1573,6 +1573,76 @@ function calcLiveFeedbackStats(seasonId){
   };
 }
 
+// Registrants type free-form team names ("New Game" vs "NewGame"), so a strict string
+// match on r.team splits one team's headcount across several rows. Spacing/case
+// variants are merged automatically; a real rename (confirmed with the organiser) goes
+// in TEAM_ALIASES — e.g. the ops sub-teams under Backend Squad are one team for ranking.
+const TEAM_ALIASES={'backend squad (legal + kế toán + admin...)':'Backend Squad'};
+function buildTeamCounts(list){
+  const groups={};
+  const bump=name=>{
+    let s=String(name||'').trim();
+    if(!s) s='Khác';
+    const label=TEAM_ALIASES[s.toLowerCase()]||s;
+    const looseKey=label.toLowerCase().replace(/\s+/g,'');
+    if(!groups[looseKey]) groups[looseKey]={count:0,labelCounts:{}};
+    groups[looseKey].count++;
+    groups[looseKey].labelCounts[label]=(groups[looseKey].labelCounts[label]||0)+1;
+  };
+  list.forEach(r=>{
+    bump(r.team);
+    if(r.member2_name&&r.member2_name.trim()) bump(r.member2_team||r.team);
+    if(r.member3_name&&r.member3_name.trim()) bump(r.member3_team||r.team);
+  });
+  return Object.values(groups)
+    .map(g=>[Object.entries(g.labelCounts).sort((a,b)=>b[1]-a[1])[0][0],g.count])
+    .sort((a,b)=>b[1]-a[1]);
+}
+function renderTeamLeaderboardCard(sorted,total,title,sub){
+  const colors=["var(--gold)","var(--pink)","var(--teal)","var(--purple)","#D97757","#14B8A6","#A78BFA","#EC4899","#EF9F27","#5EEAD4"];
+  if(sorted.length===0) return `<div class="card"><div class="card-header"><div class="card-title">${title}</div><div class="card-sub">${sub}</div></div><div style="padding:14px"><div class="empty-state">Chưa có data</div></div></div>`;
+  return `<div class="card">
+    <div class="card-header"><div class="card-title">${title}</div><div class="card-sub">${sub}</div></div>
+    <div style="padding:14px">
+      <div style="display:flex;gap:12px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
+        ${sorted.slice(0,3).map(([t,c],i)=>{
+          const medals=['🥇','🥈','🥉'];
+          const podiumH=[72,52,40];
+          const podiumC=['var(--gold)','#C0C0C0','#CD7F32'];
+          const p=Math.round(c/total*100);
+          return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:100px">
+            <div style="font-size:28px">${medals[i]}</div>
+            <div style="font-size:12px;font-weight:600;text-align:center;max-width:110px;line-height:1.3">${t}</div>
+            <div style="background:${podiumC[i]};color:#000;border-radius:8px 8px 0 0;width:80px;height:${podiumH[i]}px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700">
+              <div style="font-size:18px;font-family:monospace">${c}</div>
+              <div style="font-size:10px">người · ${p}%</div>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
+        ${sorted.map(([t,c],i)=>{
+          const medals3=['🥇','🥈','🥉'];
+          const p=Math.round(c/total*100);
+          const rank=i<3?`<span style="font-size:16px">${medals3[i]}</span>`:`<span style="font-family:monospace;font-size:12px;color:var(--textM);width:20px;text-align:center">#${i+1}</span>`;
+          const barW=sorted[0][1]>0?Math.round(c/sorted[0][1]*100):0;
+          return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            ${rank}
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+                <span style="font-weight:${i<3?'600':'400'}">${t}</span>
+                <span style="color:var(--textM)">${c} người · <span style="color:${colors[i%colors.length]};font-weight:600">${p}%</span></span>
+              </div>
+              <div style="background:rgba(255,255,255,0.04);border-radius:99px;height:6px;overflow:hidden">
+                <div style="height:100%;border-radius:99px;background:${colors[i%colors.length]};width:${barW}%"></div>
+              </div>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>
+  </div>`;
+}
 function renderAnalytics(){
   const regsA=state.registrations.filter(r=>r.season_id===state.currentSeason);
   const ss=state.seasonStats.find(x=>x.season_id===state.currentSeason)||{};
@@ -1589,15 +1659,10 @@ function renderAnalytics(){
   const allRegsCount=state.registrations.length;
   const allHeadcount=hcOf(state.registrations);
   const seasonCount=new Set(state.registrations.map(r=>r.season_id).filter(Boolean)).size||1;
-  const teamCounts={};
-  // Đếm cả TV2, TV3
-  regsA.forEach(r=>{
-    const t=r.team||"Khác";teamCounts[t]=(teamCounts[t]||0)+1;
-    if(r.member2_name&&r.member2_name.trim()){const t2=r.member2_team||t;teamCounts[t2]=(teamCounts[t2]||0)+1;}
-    if(r.member3_name&&r.member3_name.trim()){const t3=r.member3_team||t;teamCounts[t3]=(teamCounts[t3]||0)+1;}
-  });
-  const sorted=Object.entries(teamCounts).sort((a,b)=>b[1]-a[1]);
+  const sorted=buildTeamCounts(regsA);
   const total=headcount||1;
+  const allSorted=buildTeamCounts(state.registrations);
+  const allTotal=allHeadcount||1;
   const colors=["var(--gold)","var(--pink)","var(--teal)","var(--purple)","#D97757","#14B8A6","#A78BFA","#EC4899","#EF9F27","#5EEAD4"];
   const bars=sorted.map(([t,c],i)=>{const p=Math.round(c/total*100);return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="font-weight:500">${t}</span><span style="color:var(--textM)">${c} người · <span style="color:${colors[i%colors.length]};font-weight:600;font-family:monospace">${p}%</span></span></div><div style="background:rgba(255,255,255,0.04);border-radius:99px;height:8px;overflow:hidden"><div style="height:100%;border-radius:99px;background:${colors[i%colors.length]};width:${p}%"></div></div></div>`;}).join("");
   const gid=seasonGids[state.currentSeason]?.feedback||"";
@@ -1648,48 +1713,8 @@ function renderAnalytics(){
         return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="width:10px;height:10px;border-radius:50%;background:${color}"></div><div style="flex:1;font-size:12px;font-weight:500">${city}</div><div style="font-family:monospace;font-size:16px;font-weight:600;color:${color}">${p}%</div><div style="font-size:11px;color:var(--textM)">${count} người</div></div>`;}).join("")}
     </div></div>
   </div>
-  <div class="card">
-    <div class="card-header"><div class="card-title">🏆 Bảng xếp hạng team</div><div class="card-sub">Tính theo đầu người (đăng ký chính + thành viên)</div></div>
-    <div style="padding:14px">
-      ${sorted.length===0?'<div class="empty-state">Chưa có data</div>':`
-      <div style="display:flex;gap:12px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
-        ${sorted.slice(0,3).map(([t,c],i)=>{
-          const medals=['🥇','🥈','🥉'];
-          const podiumH=[72,52,40];
-          const podiumC=['var(--gold)','#C0C0C0','#CD7F32'];
-          const p=Math.round(c/total*100);
-          return `<div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:100px">
-            <div style="font-size:28px">${medals[i]}</div>
-            <div style="font-size:12px;font-weight:600;text-align:center;max-width:110px;line-height:1.3">${t}</div>
-            <div style="background:${podiumC[i]};color:#000;border-radius:8px 8px 0 0;width:80px;height:${podiumH[i]}px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700">
-              <div style="font-size:18px;font-family:monospace">${c}</div>
-              <div style="font-size:10px">người · ${p}%</div>
-            </div>
-          </div>`;
-        }).join("")}
-      </div>
-      <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
-        ${sorted.map(([t,c],i)=>{
-          const medals3=['🥇','🥈','🥉'];
-          const p=Math.round(c/total*100);
-          const rank=i<3?`<span style="font-size:16px">${medals3[i]}</span>`:`<span style="font-family:monospace;font-size:12px;color:var(--textM);width:20px;text-align:center">#${i+1}</span>`;
-          const barW=sorted[0][1]>0?Math.round(c/sorted[0][1]*100):0;
-          return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-            ${rank}
-            <div style="flex:1;min-width:0">
-              <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
-                <span style="font-weight:${i<3?'600':'400'}">${t}</span>
-                <span style="color:var(--textM)">${c} người · <span style="color:${colors[i%colors.length]};font-weight:600">${p}%</span></span>
-              </div>
-              <div style="background:rgba(255,255,255,0.04);border-radius:99px;height:6px;overflow:hidden">
-                <div style="height:100%;border-radius:99px;background:${colors[i%colors.length]};width:${barW}%"></div>
-              </div>
-            </div>
-          </div>`;
-        }).join("")}
-      </div>`}
-    </div>
-  </div>
+  ${renderTeamLeaderboardCard(sorted,total,'🏆 Bảng xếp hạng team','Tính theo đầu người (đăng ký chính + thành viên) · mùa hiện tại')}
+  <div style="margin-top:14px">${renderTeamLeaderboardCard(allSorted,allTotal,'🏆 Bảng xếp hạng team — Tổng tất cả các mùa',`Tính theo đầu người, gộp cả ${seasonCount} mùa`)}</div>
   <div id="mediaStatsPanel" style="margin-top:16px"></div>`;
 }
 
