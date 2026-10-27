@@ -2861,6 +2861,7 @@ function renderSubmissions(){
         <div style="display:flex;flex-direction:column;gap:6px;min-width:120px">
           <button class="btn btn-primary" style="font-size:11px" onclick="openApproveModal('${s.id}')">✓ Approve</button>
           <button class="btn btn-danger" style="font-size:11px" onclick="rejectSub('${s.id}')">✗ Từ chối</button>
+          ${filterTab==='pending'?`<button class="btn" style="font-size:11px" onclick="moveSubSeason('${s.id}','${s.season_id||''}')">↪ Đổi mùa</button>`:''}
         </div>
       </div>
     </div>`).join('');
@@ -3123,6 +3124,19 @@ async function doApprove(){
     btn.disabled=false; btn.textContent='✓ Approve & tạo case';
   }
 }
+async function moveSubSeason(subId,currentSeasonId){
+  const seasons=state.seasons||[];
+  const options=seasons.map(s=>`${s.id} — ${s.name}`).join('\n');
+  const picked=prompt(`Case đang thuộc mùa "${currentSeasonId}".\nGõ đúng id mùa muốn chuyển sang:\n\n${options}`, '');
+  if(!picked) return;
+  const target=picked.trim();
+  if(!seasons.some(s=>s.id===target)){ toast('Không tìm thấy mùa với id đó, không đổi gì cả.','danger'); return; }
+  if(target===currentSeasonId) return;
+  await sb(`case_submissions?id=eq.${subId}`,{method:'PATCH',body:{season_id:target}});
+  await loadAll();
+  toast('Đã chuyển mùa cho submission.');
+}
+
 async function rejectSub(subId){
   const notes=prompt('Lý do từ chối (tùy chọn):');
   if(notes===null) return;
