@@ -4105,7 +4105,11 @@ async function loadEditionFromDB(idx,seasonId){
     setEl('ek-t-'+idx,pOrO('total_teams')||undefined);
     const avgXp=pOrO('avg_experience');if(avgXp!=null)setEl('ek-xp-'+idx,(+avgXp).toFixed(2)+'★');
     const avgMn=pOrO('avg_mentor');if(avgMn!=null)setEl('ek-mn-'+idx,(+avgMn).toFixed(2)+'★');
-    const pct1=pOrO('pct_will_participate');if(pct1!=null)setEl('ek-ct-'+idx,(pct1*1).toFixed(2)+'%');
+    // "Muốn tiếp tục" reads pct_want_continue (computed from the continue_dev answer:
+    // Chắc chắn/Có thể count as yes). pct_will_participate is a different, unrelated
+    // field the server computes from the recommend-to-a-colleague answer — using it
+    // here showed the wrong percentage under this label.
+    const pct1=pOrO('pct_want_continue');if(pct1!=null)setEl('ek-ct-'+idx,(pct1*1).toFixed(2)+'%');
     const pct2=pOrO('pct_has_demo');if(pct2!=null)setEl('ek-dm-'+idx,(pct2*1).toFixed(2)+'%');
     const inCity=(a,cat,city)=>a.category_id===cat&&normalizeVoteCity(a.city)===city;
     const masterHN=awards.find(a=>inCity(a,'master-chef','HN'));

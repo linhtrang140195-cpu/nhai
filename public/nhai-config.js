@@ -222,7 +222,7 @@
         const teams = pOrO('total_teams'); if (teams) set(`ek-t-${i}`, teams);
         const xp = pOrO('avg_experience'); if (xp != null) set(`ek-xp-${i}`, (+xp).toFixed(2) + '★');
         const mn = pOrO('avg_mentor'); if (mn != null) set(`ek-mn-${i}`, (+mn).toFixed(2) + '★');
-        if (ss.pct_will_participate) set(`ek-ct-${i}`, ss.pct_will_participate + '%');
+        if (ss.pct_want_continue) set(`ek-ct-${i}`, ss.pct_want_continue + '%');
         if (ss.pct_has_demo)     set(`ek-dm-${i}`, ss.pct_has_demo + '%');
       }
     });
