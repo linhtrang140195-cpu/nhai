@@ -140,7 +140,6 @@
     updateRegistrationCount();
     updateSeasonStats();
     updateEditionStats(headcountBySeason);
-    updateHeroTeamRank(allRegs);
 
     if (dataSource !== 'supabase') {
       console.warn('⚠️ NHAI DAY đang dùng data backup từ Google Sheet. Một số dữ liệu có thể chưa cập nhật mới nhất.');
@@ -181,29 +180,6 @@
       }
       sel.appendChild(opt);
     });
-  }
-
-  // ===== 6b. HERO TOP TEAM RANK (compact pills dưới nút đăng ký) =====
-  function updateHeroTeamRank(allRegs) {
-    const el = document.getElementById('heroTeamRank');
-    if (!el) return;
-    if (!allRegs.length) return;
-    const tc = {};
-    allRegs.forEach(r => {
-      const t = r.team || 'Khác';
-      tc[t] = (tc[t] || 0) + 1;
-      if (r.member2_name && r.member2_name.trim()) { const t2 = r.member2_team || t; tc[t2] = (tc[t2] || 0) + 1; }
-      if (r.member3_name && r.member3_name.trim()) { const t3 = r.member3_team || t; tc[t3] = (tc[t3] || 0) + 1; }
-    });
-    const top2 = Object.entries(tc).sort((a, b) => b[1] - a[1]).slice(0, 2);
-    if (!top2.length) return;
-    const medals = ['🥇','🥈'];
-    el.innerHTML =
-      '<span style="font-size:13px;color:rgba(255,255,255,0.4);margin-right:2px">Top team có thành viên tham gia:</span>' +
-      top2.map(([t, c], i) =>
-        `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:3px 10px;font-size:13px;color:rgba(255,255,255,0.82)">${medals[i]} <b style="font-weight:600">${t}</b></span>`
-      ).join('');
-    el.style.display = 'flex';
   }
 
   // ===== 6c. UPDATE EDITION STATS (Results section per-season) =====
